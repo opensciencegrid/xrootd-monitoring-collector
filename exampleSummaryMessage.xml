@@ -1,0 +1,110 @@
+<statistics tod="1422045357" ver="v3.3.3" src="ds-102.cr.cnaf.infn.it:1094" tos="1421945585" pgm="xrootd" ins="anon" pid="19278" site="INFN-T1">
+    <stats id="info">
+        <host>ds-102.cr.cnaf.infn.it</host>
+        <port>1094</port>
+        <name>anon</name>
+    </stats>
+    <stats id="link">
+        <num>190</num>
+        <maxn>204</maxn>
+        <tot>8346</tot>
+        <in>1220071234</in>
+        <out>3227014196980</out>
+        <ctime>6944204</ctime>
+        <tmo>23151</tmo>
+        <stall>0</stall>
+        <sfps>0</sfps>
+    </stats>
+    <stats id="proc">
+        <usr>
+            <s>678</s>
+            <u>235892</u>
+        </usr>
+        <sys>
+            <s>6968</s>
+            <u>762587</u>
+        </sys>
+    </stats>
+    <stats id="xrootd">    
+        <num>8343</num>
+        <ops>
+            <open>14100</open>
+            <rf>0</rf>
+            <rd>50280272</rd>
+            <pr>0</pr>
+            <rv>27417</rv>
+            <rs>10413955</rs>
+            <wr>0</wr>
+            <sync>0</sync>
+            <getf>0</getf>
+            <putf>0</putf>
+            <misc>25994</misc>
+        </ops>
+        <aio>
+            <num>0</num>
+            <max>0</max>
+            <rej>0</rej>
+        </aio>
+        <err>22</err>
+        <rdr>0</rdr>
+        <dly>6</dly>
+        <lgn>
+            <num>8342</num>
+            <af>76</af>
+            <au>8218</au>
+            <ua>0</ua>
+        </lgn>
+    </stats>
+    <stats id="ofs">
+    <role>server</role>
+    <opr>217</opr>
+    <opw>0</opw>
+    <opp>0</opp>
+    <ups>0</ups>
+    <han>208</han>
+    <rdr>0</rdr>
+    <bxq>0</bxq>
+    <rep>0</rep>
+    <err>0</err>
+    <dly>0</dly>
+    <sok>0</sok>
+    <ser>0</ser>
+    <tpc>
+        <grnt>0</grnt>
+        <deny>0</deny>
+        <err>0</err>
+        <exp>0</exp>
+    </tpc>
+</stats>
+ 
+    <stats id="oss" v="2">
+        <paths>
+            1
+            <stats id="0">
+                <lp>"/atlas"</lp>
+                <rp>"/atlas"</rp>
+                <tot>3095703126016</tot>
+                <free>347031964672</free>
+                <ino>134217728</ino>
+                <ifr>85919648</ifr>
+            </stats>
+    
+        </paths>
+        <space>0</space>
+    </stats>
+    <stats id="sched">
+        <jobs>54634</jobs>
+        <inq>0</inq>
+        <maxinq>3</maxinq>
+        <threads>90</threads>
+        <idle>11</idle>
+        <tcr>300</tcr>
+        <tde>210</tde>
+        <tlimr>0</tlimr>
+    </stats>
+    <stats id="sgen">
+        <as>1</as>
+        <et>30</et>
+        <toe>1422045357</toe>
+    </stats>
+</statistics>
