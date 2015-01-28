@@ -18,5 +18,5 @@ RAW = LOAD '/user/ivukotic/IlijaCollector' as (x:chararray);
 cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 --dump cleaned;
 
-sorted = order cleaned by SITE, SRC, TOS, TOD;
+sorted = order cleaned by TOD, TOS, SRC, SITE;
 STORE cleaned into 'Cleaned';
