@@ -10,7 +10,7 @@ REGISTER '/usr/lib/pig/lib/snappy-*.jar';
 
 REGISTER 'cleanup.py' using jython as cleanfuncs;
 
-RAW = LOAD '/user/ivukotic/IlijaCollector' as (x:chararray); # USING org.apache.pig.piggybank.storage.XMLLoader('statistics') as(x:chararray);;
+RAW = LOAD '/user/ivukotic/IlijaCollector' as (x:chararray); 
 
 RAWL = LIMIT RAW 1000;
 dump RAWL;
