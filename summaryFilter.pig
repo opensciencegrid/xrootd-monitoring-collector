@@ -1,4 +1,4 @@
-rmf filteredSummary;
+rmf Cleaned;
 
 REGISTER '/home/ivukotic/piggybank-0.14.0.jar' ;
 
@@ -12,8 +12,9 @@ REGISTER 'cleanup.py' using jython as cleanfuncs;
 
 RAW = LOAD '/user/ivukotic/IlijaCollector' as (x:chararray); 
 
-RAWL = LIMIT RAW 1000;
-dump RAWL;
+--RAWL = LIMIT RAW 1000;
+--dump RAWL;
 
-a = foreach RAWL generate cleanfuncs.XMLtoNTUP(x);
-dump a;
+cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
+--dump cleaned;
+STORE cleaned into 'Cleaned';
