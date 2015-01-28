@@ -56,26 +56,26 @@
         </lgn>
     </stats>
     <stats id="ofs">
-    <role>server</role>
-    <opr>217</opr>
-    <opw>0</opw>
-    <opp>0</opp>
-    <ups>0</ups>
-    <han>208</han>
-    <rdr>0</rdr>
-    <bxq>0</bxq>
-    <rep>0</rep>
-    <err>0</err>
-    <dly>0</dly>
-    <sok>0</sok>
-    <ser>0</ser>
-    <tpc>
-        <grnt>0</grnt>
-        <deny>0</deny>
+        <role>server</role>
+        <opr>217</opr>
+        <opw>0</opw>
+        <opp>0</opp>
+        <ups>0</ups>
+        <han>208</han>
+        <rdr>0</rdr>
+        <bxq>0</bxq>
+        <rep>0</rep>
         <err>0</err>
-        <exp>0</exp>
-    </tpc>
-</stats>
+        <dly>0</dly>
+        <sok>0</sok>
+        <ser>0</ser>
+        <tpc>
+            <grnt>0</grnt>
+            <deny>0</deny>
+            <err>0</err>
+            <exp>0</exp>
+        </tpc>
+    </stats>
  
     <stats id="oss" v="2">
         <paths>
@@ -92,6 +92,7 @@
         </paths>
         <space>0</space>
     </stats>
+    
     <stats id="sched">
         <jobs>54634</jobs>
         <inq>0</inq>
@@ -102,9 +103,11 @@
         <tde>210</tde>
         <tlimr>0</tlimr>
     </stats>
+    
     <stats id="sgen">
         <as>1</as>
         <et>30</et>
         <toe>1422045357</toe>
     </stats>
+    
 </statistics>
