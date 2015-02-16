@@ -12,7 +12,7 @@ echo "Grouping ... "
 if hdfs dfs -test -d Summary/Maxis ; then
     echo "Maxis directory exists"
 else
-    hdfs dfs -test -d Summary/Maxis
+    hdfs dfs -mkdir Summary/Maxis
     echo "Creating Maxis directory"
 fi
 
