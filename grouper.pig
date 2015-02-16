@@ -23,7 +23,12 @@ X = UNION CLEANED, MAXIS;
 grouped = group X by (SITE, SRC, TOS);
 l = LIMIT grouped 1; dump l; 
 
-sorted = foreach grouped{ sorted = order X by TOD DESC; generate group, sorted; };
+sorted = foreach grouped{ 
+    ord = order X by TOD ASC; 
+    ma = order X by TOD DESC; 
+    mas = LIMIT ma 1; 
+    generate group, ma, ord; 
+    };
 
 l = LIMIT sorted 1; dump l; 
 
