@@ -32,7 +32,6 @@ sorted = foreach grouped{
 
 l = LIMIT sorted 1; dump l; 
 
-l = foreach sorted generate gmax; dump l;
 
 -- gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
 
@@ -44,7 +43,7 @@ l = foreach sorted generate gmax; dump l;
 
 
 -- removing already used Maxis
-rmf 'Summary/Maxis'
+rmf 'Summary/Maxis';
 
 -- creating new Maxis
 NMAXIS = foreach sorted generate gmax; 
