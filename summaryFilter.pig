@@ -17,7 +17,7 @@ RAW = LOAD '/user/ivukotic/IlijaCollector/SummaryStream.$INPF.*' as (x:chararray
 cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 --dump cleaned;
 
-STORE grouped into 'Summary/Cleaned/cleaned.$INPF';
+STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
 
 
 
