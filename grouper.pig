@@ -27,7 +27,7 @@ sorted = foreach grouped{
     ord = order X by TOD ASC; 
     ma = order X by TOD DESC; 
     mas = LIMIT ma 1; 
-    generate group, ma, ord; 
+    generate group, mas, ord; 
     };
 
 l = LIMIT sorted 1; dump l; 
