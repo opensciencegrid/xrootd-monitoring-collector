@@ -47,7 +47,9 @@ l = foreach sorted generate gmax; dump l;
 rmf 'Summary/Maxis'
 
 -- creating new Maxis
---STORE NMAXIS into 'Summary/Maxis';
+NMAXIS = foreach sorted generate gmax; 
+dump NMAXIS;
+STORE NMAXIS into 'Summary/Maxis';
 
 
 
