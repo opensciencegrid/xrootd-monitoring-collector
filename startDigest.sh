@@ -9,11 +9,11 @@ pig -f cleaner.pig -param INPF=${DateToProcess}
 
 echo "Grouping ... "
 
-if hadoop fs -test –d Summary/Maxis ; then
+if hdfs dfs -test -d Summary/Maxis ; then
     echo "Maxis directory exists"
 else
-    hadoop fs -mkdir Summary/Maxis
-    echo “Creating Maxis directory”
+    hdfs dfs -test -d Summary/Maxis
+    echo "Creating Maxis directory"
 fi
 
 pig -f grouper.pig -param INPF=${DateToProcess} 
