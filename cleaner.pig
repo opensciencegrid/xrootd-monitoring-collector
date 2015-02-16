@@ -19,10 +19,3 @@ cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 
 STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
 
-
-
--- grouped = group cleaned by (SITE, SRC, TOS);
--- gr = foreach grouped generate FLATTEN(group), cleaned.TOD, cleaned.TOE, cleaned.IN, cleaned.OUT ;
-
--- l = LIMIT gr 1000;
--- dump l;  
