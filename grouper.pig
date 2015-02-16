@@ -14,10 +14,7 @@ CLEANED = LOAD 'Summary/Cleaned/cleaned.$INPF' as (SRC:chararray,SITE:chararray,
 -- CLEANEDL = LIMIT CLEANED 1000;
 -- dump CLEANEDL;
 
-cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
---dump cleaned;
-
-STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
+STORE CLEANED into 'Summary/Cleaned/cleaned.$INPF';
 
 MAXIS = LOAD 'Summary/Maxis' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
 
