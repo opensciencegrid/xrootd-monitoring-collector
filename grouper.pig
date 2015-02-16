@@ -21,10 +21,18 @@ X = UNION CLEANED, MAXIS;
 
 -- grouping
 grouped = group X by (SITE, SRC, TOS);
-gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
+l = LIMIT gr 1; dump l; 
 
--- l = LIMIT gr 1000;
--- dump l;  
+output = foreach grouped{ 
+    sorted = order X by TOD DESC;
+    generate group, sorted;
+}
+
+l = LIMIT output 1; dump l; 
+
+-- gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
+
+-- l = LIMIT gr 1000; dump l;  
 
 -- sorting
 
