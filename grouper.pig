@@ -23,12 +23,9 @@ X = UNION CLEANED, MAXIS;
 grouped = group X by (SITE, SRC, TOS);
 l = LIMIT gr 1; dump l; 
 
-output = foreach grouped{ 
-    sorted = order X by TOD DESC;
-    generate group, sorted;
-}
+sorted = foreach grouped{ sorted = order X by TOD DESC; generate group, sorted; };
 
-l = LIMIT output 1; dump l; 
+l = LIMIT sorted 1; dump l; 
 
 -- gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
 
