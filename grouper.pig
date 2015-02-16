@@ -27,10 +27,12 @@ sorted = foreach grouped{
     ord = order X by TOD ASC; 
     ma = order X by TOD DESC; 
     mas = LIMIT ma 1; 
-    generate group, mas, ord; 
+    generate group AS g, mas AS gmax, ord; 
     };
 
 l = LIMIT sorted 1; dump l; 
+
+l = foreach sorted generate gmax; dump l;
 
 -- gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
 
