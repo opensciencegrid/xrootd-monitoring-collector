@@ -7,5 +7,4 @@ echo "Processing... "${DateToProcess}
 echo "Cleaning new data."
 pig -f cleaner.pig -param INPF=${DateToProcess} 
 
-#echo "Grouping ... "
-#pig -f grouper.pig -param INPF=${DateToProcess} 
+hdfs dfs -get Summary/Sorted/sorted.${DateToProcess}/part-r-00000
