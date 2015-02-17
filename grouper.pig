@@ -24,8 +24,8 @@ grouped = group X by (SITE, SRC, TOS);
 sorted = foreach grouped{ 
     ord = order X by TOD ASC; 
     ma  = order X by TOD DESC; 
-    mas = LIMIT ma 1; 
-    fmas = FLATTEN(mas);
+    --mas = LIMIT ma 1; 
+    fmas = TOP(1,4,ma);
     generate group AS g, fmas AS gmax, ord as O; 
     };
 
