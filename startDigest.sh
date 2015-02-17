@@ -8,3 +8,7 @@ echo "Cleaning new data."
 pig -f cleaner.pig -param INPF=${DateToProcess} 
 
 hdfs dfs -get Summary/Sorted/sorted.${DateToProcess}/part-r-00000
+
+python binner.py
+
+rm part-r-00000
