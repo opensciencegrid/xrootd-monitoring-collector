@@ -12,8 +12,6 @@ servers=[]
 
 f = open('part-r-00000')
 lines=f.readlines()
-servers=len(lines)
-print 'servers found:', servers
 for l in lines:
     s=faxserver()
     cl=l.replace('{(','').replace(')}','').strip()
