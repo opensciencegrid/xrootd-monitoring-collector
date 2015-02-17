@@ -6,7 +6,6 @@ REGISTER '/usr/lib/pig/lib/json-*.jar';
 REGISTER '/usr/lib/pig/lib/jython-*.jar';
 REGISTER '/usr/lib/pig/lib/snappy-*.jar';
 
--- REGISTER 'cleanup.py' using jython as cleanfuncs;
 
 CLEANED = LOAD 'Summary/Cleaned/cleaned.$INPF' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
 
@@ -14,7 +13,7 @@ CLEANED = LOAD 'Summary/Cleaned/cleaned.$INPF' as (SRC:chararray,SITE:chararray,
 -- dump CLEANEDL;
 
 
-MAXIS = LOAD 'Summary/Maxis' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
+MAXIS = LOAD '/user/ivukotic/Summary/Maxis' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
 
 X = UNION CLEANED, MAXIS;
 
@@ -24,9 +23,9 @@ grouped = group X by (SITE, SRC, TOS);
 
 sorted = foreach grouped{ 
     ord = order X by TOD ASC; 
-    ma = order X by TOD DESC; 
+    ma  = order X by TOD DESC; 
     mas = LIMIT ma 1; 
-    generate group AS g, mas AS gmax, ord; 
+    generate group AS g, FLATTEN(mas) AS gmax, ord as O; 
     };
 
 l = LIMIT sorted 1; dump l; 
@@ -41,7 +40,7 @@ l = LIMIT sorted 1; dump l;
 
 
 -- creating new Maxis
-NMAXIS = foreach sorted generate gmax; 
-dump NMAXIS;
-STORE NMAXIS into '/user/ivukotic/Summary/MaxisNEW';
+NoviMAXIS = foreach sorted generate gmax; 
+dump NoviMAXIS;
+-- STORE NMAXIS into '/user/ivukotic/Summary/MaxisNEW';
 
