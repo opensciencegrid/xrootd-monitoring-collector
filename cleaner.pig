@@ -19,3 +19,15 @@ cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 
 STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
 
+-- grouping
+grouped = group cleaned by (SITE, SRC, TOS);
+-- l = LIMIT grouped 1; dump l; 
+
+-- sorting
+sorted = foreach grouped{ 
+    ord = order cleaned by TOD ASC; 
+    generate ord as O; 
+    };
+
+STORE sorted into 'Summary/Sorted/sorted.$INPF';
+-- l = LIMIT sorted 1; dump l; 
