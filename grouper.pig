@@ -1,5 +1,3 @@
-rmf '/user/ivukotic/Summary/MaxisOLD';
-
 REGISTER '/home/ivukotic/piggybank-0.14.0.jar' ;
 
 REGISTER '/usr/lib/pig/lib/avro-*.jar';
@@ -22,7 +20,7 @@ X = UNION CLEANED, MAXIS;
 
 -- grouping
 grouped = group X by (SITE, SRC, TOS);
-l = LIMIT grouped 1; dump l; 
+--l = LIMIT grouped 1; dump l; 
 
 sorted = foreach grouped{ 
     ord = order X by TOD ASC; 
@@ -35,22 +33,22 @@ l = LIMIT sorted 1; dump l;
 
 
 -- gr = foreach grouped generate FLATTEN(group), X.TOD, X.TOE, X.IN, X.OUT ;
-
 -- l = LIMIT gr 1000; dump l;  
 
 -- sorting
 
--- 
 
 
--- moving already used Maxis
-mv '/user/ivukotic/Summary/Maxis' '/user/ivukotic/Summary/MaxisOLD';
 
 -- creating new Maxis
 NMAXIS = foreach sorted generate gmax; 
 dump NMAXIS;
-STORE NMAXIS into 'Summary/Maxis';
+STORE NMAXIS into '/user/ivukotic/Summary/MaxisNEW';
 
 
+-- removing already used Maxis
+rmf '/user/ivukotic/Summary/MaxisOLD';
+mv '/user/ivukotic/Summary/Maxis' '/user/ivukotic/Summary/MaxisOLD';
+mv '/user/ivukotic/Summary/MaxisNEW' user/ivukotic/Summary/Maxis';
 
 
