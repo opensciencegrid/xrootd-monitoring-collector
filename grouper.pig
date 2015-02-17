@@ -1,3 +1,4 @@
+rmf '/user/ivukotic/Summary/MaxisOLD';
 
 REGISTER '/home/ivukotic/piggybank-0.14.0.jar' ;
 
@@ -42,8 +43,8 @@ l = LIMIT sorted 1; dump l;
 -- 
 
 
--- removing already used Maxis
-rmf 'Summary/Maxis';
+-- moving already used Maxis
+mv '/user/ivukotic/Summary/Maxis' '/user/ivukotic/Summary/MaxisOLD';
 
 -- creating new Maxis
 NMAXIS = foreach sorted generate gmax; 
