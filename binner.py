@@ -15,9 +15,9 @@ lines=f.readlines()
 servers=len(lines)
 print 'servers found:', servers
 for l in lines:
-	s=faxserver()
-	cl=l.replace('{(','').replace(')}','').strip()
-	ms=cl.split('),(')
+    s=faxserver()
+    cl=l.replace('{(','').replace(')}','').strip()
+    ms=cl.split('),(')
     for m in ms:
         vs=m.split(',')
         s.site=vs[0]
@@ -25,7 +25,7 @@ for l in lines:
         s.startedat=vs[2]
         s.measurements.append([vs[3],vs[4],vs[5],vs[6]]) #TOD,TOE,IN,OUT
     servers.append(s)
-    
+
 for serv in servers:
     serv.prnt()
     
