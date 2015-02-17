@@ -45,10 +45,3 @@ NMAXIS = foreach sorted generate gmax;
 dump NMAXIS;
 STORE NMAXIS into '/user/ivukotic/Summary/MaxisNEW';
 
-
--- removing already used Maxis
-rmf '/user/ivukotic/Summary/MaxisOLD';
-mv '/user/ivukotic/Summary/Maxis' '/user/ivukotic/Summary/MaxisOLD';
-mv '/user/ivukotic/Summary/MaxisNEW' user/ivukotic/Summary/Maxis';
-
-
