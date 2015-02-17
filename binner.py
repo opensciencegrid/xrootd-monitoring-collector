@@ -6,7 +6,7 @@ class faxserver:
 	startedat=0
 	measurements=[]
 	def prnt(self):
-		print 'site:',site,'\tserver:',hostname,'\tstarted at:',startedat, '\tmeasurements:',len(measurements)
+		print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
 
 servers=[]
 
