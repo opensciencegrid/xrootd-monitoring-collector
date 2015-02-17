@@ -9,38 +9,18 @@ REGISTER '/usr/lib/pig/lib/snappy-*.jar';
 
 CLEANED = LOAD 'Summary/Cleaned/cleaned.$INPF' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
 
--- CLEANEDL = LIMIT CLEANED 1000;
--- dump CLEANEDL;
-
-
-MAXIS = LOAD '/user/ivukotic/Summary/Maxis' as (SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long); 
-
-X = UNION CLEANED, MAXIS;
+-- CLEANEDL = LIMIT CLEANED 1000; dump CLEANEDL;
 
 -- grouping
-grouped = group X by (SITE, SRC, TOS);
+grouped = group CLEANED by (SITE, SRC, TOS);
 --l = LIMIT grouped 1; dump l; 
 
 sorted = foreach grouped{ 
-    ord = order X by TOD ASC; 
-    ma  = order X by TOD DESC; 
-    --mas = LIMIT ma 1; 
-    fmas = TOP(1,4,ma);
-    generate group AS g, fmas AS gmax, ord as O; 
+    ord = order CLEANED by TOD ASC; 
+    generate group AS g, {ord.TOD, ord.TOE, ord.IN, ord.OUT} as O; 
     };
 
 DESCRIBE sorted;
 
 l = LIMIT sorted 1; dump l; 
-
-
--- sorting
-
-
-
-
--- creating new Maxis
-NoviMAXIS = foreach sorted generate gmax; 
-dump NoviMAXIS;
--- STORE NMAXIS into '/user/ivukotic/Summary/MaxisNEW';
 
