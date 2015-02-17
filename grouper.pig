@@ -29,6 +29,8 @@ sorted = foreach grouped{
     generate group AS g, fmas AS gmax, ord as O; 
     };
 
+DESCRIBE sorted;
+
 l = LIMIT sorted 1; dump l; 
 
 
