@@ -13,14 +13,14 @@ CLEANED = LOAD 'Summary/Cleaned/cleaned.$INPF' as (SRC:chararray,SITE:chararray,
 
 -- grouping
 grouped = group CLEANED by (SITE, SRC, TOS);
---l = LIMIT grouped 1; dump l; 
+-- l = LIMIT grouped 1; dump l; 
 
+-- sorting
 sorted = foreach grouped{ 
     ord = order CLEANED by TOD ASC; 
-    generate group AS g, {ord.TOD, ord.TOE, ord.IN, ord.OUT} as O; 
+    generate ord as O; 
     };
 
-DESCRIBE sorted;
-
-l = LIMIT sorted 1; dump l; 
+STORE sorted into 'Summary/Sorted/sorted.$INPF';
+-- l = LIMIT sorted 1; dump l; 
 
