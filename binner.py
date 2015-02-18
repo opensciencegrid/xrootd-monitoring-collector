@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import datetime
+import datetime,sys
 
 dan=sys.argv[1].split('-')
 cday=datetime.datetime(dan[0],dan[1],dan[2])
