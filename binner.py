@@ -1,38 +1,51 @@
 #!/usr/bin/python
 import datetime,sys
 
-dan=sys.argv[1].split('-')
-cday=datetime.datetime(int(dan[0]),int(dan[1]),int(dan[2]))
-print "working on:",cday
+#dan=sys.argv[1].split('-')
+#cday=datetime.datetime(int(dan[0]),int(dan[1]),int(dan[2]))
+#print "working on:",cday
 
-bs=datetime.timedelta(0,60)
+#bs=datetime.timedelta(0,60)
+bs=60
+
 class faxserver:
     def __init__(self):
         self.site=''
         self.hostname=''
         self.startedat=0
         self.measurements=[]
-        self.obins=[0]*1440
-        self.ibins=[0]*1440
+        self.bin={}
         
     def binit(self):
         fm=self.measuremets.pop(0)
+        lm=self.measuremets[len(self.measurements)-1]
+        for b in range(fm[0]/bs,lm[0]/bs):
+            self.bin[b]=0
+            
         for sm in self.measurements:
-            fdt=datetime.datetime.fromtimestamp(fm[0])
-            fmin=fdt.hour*60+mdt.minute
-            fsec=fdt.second
-            sdt=datetime.datetime.fromtimestamp(sm[0])
-            smin=sdt.hour*60+mdt.minute
-            ssec=sdt.second
-            dsec=smin*60+ssec-fsec*60-fsec # seconds between two measurements
+            rft=divmod(fm[0],bs) # gives [a/b, a%b]
+            sft=divmod(sm[0],bs)
+            
+            dsec=sm[0]-fm[0] # seconds between two measurements
             dout=float(sm[3]-fmin[3])/dsec #rates in bytes/second
             din =float(sm[2]-fmin[2])/dsec
+            
+            self.bin[rft[0]]+=dout*(bs-rft[1]) #the first minute is never complete 
+            rft[0]+=1
+            while(rft[0]<sft[0]):
+                self.bin[rft[0]]+=dout*bs
+                rft[0]+=1
+            self.bin[sft[0]]+=dout*sft[1]  #the last minute is never complete
+            
+            fm=sm
             
     def prnt(self):
         print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
         print 'first:',self.measurements[0]
         print 'last:',self.measurements[len(self.measurements)-1]
-
+        for key, value in self.bin.iteritems():
+            print key, value
+            
 servers=[]
 
 f = open('part-r-00000')
