@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import datetime
 
-dan=split(sys.argv[1],'-')
+dan=sys.argv[1].split('-')
 cday=datetime.datetime(dan[0],dan[1],dan[2])
 print "working on:",cday
 
