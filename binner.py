@@ -30,12 +30,14 @@ class faxserver:
             dout=float(sm[3]-fm[3])/dsec #rates in bytes/second
             din =float(sm[2]-fm[2])/dsec
             
-            self.bin[rft[0]]+=dout*(bs-rft[1]) #the first minute is never complete 
-            rft[0]+=1
-            while(rft[0]<sft[0]):
-                self.bin[rft[0]]+=dout*bs
-                rft[0]+=1
-            self.bin[sft[0]]+=dout*sft[1]  #the last minute is never complete
+            fb=rft[0]
+            lb=sft[0]
+            self.bin[fb]+=dout*(bs-rft[1]) #the first minute is never complete 
+            fb+=1
+            while(fb<lb):
+                self.bin[fb]]+=dout*bs
+                fb+=1
+            self.bin[lb]+=dout*sft[1]  #the last minute is never complete
             
             fm=sm
             
