@@ -15,10 +15,12 @@ class faxserver:
         self.measurements=[]
         self.obins=[0]*1440
         self.ibins=[0]*1440
+
 	def prnt(self):
 		print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
         print 'first:',self.measurements[0]
         print 'last:',self.measurements[len(self.measurements)-1]
+
     def binit(self):
         fm=self.measuremets.pop(0)
         for sm in self.measurements:
@@ -45,7 +47,6 @@ for l in lines:
     s=faxserver()
     cl=l.replace('{(','').replace(')}','').strip()
     ms=cl.split('),(')
-    print len(ms)
     for m in ms:
         vs=m.split(',')
         s.site=vs[0]
