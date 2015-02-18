@@ -27,8 +27,8 @@ class faxserver:
             sft=divmod(sm[0],bs)
             
             dsec=sm[0]-fm[0] # seconds between two measurements
-            dout=float(sm[3]-fmin[3])/dsec #rates in bytes/second
-            din =float(sm[2]-fmin[2])/dsec
+            dout=float(sm[3]-fm[3])/dsec #rates in bytes/second
+            din =float(sm[2]-fm[2])/dsec
             
             self.bin[rft[0]]+=dout*(bs-rft[1]) #the first minute is never complete 
             rft[0]+=1
