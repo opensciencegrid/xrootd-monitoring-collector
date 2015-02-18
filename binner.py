@@ -35,7 +35,7 @@ class faxserver:
             self.bin[fb]+=dout*(bs-rft[1]) #the first minute is never complete 
             fb+=1
             while(fb<lb):
-                self.bin[fb]]+=dout*bs
+                self.bin[fb]+=dout*bs
                 fb+=1
             self.bin[lb]+=dout*sft[1]  #the last minute is never complete
             
