@@ -59,7 +59,7 @@ for l in lines:
         s.site=vs[0]
         s.hostname=vs[1]
         s.startedat=vs[2]
-        s.measurements.append([vs[3],vs[4],vs[5],vs[6]]) #TOD,TOE,IN,OUT
+        s.measurements.append([int(vs[3]),int(vs[4]),long(vs[5]),long(vs[6])]) #TOD,TOE,IN,OUT
     servers.append(s)
 
 for serv in servers:
