@@ -33,8 +33,8 @@ class faxserver:
             
             dsec=smin*60+ssec-fsec*60-fsec # seconds between two measurements
             
-            dout=((float)sm[3]-fm[3])/dsec #rates in bytes/second
-            din =((float)sm[2]-fm[2])/dsec
+            dout=float(sm[3]-fmin[3])/dsec #rates in bytes/second
+            din =float(sm[2]-fmin[2])/dsec
             
 
 servers=[]
