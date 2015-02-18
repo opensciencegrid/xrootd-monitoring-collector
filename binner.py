@@ -63,6 +63,7 @@ for l in lines:
     servers.append(s)
 
 for serv in servers:
+    serv.binit()
     serv.prnt()
 	 
 	 
