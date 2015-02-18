@@ -9,6 +9,6 @@ pig -f cleaner.pig -param INPF=${DateToProcess}
 
 hdfs dfs -get Summary/Sorted/sorted.${DateToProcess}/part-r-00000
 
-python binner.py
+python binner.py ${DateToProcess} 
 
 rm part-r-00000
