@@ -2,7 +2,7 @@
 import datetime,sys
 
 dan=sys.argv[1].split('-')
-cday=datetime.datetime(dan[0],dan[1],dan[2])
+cday=datetime.datetime(int(dan[0]),int(dan[1]),int(dan[2]))
 print "working on:",cday
 
 bs=datetime.timedelta(0,60)
