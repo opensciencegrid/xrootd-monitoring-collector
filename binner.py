@@ -6,38 +6,32 @@ cday=datetime.datetime(int(dan[0]),int(dan[1]),int(dan[2]))
 print "working on:",cday
 
 bs=datetime.timedelta(0,60)
-
 class faxserver:
     def __init__(self):
         self.site=''
         self.hostname=''
-    	self.startedat=0
+        self.startedat=0
         self.measurements=[]
         self.obins=[0]*1440
         self.ibins=[0]*1440
-
-	def prnt(self):
-		print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
-        # print 'first:',self.measurements[0]
-        # print 'last:',self.measurements[len(self.measurements)-1]
-
+        
     def binit(self):
         fm=self.measuremets.pop(0)
         for sm in self.measurements:
-
             fdt=datetime.datetime.fromtimestamp(fm[0])
             fmin=fdt.hour*60+mdt.minute
             fsec=fdt.second
-            
             sdt=datetime.datetime.fromtimestamp(sm[0])
             smin=sdt.hour*60+mdt.minute
             ssec=sdt.second
-            
             dsec=smin*60+ssec-fsec*60-fsec # seconds between two measurements
-            
             dout=float(sm[3]-fmin[3])/dsec #rates in bytes/second
             din =float(sm[2]-fmin[2])/dsec
             
+    def prnt(self):
+        print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
+        print 'first:',self.measurements[0]
+        print 'last:',self.measurements[len(self.measurements)-1]
 
 servers=[]
 
@@ -57,5 +51,5 @@ for l in lines:
 
 for serv in servers:
     serv.prnt()
-    
+	 
 	 
