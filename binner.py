@@ -19,7 +19,7 @@ class faxserver:
     def binit(self):
         fm=self.measurements.pop(0)
         lm=self.measurements[len(self.measurements)-1]
-        for b in range(fm[0]/bs,lm[0]/bs):
+        for b in range(fm[0]/bs,lm[0]/bs+1):
             self.bin[b]=0
             
         for sm in self.measurements:
