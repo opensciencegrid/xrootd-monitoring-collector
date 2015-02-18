@@ -18,8 +18,8 @@ class faxserver:
 
 	def prnt(self):
 		print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
-        print 'first:',self.measurements[0]
-        print 'last:',self.measurements[len(self.measurements)-1]
+        # print 'first:',self.measurements[0]
+        # print 'last:',self.measurements[len(self.measurements)-1]
 
     def binit(self):
         fm=self.measuremets.pop(0)
