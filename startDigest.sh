@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd /home/ivukotic/FAXtools/IlijaCollector
+
 DateToProcess=$(date --date="1 days ago" +%Y-%m-%d)
 
 echo "Processing... "${DateToProcess}
@@ -9,6 +11,6 @@ pig -f cleaner.pig -param INPF=${DateToProcess}
 
 hdfs dfs -get Summary/Sorted/sorted.${DateToProcess}/part-r-00000
 
-python binner.py ${DateToProcess} 
+python binner.py 
 
 rm part-r-00000

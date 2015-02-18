@@ -27,6 +27,11 @@ class faxserver:
             sft=divmod(sm[0],bs)
             
             dsec=sm[0]-fm[0] # seconds between two measurements
+            if dsec==0:
+                print "0 sec between measurements!"
+                print "f:",fm
+                print "s:",sm
+                dsec=1
             dout=float(sm[3]-fm[3])/dsec #rates in bytes/second
             din =float(sm[2]-fm[2])/dsec
             
@@ -45,8 +50,9 @@ class faxserver:
         print 'site:',self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
         print 'first:',self.measurements[0]
         print 'last:',self.measurements[len(self.measurements)-1]
-        for key, value in self.bin.iteritems():
-            print key, value
+        for bi, Transfered in self.bin.iteritems():
+            print bi, int(Transfered/1024), Transfered/1024/1024/60
+        print '---------------------------------------'
             
 servers=[]
 
