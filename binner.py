@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys,os
 
-bs=60
+bs=180
 
 class fax:
     def __init__(self):
@@ -21,7 +21,9 @@ class fax:
         print '-------- FAX total out ---------'
         for bi in sorted(self.sumout.keys()):
             traf=self.sumout[bi]
-            print bi*60, float(traf)/1024/1024,"MB\t", float(traf)/1024/1024/bs, 'MB/s'
+            print bi, float(traf)/1024/1024/bs
+        for s in self.sites:
+            self.sites[s].prntBins()
     def crunch(self):
         lastMeasurements=''
         for s in self.sites:
@@ -57,11 +59,16 @@ class site:
         for s in self.servers:
             s.prnt()
             # s.checkMe()
+    def prntBins(self):
+        print '-------- FAX '+self.name+' out ---------'
+        for bi in sorted(self.sumout.keys()):
+            traf=self.sumout[bi]
+            print bi, float(traf)/1024/1024/bs
     def crunch(self):
         lastMeasurements=''
         for s in self.servers:
             s.binit()
-            # s.prnt()
+            #s.prnt()
             lastMeasurements+=s.getLast()
         return lastMeasurements
     def sumup(self):
@@ -79,48 +86,47 @@ class faxserver:
         self.startedat=sat
         self.measurements=[]
         self.bin={}  
-        self.missing=0
     def binit(self):
         if len(self.measurements)<2: 
             print 'not enough measurements.'
             return;
         fm=self.getFirstMeasurement()
         lm=self.getLastMeasurement()
-        for b in range(fm[0]/bs,lm[0]/bs+1):
+        fb=fm[0]/bs*bs #beginning of the first bin
+        lb=lm[0]/bs*bs #beginning of the last bin
+        
+        for b in range(fb,lb+1,bs): #initialize bins
             self.bin[b]=0
         
-        first=True
-        for sm in self.measurements:
-            if first:
-                first=False
-                continue
-            rft=divmod(fm[0],bs) # gives [a/b, a%b]
-            sft=divmod(sm[0],bs)
-            
-            dsec=sm[0]-fm[0] # seconds between two measurements
-            if dsec==0:
-                print "0 sec between measurements!"
-                print "f:",fm
-                print "s:",sm
-                dsec=1
-            dout=float(sm[3]-fm[3])/dsec #rates in bytes/second
-            #din =float(sm[2]-fm[2])/dsec  not needed for now.
-            
-            if dout<0:
-                print "Rollover in outbytes! ",  fm[3], sm[3]
-                dout=float(sm[3])/dsec
-            
-            fb=rft[0]
-            lb=sft[0]
-            self.bin[fb]+=dout*(bs-rft[1]) #the first minute is never complete 
-            fb+=1
-            while(fb<lb):
-                self.bin[fb]+=dout*bs
-                self.missing+=1
-                fb+=1
-            self.bin[lb]+=dout*sft[1]  #the last minute is never complete
-            
-            fm=sm
+        for b in range(fb,lb+1,bs):  #loop over bins
+            bb=b     #bin begin
+            be=b+bs  #bin end
+            for m in range(len(self.measurements)-1):   #loop over measurements
+                mb=self.measurements[m][0]   #measurement interval begin
+                if mb>=be: break  # measurement interval after bin end - all other measurements are even later
+                me=self.measurements[m+1][0] #measurement interval end
+                if me<=bb: continue  #measurement interval before bin starts
+                dsec=me-mb #measurement interval duration in seconds
+                if dsec==0:
+                    print "warning 0 interval between two measurements."
+                    continue
+                dout=float(self.measurements[m+1][3]-self.measurements[m][3])/dsec  #data rate in bytes/s during this measurement interval
+                if dout<0:
+                    print "server dateout rolled over", self.measurements[m][3], '->' , self.measurements[m+1][3]
+                    dout=float(self.measurements[m+1][3])/dsec
+                if mb<=bb and me>=be: #measurement interval completely covers bin
+                    self.bin[bb]+=bs*dout
+                    break
+                if mb>=bb and me<=be: #measurement interval completely inside bin (no double counting as previous if breaks)
+                    self.bin[bb]+=dsec*dout
+                    continue
+                if mb<bb and me<be:  #tail of the measurement interval inside bin
+                    self.bin[bb]+=(me-bb)*dout
+                    continue
+                if mb>bb and me>be:  #head of the measurement interval inside bin
+                    self.bin[bb]+=(be-mb)*dout
+                    break
+        
     def checkMe(self):
         fm=self.getFirstMeasurement()
         lm=self.getLastMeasurement()
@@ -131,11 +137,11 @@ class faxserver:
         print 'SummedUp bytes:',stotal
     def prnt(self):
         print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
-        print 'missing:', self.missing
         print 'first:', self.getFirstMeasurement()
         print 'last:', self.getLastMeasurement()
-        # for bi, Transfered in self.bin.iteritems():
-            # print bi, int(Transfered/1024),"kB\t", Transfered/1024/1024/60,"MB/s"
+        # for bi in sorted(self.bin.keys()):
+        #     traf=self.bin[bi]
+        #     print bi, float(traf)/1024/1024/bs
         print '---------------------------------------'
 
     def getFirstMeasurement(self):
