@@ -6,6 +6,7 @@ bs=60
 class fax:
     def __init__(self):
         self.sites={}
+        self.sumout={}
     def getSite(self,name):
         if not name in self.sites:
             print "NEW site", name
@@ -16,6 +17,11 @@ class fax:
         print ' Sites:', len(self.sites)
         for s in self.sites:
             self.sites[s].prnt()
+    def prntBins(self):
+        print '-------- FAX total out ---------'
+        for bi in sorted(self.sumout.keys()):
+            traf=self.sumout[bi]
+            print bi*60, float(traf)/1024/1024,"MB\t", float(traf)/1024/1024/bs, 'MB/s'
     def crunch(self):
         lastMeasurements=''
         for s in self.sites:
@@ -23,11 +29,21 @@ class fax:
         outF=open('.LastValues','w')
         outF.write(lastMeasurements)
         outF.close()
+    def sumup(self):
+        self.sumout.clear()
+        for s in self.sites:
+            self.sites[s].sumup()
+            for bi,traf in self.sites[s].sumout.iteritems():
+                if bi not in self.sumout:
+                    self.sumout[bi]=0
+                self.sumout[bi]+=traf
+                
         
 class site:
     def __init__(self,name):
         self.name=name
         self.servers=[]
+        self.sumout={}
     def getServer(self,sname,stime):
         for s in self.servers:
             if s.hostname==sname and s.startedat==stime:
@@ -40,14 +56,22 @@ class site:
         print 'site:',self.name, "servers:", len(self.servers)
         for s in self.servers:
             s.prnt()
+            # s.checkMe()
     def crunch(self):
         lastMeasurements=''
         for s in self.servers:
             s.binit()
-            s.prnt()
+            # s.prnt()
             lastMeasurements+=s.getLast()
         return lastMeasurements
-
+    def sumup(self):
+        self.sumout.clear()
+        for s in self.servers:
+            for bi,traf in s.bin.iteritems():
+                if bi not in self.sumout:
+                    self.sumout[bi]=0
+                self.sumout[bi]+=traf
+                
 class faxserver:
     def __init__(self, s,h,sat):
         self.site=s
@@ -55,6 +79,7 @@ class faxserver:
         self.startedat=sat
         self.measurements=[]
         self.bin={}  
+        self.missing=0
     def binit(self):
         if len(self.measurements)<2: 
             print 'not enough measurements.'
@@ -79,7 +104,11 @@ class faxserver:
                 print "s:",sm
                 dsec=1
             dout=float(sm[3]-fm[3])/dsec #rates in bytes/second
-            din =float(sm[2]-fm[2])/dsec
+            #din =float(sm[2]-fm[2])/dsec  not needed for now.
+            
+            if dout<0:
+                print "Rollover in outbytes! ",  fm[3], sm[3]
+                dout=float(sm[3])/dsec
             
             fb=rft[0]
             lb=sft[0]
@@ -87,13 +116,22 @@ class faxserver:
             fb+=1
             while(fb<lb):
                 self.bin[fb]+=dout*bs
+                self.missing+=1
                 fb+=1
             self.bin[lb]+=dout*sft[1]  #the last minute is never complete
             
             fm=sm
-            
+    def checkMe(self):
+        fm=self.getFirstMeasurement()
+        lm=self.getLastMeasurement()
+        print 'Total bytes:', lm[3]-fm[3]
+        stotal=0L
+        for bi, Transfered in self.bin.iteritems():
+            stotal+=Transfered
+        print 'SummedUp bytes:',stotal
     def prnt(self):
         print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
+        print 'missing:', self.missing
         print 'first:', self.getFirstMeasurement()
         print 'last:', self.getLastMeasurement()
         # for bi, Transfered in self.bin.iteritems():
@@ -111,10 +149,9 @@ class faxserver:
             return '' 
         return self.hostname+','+self.site+','+str(self.startedat)+','+str(self.getLastMeasurement()[0])+','+str(self.getLastMeasurement()[1])+','+str(self.getLastMeasurement()[2])+','+str(self.getLastMeasurement()[3])+'\n'
     def addMeasurement(self, m):
-        self.measurements.append(m
-        
-        
-        )
+        self.measurements.append(m)
+
+
 
 
 
@@ -146,3 +183,5 @@ for l in lines:
 
 FAX.crunch() 
 FAX.prnt()
+FAX.sumup()
+FAX.prntBins()
