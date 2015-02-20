@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys,os
+import requests, json
 
 bs=180
 
@@ -7,6 +8,11 @@ class fax:
     def __init__(self):
         self.sites={}
         self.sumout={}
+        self.data={}
+        self.data['siteNames']=[]
+        self.data['bins']=[]
+        self.data['values']=[]
+        
     def getSite(self,name):
         if not name in self.sites:
             print "NEW site", name
@@ -39,6 +45,22 @@ class fax:
                 if bi not in self.sumout:
                     self.sumout[bi]=0
                 self.sumout[bi]+=traf
+        
+        # creating data to upload
+        self.data['bins']=sorted(self.sumout.keys())
+        
+        bibi={} # dictionary of bin positions to speed up lookup.
+        for i,bi in enumerate(self.data['bins']): 
+            bibi[bi]=i
+            self.data['values'].append([])
+            
+        for s in self.sites.values():
+            self.data['siteNames'].append(s.name)
+            for i,bi in enumerate(self.data['bins']):
+                if bi in s.sumout:
+                    self.data['values'][i].append(s.sumout[bi]/1024/1024/bs)
+                else:
+                    self.data['values'][i].append(-1)
                 
         
 class site:
@@ -190,4 +212,12 @@ for l in lines:
 FAX.crunch() 
 FAX.prnt()
 FAX.sumup()
-FAX.prntBins()
+#FAX.prntBins()
+print FAX.data
+
+GAEurl= 'http://1-dot-waniotest.appspot.com/summarymonitor'
+data = json.dumps({'name':'test', 'description':'some test repo'}) 
+headers = {'content-type': 'application/json'}
+#data={ "siteNames":["MWT2","AGLT2", "WT2"], "bins":[10,20,30,40], "values":[[1,2,3],[3,2,1],[1,3,2],[2,1,3]] }
+r = requests.post(GAEurl, data=json.dumps(FAX.data), headers=headers)
+print r.text
