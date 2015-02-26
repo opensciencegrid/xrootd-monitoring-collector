@@ -20,7 +20,7 @@ cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
 
 -- grouping
-grouped = group cleaned by (SITE, SRC, TOS);
+grouped = group cleaned by (SITE, SRC, TOS, PID);
 -- l = LIMIT grouped 1; dump l; 
 
 -- sorting

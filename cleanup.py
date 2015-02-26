@@ -9,6 +9,7 @@ def XMLtoNTUP(xmlInput):
     SRC=root.attrib['src']   # server name
     SITE=root.attrib['site'] # sitename as set by the endpoint
     TOS=root.attrib['tos']   # time the service started
+    PID=int(root.attrib['pid'])   # time the statistics gathering started
     TOD=root.attrib['tod']   # time the statistics gathering started
     
     for child in root:
@@ -21,4 +22,4 @@ def XMLtoNTUP(xmlInput):
         if child.attrib['id']=='sgen':
             for c in child:
                 if c.tag=='toe': TOE=long(c.text)
-    return (SRC,SITE,TOS,TOD,TOE,IN,OUT)
+    return (SRC,SITE,TOS,PID,TOD,TOE,IN,OUT)

@@ -2,7 +2,7 @@
 import sys,os
 import requests, json
 
-bs=180
+bs=180  #bin size in seconds
 
 class fax:
     def __init__(self):
@@ -68,12 +68,12 @@ class site:
         self.name=name
         self.servers=[]
         self.sumout={}
-    def getServer(self,sname,stime):
+    def getServer(self,sname,stime, spid):
         for s in self.servers:
-            if s.hostname==sname and s.startedat==stime:
+            if s.hostname==sname and s.startedat==stime and s.pid=spid:
                 return s
-        print "NEW server:",sname,":",stime
-        ns=faxserver(self.name,sname,stime)
+        print "NEW server:",sname,":",stime,":",spid
+        ns=faxserver(self.name,sname,stime,spid)
         self.servers.append(ns)
         return ns
     def prnt(self):
@@ -102,10 +102,11 @@ class site:
                 self.sumout[bi]+=traf
                 
 class faxserver:
-    def __init__(self, s,h,sat):
+    def __init__(self, s, h, sat, pid):
         self.site=s
         self.hostname=h
         self.startedat=sat
+        self.pid=pid
         self.measurements=[]
         self.bin={}  
     def binit(self):
@@ -133,7 +134,7 @@ class faxserver:
                     print "warning 0 interval between two measurements."
                     continue
                 dout=float(self.measurements[m+1][3]-self.measurements[m][3])/dsec  #data rate in bytes/s during this measurement interval
-                if dout<0:
+                if dout<2147483647:
                     print "server dateout rolled over", self.measurements[m][3], '->' , self.measurements[m+1][3]
                     dout=float(self.measurements[m+1][3])/dsec
                 if mb<=bb and me>=be: #measurement interval completely covers bin
@@ -158,7 +159,7 @@ class faxserver:
             stotal+=Transfered
         print 'SummedUp bytes:',stotal
     def prnt(self):
-        print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat, '\tmeasurements:',len(self.measurements)
+        print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat,'\tpid:',self.pid, '\tmeasurements:',len(self.measurements)
         print 'first:', self.getFirstMeasurement()
         print 'last:', self.getLastMeasurement()
         # for bi in sorted(self.bin.keys()):
@@ -192,7 +193,7 @@ if os.path.isfile('.LastValues'):
     lines=lv.readlines()
     for l in lines:
         w=l.split(',')
-        FAX.getSite(w[1]).getServer(w[0],int(w[2])).addMeasurement([int(w[3]),int(w[4]),long(w[5]),long(w[6])])
+        FAX.getSite(w[1]).getServer(w[0],int(w[2]),int(w[3])).addMeasurement([int(w[3]),int(w[4]),long(w[5]),long(w[6])])
     lv.close()
     os.remove('.LastValues')
 
@@ -203,7 +204,7 @@ for l in lines:
     cl=l.replace('{(','').replace(')}','').strip()
     ms=cl.split('),(')
     firstRec=ms[0].split(',')
-    s=FAX.getSite(firstRec[1]).getServer(firstRec[0],int(firstRec[2]))
+    s=FAX.getSite(firstRec[1]).getServer(firstRec[0],int(firstRec[2]), int(firstRec[3]) )
     for m in ms:
         vs=m.split(',')
         s.addMeasurement([int(vs[3]),int(vs[4]),long(vs[5]),long(vs[6])]) #TOD,TOE,IN,OUT
