@@ -70,7 +70,7 @@ class site:
         self.sumout={}
     def getServer(self,sname,stime, spid):
         for s in self.servers:
-            if s.hostname==sname and s.startedat==stime and s.pid=spid:
+            if s.hostname==sname and s.startedat==stime and s.pid==spid:
                 return s
         print "NEW server:",sname,":",stime,":",spid
         ns=faxserver(self.name,sname,stime,spid)
