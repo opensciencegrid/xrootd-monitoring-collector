@@ -2,14 +2,14 @@
 from datetime import datetime
 import xml.etree.ElementTree as ET
 
-@outputSchema("CLEANED:tuple(SRC:chararray,SITE:chararray,TOS:long,TOD:long,TOE:long,IN:long,OUT:long)")
+@outputSchema("CLEANED:tuple(SRC:chararray,SITE:chararray,TOS:long,PID:long,TOD:long,TOE:long,IN:long,OUT:long)")
 def XMLtoNTUP(xmlInput):
     ntup = []
     root = ET.fromstring(xmlInput)
     SRC=root.attrib['src']   # server name
     SITE=root.attrib['site'] # sitename as set by the endpoint
     TOS=root.attrib['tos']   # time the service started
-    PID=int(root.attrib['pid'])   # time the statistics gathering started
+    PID=long(root.attrib['pid'])   # time the statistics gathering started
     TOD=root.attrib['tod']   # time the statistics gathering started
     
     for child in root:
