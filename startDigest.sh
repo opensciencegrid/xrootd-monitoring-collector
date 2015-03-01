@@ -7,7 +7,7 @@ HourToProcess=$(date --date="1 hours ago" +%H)
 echo "Processing... "${DateToProcess} ${HourToProcess}
 
 echo "Cleaning new data."
-pig -f cleaner.pig -param INPD=${DateToProcess} INPH=${HourToProcess} 
+pig -f cleaner.pig -param INPD=${DateToProcess}  -param INPH=${HourToProcess} 
 
 hdfs dfs -get Summary/Sorted/sorted.${DateToProcess}.${HourToProcess}/part-r-00000
 
