@@ -9,7 +9,7 @@ REGISTER '/usr/lib/pig/lib/snappy-*.jar';
 
 REGISTER 'cleanup.py' using jython as cleanfuncs;
 
-RAW = LOAD '/user/ivukotic/IlijaCollector/SummaryStream.$INPF.*' as (x:chararray); 
+RAW = LOAD '/user/ivukotic/IlijaCollector/SummaryStream.$INPD/SummaryStream.$INPH.*' as (x:chararray); 
 
 -- RAWL = LIMIT RAW 1000;
 -- dump RAWL;
@@ -17,7 +17,7 @@ RAW = LOAD '/user/ivukotic/IlijaCollector/SummaryStream.$INPF.*' as (x:chararray
 cleaned = foreach RAW generate FLATTEN(cleanfuncs.XMLtoNTUP(x));
 --dump cleaned;
 
-STORE cleaned into 'Summary/Cleaned/cleaned.$INPF';
+STORE cleaned into 'Summary/Cleaned/cleaned.$INPD.$INPH';
 
 -- grouping
 grouped = group cleaned by (SITE, SRC, TOS, PID);
@@ -29,5 +29,5 @@ sorted = foreach grouped{
     generate ord as O; 
     };
 
-STORE sorted into 'Summary/Sorted/sorted.$INPF';
+STORE sorted into 'Summary/Sorted/sorted.$INPD.$INPH';
 -- l = LIMIT sorted 1; dump l; 
