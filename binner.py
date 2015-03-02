@@ -68,12 +68,12 @@ class site:
         self.name=name
         self.servers=[]
         self.sumout={}
-    def getServer(self,sname,stime, spid):
+    def getServer(self,sname,stime):
         for s in self.servers:
-            if s.hostname==sname and s.startedat==stime and s.pid==spid:
+            if s.hostname==sname and s.startedat==stime:
                 return s
-        print "NEW server:",sname,":",stime,":",spid
-        ns=faxserver(self.name,sname,stime,spid)
+        print "NEW server:",sname,":",stime
+        ns=faxserver(self.name,sname,stime)
         self.servers.append(ns)
         return ns
     def prnt(self):
@@ -102,11 +102,10 @@ class site:
                 self.sumout[bi]+=traf
                 
 class faxserver:
-    def __init__(self, s, h, sat, pid):
+    def __init__(self, s, h, sat):
         self.site=s
         self.hostname=h
         self.startedat=sat
-        self.pid=pid
         self.measurements=[]
         self.bin={}  
     def binit(self):
@@ -159,7 +158,7 @@ class faxserver:
             stotal+=Transfered
         print 'SummedUp bytes:',stotal
     def prnt(self):
-        print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat,'\tpid:',self.pid, '\tmeasurements:',len(self.measurements)
+        print 'site:', self.site,'\tserver:',self.hostname,'\tstarted at:',self.startedat,'\tmeasurements:',len(self.measurements)
         print 'first:', self.getFirstMeasurement()
         print 'last:', self.getLastMeasurement()
         # for bi in sorted(self.bin.keys()):
@@ -193,7 +192,7 @@ if os.path.isfile('.LastValues'):
     lines=lv.readlines()
     for l in lines:
         w=l.split(',')
-        FAX.getSite(w[1]).getServer(w[0],int(w[2]),int(w[3])).addMeasurement([int(w[3]),int(w[4]),long(w[5]),long(w[6])])
+        FAX.getSite(w[1]).getServer(w[0],int(w[2])).addMeasurement([int(w[3]),int(w[4]),long(w[5]),long(w[6])])
     lv.close()
     os.remove('.LastValues')
 
@@ -204,7 +203,7 @@ for l in lines:
     cl=l.replace('{(','').replace(')}','').strip()
     ms=cl.split('),(')
     firstRec=ms[0].split(',')
-    s=FAX.getSite(firstRec[1]).getServer(firstRec[0],int(firstRec[2]), int(firstRec[3]) )
+    s=FAX.getSite(firstRec[1]).getServer(firstRec[0],int(firstRec[2]) )
     for m in ms:
         vs=m.split(',')
         s.addMeasurement([int(vs[3]),int(vs[4]),long(vs[5]),long(vs[6])]) #TOD,TOE,IN,OUT

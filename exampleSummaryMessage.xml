@@ -111,3 +111,28 @@
     </stats>
     
 </statistics>
+
+
+<statistics ver="v1.9.12.21" pgm="xrootd" ins="anon" tos="1424371079" src="uct2-s16.uchicago.edu:55428" host="uct2-s16.uchicago.edu" site="MWT2" pid="4023924" tod="1425257941">
+    <stats id="sgen">
+        <as>1</as>
+        <et>60</et>
+        <toe>1425258001</toe>
+    </stats>
+    <stats id="info">
+        <host>uct2-s16.uchicago.edu</host>
+        <port>1096</port>
+        <name>anon</name>
+    </stats>
+    <stats id="link">
+        <num>206</num>
+        <maxn>366</maxn>
+        <tot>34511</tot>
+        <in>0</in>
+        <out>10027179135054</out>
+        <ctime>0</ctime>
+        <tmo>0</tmo>
+        <stall>0</stall>
+        <sfps>0</sfps>
+    </stats>
+</statistics>
