@@ -133,9 +133,9 @@ class faxserver:
                     print "warning 0 interval between two measurements."
                     continue
                 dout=float(self.measurements[m+1][3]-self.measurements[m][3])/dsec  #data rate in bytes/s during this measurement interval
-                # if dout<2147483647:
-                    # print "server dateout rolled over", self.measurements[m][3], '->' , self.measurements[m+1][3]
-                    # dout=float(self.measurements[m+1][3])/dsec
+                if dout<-2147483647:
+                    print "server dateout rolled over", self.measurements[m][3], '->' , self.measurements[m+1][3]
+                    dout=float(self.measurements[m+1][3])/dsec
                 if mb<=bb and me>=be: #measurement interval completely covers bin
                     self.bin[bb]+=bs*dout
                     break
