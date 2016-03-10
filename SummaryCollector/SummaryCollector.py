@@ -114,6 +114,7 @@ def eventCreator():
         data['pid'] = pid
         data['timestamp'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         data['tos'] = datetime.utcfromtimestamp(float(tos)).isoformat()
+        data['cstart'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         data['version']  = s['@ver'] # version name of the servers 
         data['site'] = s['@site'] # site name specified in the configuration
         
@@ -176,8 +177,8 @@ def eventCreator():
                 # print 'sched >>>>',st
             elif sw=='sgen':
                 data['sgen_as']  = int(st['as'])
-                data['sgen_et']  = int(st['et'])
-                data['sgen_toe'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
+                # data['sgen_et']  = int(st['et']) # always 0
+                data['cend'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
             # elif sw=='ofs':
                 #print 'ofs    >>>',st
          
@@ -220,7 +221,7 @@ def eventCreator():
         # print "current state ----"
         # currState.prnt()
         
-        if len(aLotOfData)>5:
+        if len(aLotOfData)>50:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
                 print threading.current_thread().name, "\t inserted:",res[0], '\tErrors:',res[1]
@@ -257,5 +258,5 @@ while (True):
     # print ("received message:", message, "from:", addr)
     q.put([message,addr[0]])
     nMessages+=1
-    if (nMessages%10==0):
+    if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
