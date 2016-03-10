@@ -68,7 +68,7 @@ class state:
 AllState={}
 
 def eventCreator():
-    header = namedtuple("header", "code pseq plen stod")
+    header = namedtuple("header", ["code", "pseq","plen","stod"])
     
     aLotOfData=[]
     while(True):

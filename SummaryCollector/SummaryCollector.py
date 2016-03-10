@@ -225,7 +225,7 @@ def eventCreator():
         # print "current state ----"
         # currState.prnt()
         
-        if len(aLotOfData)>50:
+        if len(aLotOfData)>10:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
                 print threading.current_thread().name, "\t inserted:",res[0], '\tErrors:',res[1]
