@@ -68,7 +68,7 @@ class state:
 AllState={}
 
 def eventCreator():
-    header = namedtuple("header", ["code", "pseq","plen","stod"])
+    header = namedtuple("header", ["code", "pseq","plen","server_start"])
     
     aLotOfData=[]
     while(True):
@@ -76,8 +76,8 @@ def eventCreator():
         
         # print "\nByte Length of Message :", len(d)
         
-        header=struct.unpack("ccHI",d[:8])
-        print "Header :", header
+        h=header._make(struct.unpack("cBHI",d[:8]))
+        print header
         
         # m={}
         # try:
