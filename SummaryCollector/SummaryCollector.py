@@ -1,4 +1,3 @@
-# import siteMapping
 
 import xmltodict
 import Queue, os, sys, time
