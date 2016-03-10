@@ -104,7 +104,6 @@ def eventCreator():
                  
         # print m
         s=m['statistics'] # top level
-        
         pgm         = s['@pgm'] # program name
         #print "PGM >>> ", pgm
         if (pgm != 'xrootd'):
@@ -113,7 +112,8 @@ def eventCreator():
             
         tos         = int(s['@tos'])  # Unix time when the program was started.
         tod         = int(s['@tod'])  # Unix time when statistics gathering started.
-        pid         = int(s['@pid']
+        pid         = int(s['@pid'])
+
         currState.pid = pid
         currState.tod = tod
         data['pid'] = pid
