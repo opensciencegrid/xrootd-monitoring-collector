@@ -1,5 +1,5 @@
-# import siteMapping
 import struct
+from collections import namedtuple
 import Queue, os, sys, time
 import threading
 from threading import Thread
@@ -63,23 +63,21 @@ class state:
     def prnt(self):
         print "pid:",self.pid, "\ttotal:",self.link_total, "\tin:",self.link_in, "\tout:",self.link_out, "\tctime:",self.link_ctime, "\ttmo:",self.link_tmo
         
-#([(u'@id', u'info'), (u'host', u'ceph36'), (u'port', u'1094'), (u'name', u'anon')])
-#([(u'@id', u'link'), (u'num', u'0'), (u'maxn', u'0'), (u'tot', u'0'), (u'in', u'0'), (u'out', u'0'), (u'ctime', u'0'), (u'tmo', u'0'), (u'stall', u'0'), (u'sfps', u'0')])
-#([(u'@id', u'proc'), (u'usr', ([(u's', u'0'), (u'u', u'46467')])), (u'sys', ([(u's', u'0'), (u'u', u'38248')]))])
-#([(u'@id', u'xrootd'), (u'num', u'0'), (u'ops', ([(u'open', u'0'), (u'rf', u'0'), (u'rd', u'0'), (u'pr', u'0'), (u'rv', u'0'), (u'rs', u'0'), (u'wr', u'0'), (u'sync', u'0'), (u'getf', u'0'), (u'putf', u'0'), (u'misc', u'0')])), (u'aio', ([(u'num', u'0'), (u'max', u'0'), (u'rej', u'0')])), (u'err', u'0'), (u'rdr', u'0'), (u'dly', u'0'), (u'lgn', ([(u'num', u'0'), (u'af', u'0'), (u'au', u'0'), (u'ua', u'0')]))])
-#([(u'@id', u'ofs'), (u'role', u'server'), (u'opr', u'0'), (u'opw', u'0'), (u'opp', u'0'), (u'ups', u'0'), (u'han', u'0'), (u'rdr', u'0'), (u'bxq', u'0'), (u'rep', u'0'), (u'err', u'0'), (u'dly', u'0'), (u'sok', u'0'), (u'ser', u'0'), (u'tpc', ([(u'grnt', u'0'), (u'deny', u'0'), (u'err', u'0'), (u'exp', u'0')]))])
-#([(u'@id', u'sched'), (u'jobs', u'2201'), (u'inq', u'0'), (u'maxinq', u'3'), (u'threads', u'5'), (u'idle', u'3'), (u'tcr', u'5'), (u'tde', u'0'), (u'tlimr', u'0')])
-#([(u'@id', u'sgen'), (u'as', u'0'), (u'et', u'0'), (u'toe', u'1457470123')])
+
 
 AllState={}
 
 def eventCreator():
+    header = namedtuple("header", "code pseq plen stod")
+    
     aLotOfData=[]
     while(True):
         [d,addr]=q.get()
         
-        print "\nByte Length of Message :", len(d) ,"\n"
-        print "Message Data :", struct.unpack("ccHI",d) ,"\n"
+        # print "\nByte Length of Message :", len(d)
+        
+        header=struct.unpack("ccHI",d[:8])
+        print "Header :", header
         
         # m={}
         # try:
