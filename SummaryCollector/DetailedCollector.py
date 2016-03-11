@@ -87,10 +87,11 @@ def eventCreator():
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
         else:
+            print '------------------------------------------------'
             infolen=len(d)-4
             mm = mapheader._make(struct.unpack("I"+str(infolen)+"s",d))
-            print 'mapping message: ', mm
-            (u,rest) = mm.info.split('\n')
+            # print 'mapping message: ', mm
+            (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
             print userInfo
             if (h.code=='='):
@@ -100,14 +101,18 @@ def eventCreator():
                 path=rest
                 print 'path: ', path
             elif (h.code=='i'):
-                pass
+                appinfo=rest
+                print 'appinfo:', appinfo
             elif (h.code=='p'):
-                pass
+                purgeInfo=decoding.purgeInfo(rest)
+                print purgeInfo
             elif (h.code=='u'):
                 authorizationInfo=decoding.authorizationInfo(rest)
                 print authorizationInfo
             elif (h.code=='x'):
-                pass
+                xfrInfo=decoding.xfrInfo(rest)
+                print authorizationInfo
+            print '------------------------------------------------'
         # m={}
         # try:
         #     m=xmltodict.parse(d)

@@ -1,8 +1,10 @@
 from collections import namedtuple
 
-userid = namedtuple("userid",["username","pid","sid","host"])
+userid   = namedtuple("userid",["username","pid","sid","host"])
 authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
-srvinfo = namedtuple("srvinfo",["program","version","instance","port","site"])
+srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
+prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
+xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
 def userInfo(message):
     prot,c = message.split('/',1)
@@ -34,3 +36,28 @@ def serverInfo(message):
     port=r[4].split('=')[1]
     site=r[5].split('=')[1]
     return srvinfo(pgm,ver,ints,port,site)
+    
+def purgeInfo(message):
+    xfn,rest=message.split('\n')
+    r=rest.split("&")
+    tod=r[1].split('=')[1]
+    sz =r[2].split('=')[1]
+    at =r[3].split('=')[1]
+    ct =r[4].split('=')[1]
+    mt =r[5].split('=')[1]
+    fn =r[6].split('=')[1]
+    return prginfo(xfn,tod,sz,at,ct,mt,fn)
+
+def xfrInfo(message):
+    lfn, rest==message.split('\n')
+    r=rest.split("&")
+    tod=r[1].split('=')[1]
+    sz =r[2].split('=')[1]
+    tm =r[3].split('=')[1]
+    op =r[4].split('=')[1]
+    rc =r[5].split('=')[1]
+    if (len(r)==7):
+        pd =r[6].split('=')[1]
+    else:
+        pd = ''
+    return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
