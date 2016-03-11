@@ -1,3 +1,4 @@
+import decoding
 import struct
 from collections import namedtuple
 import Queue, os, sys, time
@@ -68,7 +69,9 @@ class state:
 AllState={}
 
 def eventCreator():
+    
     header = namedtuple("header", ["code", "pseq","plen","server_start"])
+    mapheader = namedtuple("mapheader",["dictid","info"])
     
     aLotOfData=[]
     while(True):
@@ -77,8 +80,34 @@ def eventCreator():
         # print "\nByte Length of Message :", len(d)
         
         h=header._make(struct.unpack("cBHI",d[:8]))
-        print header
+        print h
         
+        d=d[8:]
+        
+        if (h.code=='f' or h.code=='r' or h.code=='t'):
+            print 'stream message'
+        else:
+            infolen=len(d)-4
+            mm = mapheader._make(struct.unpack("I"+str(infolen)+"s",d))
+            print 'mapping message: ', mm
+            (u,rest) = mm.info.split('\n')
+            userInfo=decoding.userInfo(u)
+            print userInfo
+            if (h.code=='='):
+                serverInfo=decoding.serverInfo(rest)
+                print serverInfo
+            elif (h.code=='d'):
+                path=rest
+                print 'path: ', path
+            elif (h.code=='i'):
+                pass
+            elif (h.code=='p'):
+                pass
+            elif (h.code=='u'):
+                authorizationInfo=decoding.authorizationInfo(rest)
+                print authorizationInfo
+            elif (h.code=='x'):
+                pass
         # m={}
         # try:
         #     m=xmltodict.parse(d)
