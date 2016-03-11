@@ -1,4 +1,5 @@
 from collections import namedtuple
+import struct
 
 userid   = namedtuple("userid",["username","pid","sid","host"])
 authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
@@ -72,8 +73,8 @@ def FileTOD(d):
     if up[0]==2:
         return fileTODtime(struct.unpack(ccHHH),d)
     if up[0]==4:
-        return fileTODdisc(up)
-    return fileTOD(up)
+        return fileTODdisc._make(up)
+    return fileTOD._make(up)
     
     # isClose = 0,   // Record for close
     # isOpen =1,        // Record for open
