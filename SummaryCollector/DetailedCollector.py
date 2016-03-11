@@ -87,9 +87,8 @@ def eventCreator():
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
             if (h.code=='f'):
-                FileTOD=decode.FileTOD(d[:8])
+                FileTOD=decoding.FileTOD(d[:8])
                 print FileTOD
-                pass
             elif (h.code=='r'):
                 pass
             else:
