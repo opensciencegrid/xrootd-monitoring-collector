@@ -69,9 +69,9 @@ def xfrInfo(message):
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
 def FileTOD(d):
-    up=struct.unpack("ccHI",d)
+    up=struct.unpack("BBHI",d)
     if up[0]==2:
-        return fileTODtime(struct.unpack(ccHHH),d)
+        return fileTODtime(struct.unpack(BBHHH),d)
     if up[0]==4:
         return fileTODdisc._make(up)
     return fileTOD._make(up)

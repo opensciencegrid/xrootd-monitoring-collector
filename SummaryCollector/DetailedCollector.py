@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import decoding
 import struct
 from collections import namedtuple
