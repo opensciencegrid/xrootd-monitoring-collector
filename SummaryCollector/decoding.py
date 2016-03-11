@@ -17,7 +17,7 @@ def userInfo(message):
     user,c  =c.split('.',1)
     pid,c   =c.split(':',1)
     sid,host=c.split('@',1)
-    return userid(user,pid,sid,host)
+    return userid(user,int(pid),int(sid),host)
 
 def authorizationInfo(message):
     r=message.split('&')
@@ -71,7 +71,7 @@ def xfrInfo(message):
 def FileTOD(d):
     up=struct.unpack("BBHI",d)
     if up[0]==2:
-        return fileTODtime(struct.unpack("BBHHH",d))
+        return fileTODtime._make(struct.unpack("BBHHH",d))
     if up[0]==4:
         return fileTODdisc._make(up)
     return fileTOD._make(up)
