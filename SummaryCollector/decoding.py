@@ -6,6 +6,11 @@ srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
 prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
+# fileHDR  = namedtuple()
+fileTOD      = namedtuple("fileTOD",["rectype","recFlag","recSize","fileID"])
+fileTODtime  = namedtuple("fileTOD",["rectype","recFlag","recSize","isXfr_recs","total_recs"])
+fileTODdisc  = namedtuple("fileTOD",["rectype","recFlag","recSize","userID"])
+
 def userInfo(message):
     prot,c = message.split('/',1)
     user,c  =c.split('.',1)
@@ -61,3 +66,17 @@ def xfrInfo(message):
     else:
         pd = ''
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
+    
+def FileTOD(d):
+    up=struct.unpack("ccHI",d)
+    if up[0]==2:
+        return fileTODtime(struct.unpack(ccHHH),d)
+    if up[0]==4:
+        return fileTODdisc(up)
+    return fileTOD(up)
+    
+    # isClose = 0,   // Record for close
+    # isOpen =1,        // Record for open
+    # isTime =2 ,        // Record for time
+    # isXfr =3,         // Record for transfers
+    # isDisc = 4         // Record for disconnection

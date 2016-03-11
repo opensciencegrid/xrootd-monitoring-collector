@@ -86,8 +86,16 @@ def eventCreator():
         
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
-        else:
+            if (h.code=='f'):
+                FileTOD=decode.FileTOD(d[:8])
+                print FileTOD
+                pass
+            elif (h.code=='r'):
+                pass
+            else:
+                pass
             print '------------------------------------------------'
+        else:
             infolen=len(d)-4
             mm = mapheader._make(struct.unpack("I"+str(infolen)+"s",d))
             # print 'mapping message: ', mm
