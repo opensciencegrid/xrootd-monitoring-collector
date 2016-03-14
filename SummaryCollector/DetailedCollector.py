@@ -91,9 +91,9 @@ def eventCreator():
             if (h.code=='f'):
                 FileHDR=decoding.FileHDR(d[:8])
                 print FileHDR
-                (tBeg,tEnd)=decoding.getBin(d[8:15])
+                (tBeg,tEnd)=decoding.getBin(d[8:16])
                 print "Bin start:", tBeg, '\t Bin ends:', tEnd 
-                d=d[15:]
+                d=d[16:]
                 for i in range(FileHDR.total_recs): # first one is always TOD
                     hd=decoding.FileHDR(d[:8])
                     print i, hd
