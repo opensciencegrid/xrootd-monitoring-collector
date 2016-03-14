@@ -123,7 +123,7 @@ def eventCreator():
                 print authorizationInfo
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
-                print authorizationInfo
+                print xfrInfo
         
         print '------------------------------------------------'
         
