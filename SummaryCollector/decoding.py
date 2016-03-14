@@ -73,7 +73,7 @@ def MonFile(d):
     up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
     
     if up[0]==1: # isOpen
-        fO=struct.unpack("!BBHIQ",d[:16])
+        fO=struct.unpack("!BBHIq",d[:16])
         if up[1]==1:
             userId=struct.unpack("!I",d[16:20])
             fileName=struct.unpack("!"+(up[2]-20)+"s",d[20:])
