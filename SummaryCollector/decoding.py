@@ -71,7 +71,7 @@ def xfrInfo(message):
 def FileHDR(d):
     up=struct.unpack("BBHI",d)
     if up[0]==2:
-        return fileHDRtime._make(struct.unpack("BBHHH",d))
+        return fileHDRtime._make(struct.unpack("BBhhh",d))
     if up[0]==4:
         return fileHDRdisc._make(up)
     return fileHDR._make(up)
