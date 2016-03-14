@@ -81,7 +81,7 @@ def eventCreator():
         
         # print "\nByte Length of Message :", len(d)
         
-        h=header._make(struct.unpack("cBhi",d[:8]))
+        h=header._make(struct.unpack("cB!H!I",d[:8]))
         print h
         
         d=d[8:]
