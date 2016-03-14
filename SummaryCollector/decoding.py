@@ -76,12 +76,12 @@ def MonFile(d):
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
             userId=struct.unpack("!I",d[16:20])
+            print up[2],len(d),d[20:]
             fileName=struct.unpack("!"+str(up[2]-20)+"s",d[20:])
         else:
             userId=0
             fileName=''
-        fO = fO + (userId,fileName)
-        return fO
+        return fileOpen._make(fO + (userId,fileName))
     if up[0]==2: # isTime
         return fileTime._make(struct.unpack("!BBHHHII",d[:16]))
     if up[0]==4: # isDisc
