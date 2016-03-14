@@ -9,7 +9,7 @@ xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
 # fileHDR  = namedtuple()
 fileHDR     = namedtuple("fileHDR",["rectype","recFlag","recSize","fileID"])
-fileHDRtime  = namedtuple("fileHDRtime",["rectype","recFlag","recSize","isXfr_recs","total_recs"])
+fileHDRtime  = namedtuple("fileHDRtime",["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
 fileHDRdisc  = namedtuple("fileHDRdisc",["rectype","recFlag","recSize","userID"])
 
 def userInfo(message):
@@ -68,10 +68,13 @@ def xfrInfo(message):
         pd = ''
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
-def FileHDR(d):
-    up=struct.unpack("!BBHI",d) # XrdXrootdMonHeader
-    if up[0]==2:
-        return fileHDRtime._make(struct.unpack("!BBHHH",d))
+def MonFile(d):
+    hd=d[:8]
+    up=struct.unpack("!BBHI",hd) # XrdXrootdMonHeader
+    if up[0]==2: # isTime
+        dt=d[:16]
+        d=d[16:]
+        return fileHDRtime._make(struct.unpack("!BBHHHII",dt))
     if up[0]==4:
         return fileHDRdisc._make(up)
     return fileHDR._make(up)
@@ -82,5 +85,3 @@ def FileHDR(d):
     # isXfr =3,         // Record for transfers
     # isDisc = 4         // Record for disconnection
     
-def getBin(d):
-    return struct.unpack("!II",d)

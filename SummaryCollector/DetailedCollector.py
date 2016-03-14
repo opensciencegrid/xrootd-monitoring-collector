@@ -81,7 +81,7 @@ def eventCreator():
         
         # print "\nByte Length of Message :", len(d)
         
-        h=header._make(struct.unpack("!cBHI",d[:8]))
+        h=header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
         print h
         
         d=d[8:]
@@ -89,13 +89,13 @@ def eventCreator():
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
             if (h.code=='f'):
-                FileHDR=decoding.FileHDR(d[:8])
-                print FileHDR
-                (tBeg,tEnd)=decoding.getBin(d[8:16])
-                print "Bin start:", tBeg, '\t Bin ends:', tEnd 
+                print len(d)
+                FileStruct=decoding.MonFile(d)
+                print FileStruct
+                print len(d)
                 d=d[16:]
-                for i in range(FileHDR.total_recs): # first one is always TOD
-                    hd=decoding.FileHDR(d[:8])
+                for i in range(FileStruct.total_recs): # first one is always TOD
+                    hd=decoding.MonFile(d[:8])
                     print i, hd
                     d=d[8+hd.recSize:]
             elif (h.code=='r'):
