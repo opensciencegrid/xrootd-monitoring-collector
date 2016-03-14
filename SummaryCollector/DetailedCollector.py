@@ -89,15 +89,13 @@ def eventCreator():
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
             if (h.code=='f'):
-                print len(d)
                 FileStruct=decoding.MonFile(d)
                 print FileStruct
-                print len(d)
-                d=d[16:]
+                d=d[FileStruct.recSize:]
                 for i in range(FileStruct.total_recs): # first one is always TOD
                     hd=decoding.MonFile(d[:8])
                     print i, hd
-                    d=d[8+hd.recSize:]
+                    d=d[hd.recSize:]
             elif (h.code=='r'):
                 pass
             else:
