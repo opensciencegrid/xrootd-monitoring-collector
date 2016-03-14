@@ -114,7 +114,8 @@ def eventCreator():
                     print 'Adding new server info: ', serverInfo
             elif (h.code=='d'):
                 path=rest
-                print 'path: ', path
+                # print 'path: ', path
+                print 'path information. Server started at', h[3], 'should remove files from the monitoring configuration.'
             elif (h.code=='i'):
                 appinfo=rest
                 print 'appinfo:', appinfo
