@@ -81,7 +81,7 @@ def eventCreator():
         
         # print "\nByte Length of Message :", len(d)
         
-        h=header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
+        h=decoding.header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
         print h
         
         d=d[8:]
@@ -101,7 +101,7 @@ def eventCreator():
             print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
         else: 
             infolen=len(d)-4
-            mm = mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
+            mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             # print 'mapping message: ', mm
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
