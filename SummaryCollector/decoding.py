@@ -89,8 +89,8 @@ def MonFile(d):
     if up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
-            userId=struct.unpack("!I",d[16:20])
-            fileName=struct.unpack("!"+str(up[2]-20)+"s",d[20:up[2]])
+            userId=struct.unpack("!I",d[16:20])[0]
+            fileName=struct.unpack("!"+str(up[2]-20)+"s",d[20:up[2]])[0]
         else:
             userId=0
             fileName=''
