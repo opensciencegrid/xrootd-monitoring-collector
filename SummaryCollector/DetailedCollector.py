@@ -105,7 +105,7 @@ def eventCreator():
             print '------------------------------------------------'
         else:
             infolen=len(d)-4
-            mm = mapheader._make(struct.unpack("I"+str(infolen)+"s",d))
+            mm = mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             # print 'mapping message: ', mm
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)

@@ -69,9 +69,9 @@ def xfrInfo(message):
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
 def FileHDR(d):
-    up=struct.unpack("BBhi",d) # XrdXrootdMonHeader
+    up=struct.unpack("!BBHI",d) # XrdXrootdMonHeader
     if up[0]==2:
-        return fileHDRtime._make(struct.unpack("BBhhh",d))
+        return fileHDRtime._make(struct.unpack("!BBHHH",d))
     if up[0]==4:
         return fileHDRdisc._make(up)
     return fileHDR._make(up)
@@ -83,4 +83,4 @@ def FileHDR(d):
     # isDisc = 4         // Record for disconnection
     
 def getBin(d):
-    return struct.unpack("ii",d)
+    return struct.unpack("!II",d)
