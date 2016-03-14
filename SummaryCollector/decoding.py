@@ -76,12 +76,14 @@ def MonFile(d):
     
     if up[0]==0: # isClose
         if up[1] & 0b010:  #hasOPS
-            
+            O=ops._make(struct.unpack("!IIIHHQIIIIII",d[32:80]))
+        else:
+            O=()
         #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04,
         #hasOPS XrdXroodMonFileOPS present
         #hasSSQ XrdXroodMonFileSSQ present
         
-        return (fileClose._make(struct.unpack("!BBHIQQQ",d[:32])), ops._make(struct.unpack("!IIIHHQIIIIII",d[32:80])) )
+        return (fileClose._make(struct.unpack("!BBHIQQQ",d[:32])),  )
         
     if up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
