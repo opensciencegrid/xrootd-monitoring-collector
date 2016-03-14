@@ -89,8 +89,15 @@ def eventCreator():
         if (h.code=='f' or h.code=='r' or h.code=='t'):
             print 'stream message'
             if (h.code=='f'):
-                FileTOD=decoding.FileTOD(d[:8])
-                print FileTOD
+                FileHDR=decoding.FileHDR(d[:8])
+                print FileHDR
+                (tBeg,tEnd)=decoding.getBin(d[8:15])
+                print "Bin start:", tBeg, '\t Bin ends:', tEnd 
+                d=d[15:]
+                for i in range(FileHDR.total_recs): # first one is always TOD
+                    hd=decoding.FileHDR(d[:8])
+                    print i, hd
+                    d=d[8+hd.recSize:]
             elif (h.code=='r'):
                 pass
             else:
