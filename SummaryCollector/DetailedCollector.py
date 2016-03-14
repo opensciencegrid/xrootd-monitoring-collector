@@ -109,8 +109,8 @@ def eventCreator():
             
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
-                if h.server_start in AllServer:
-                    AllServer[h.server_start]=serverInfo
+                if h.server_start in AllServers:
+                    AllServers[h.server_start]=serverInfo
                     print 'Adding new server info: ', serverInfo
             elif (h.code=='d'):
                 path=rest
