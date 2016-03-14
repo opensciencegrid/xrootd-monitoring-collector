@@ -93,7 +93,7 @@ def eventCreator():
                 print FileStruct
                 d=d[FileStruct.recSize:]
                 for i in range(FileStruct.total_recs): # first one is always TOD
-                    hd=decoding.MonFile(d[:8])
+                    hd=decoding.MonFile(d)
                     print i, hd
                     d=d[hd.recSize:]
             elif (h.code=='r'):
