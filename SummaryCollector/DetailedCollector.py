@@ -102,7 +102,7 @@ def eventCreator():
             # print 'mapping message: ', mm
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
-            print userInfo
+            # print userInfo
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
                 print serverInfo

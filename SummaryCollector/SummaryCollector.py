@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import xmltodict
 import Queue, os, sys, time
