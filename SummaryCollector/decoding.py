@@ -7,12 +7,12 @@ srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
 prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
+fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","userID","fileName"])
+fileXfr   = namedtuple("fileXfr",  ["rectype","recFlag","recSize","fileID","read","readv","write"])
 fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write"])
-fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","user","fileName"])
 fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
 fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
-fileXfr   = namedtuple("fileXfr",  ["rectype","recFlag","recSize","fileID","read","readv","write"])
-ops=namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
+ops       = namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
 
 def userInfo(message):
     prot,c = message.split('/',1)

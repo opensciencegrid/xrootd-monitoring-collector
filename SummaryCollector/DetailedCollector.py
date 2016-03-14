@@ -99,13 +99,13 @@ def eventCreator():
             print "r - stream message."
         elif (h.code=='t'):
             print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
-        else:
+        else: 
             infolen=len(d)-4
             mm = mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             # print 'mapping message: ', mm
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
-            # print userInfo
+            print userInfo
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
                 print serverInfo
@@ -311,7 +311,7 @@ for i in range(3):
      
 nMessages=0
 while (True):
-    message, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
+    message, addr = sock.recvfrom(65536) # buffer size is 1024 bytes
     # print ("received message:", message, "from:", addr)
     q.put([message,addr[0]])
     nMessages+=1
