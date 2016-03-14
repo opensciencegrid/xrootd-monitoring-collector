@@ -79,7 +79,7 @@ def MonFile(d):
     if up[0]==0: # isClose
         if up[1] & 0b010:  #hasOPS
             O=ops._make(struct.unpack("!IIIHHQIIIIII",d[32:80]))
-            print O
+            #print O
         else:
             O=()
         #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04
