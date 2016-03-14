@@ -98,7 +98,7 @@ def eventCreator():
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
-            print "t - stream message. The site should remove files, io, iov from the monitoring configuration."
+            print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
         else:
             infolen=len(d)-4
             mm = mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
