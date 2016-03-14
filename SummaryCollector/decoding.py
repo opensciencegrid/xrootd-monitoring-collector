@@ -76,7 +76,7 @@ def MonFile(d):
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
             userId=struct.unpack("!I",d[16:20])
-            fileName=struct.unpack("!"+(up[2]-20)+"s",d[20:])
+            fileName=struct.unpack("!"+str(up[2]-20)+"s",d[20:])
         else:
             userId=0
             fileName=''
