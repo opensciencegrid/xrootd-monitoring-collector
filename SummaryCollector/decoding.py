@@ -95,7 +95,7 @@ def MonFile(d):
     elif up[0]==3: #isXfr
         print "isXfr ..."
         return fileXfr._make(struct.unpack("!BBHIQQQ",d[:32]))
-    else up[0]==4: # isDisc
+    else: # isDisc up[0]==4
         return fileDisc._make(up)
     
     
