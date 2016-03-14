@@ -83,4 +83,4 @@ def FileHDR(d):
     # isDisc = 4         // Record for disconnection
     
 def getBin(d):
-    return struct.unpack("II",d)
+    return struct.unpack("ii",d)
