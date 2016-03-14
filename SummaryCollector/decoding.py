@@ -1,6 +1,9 @@
 from collections import namedtuple
 import struct
 
+header = namedtuple("header", ["code", "pseq","plen","server_start"])
+mapheader = namedtuple("mapheader",["dictid","info"])
+
 userid   = namedtuple("userid",["username","pid","sid","host"])
 authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
 srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
@@ -93,7 +96,7 @@ def MonFile(d):
     elif up[0]==2: # isTime
         return fileTime._make(struct.unpack("!BBHHHII",d[:16]))
     elif up[0]==3: #isXfr
-        print "isXfr ..."
+        # print "isXfr ..."
         return fileXfr._make(struct.unpack("!BBHIQQQ",d[:32]))
     else: # isDisc up[0]==4
         return fileDisc._make(up)

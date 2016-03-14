@@ -68,12 +68,12 @@ class state:
         
 
 
-AllState={}
+
+AllTransfers={}
+AllServers={}
+AllUsers={}
 
 def eventCreator():
-    
-    header = namedtuple("header", ["code", "pseq","plen","server_start"])
-    mapheader = namedtuple("mapheader",["dictid","info"])
     
     aLotOfData=[]
     while(True):
@@ -106,9 +106,12 @@ def eventCreator():
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
             print userInfo
+            
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
-                print serverInfo
+                if h.server_start in AllServer:
+                    AllServer[h.server_start]=serverInfo
+                    print 'Adding new server info: ', serverInfo
             elif (h.code=='d'):
                 path=rest
                 print 'path: ', path
@@ -123,7 +126,7 @@ def eventCreator():
                 print authorizationInfo
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
-                print xfrInfo
+                # print xfrInfo
         
         print '------------------------------------------------'
         
