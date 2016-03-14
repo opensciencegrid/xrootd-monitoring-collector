@@ -8,10 +8,11 @@ prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
 # fileHDR  = namedtuple()
-fileHDR     = namedtuple("fileHDR",["rectype","recFlag","recSize","fileID"])
-fileOpen  = namedtuple("fileOpen",["rectype","recFlag","recSize","userID", "fileSize","user","fileName"])
-fileTime  = namedtuple("fileTime",["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
-fileDisc  = namedtuple("fileDisc",["rectype","recFlag","recSize","userID"])
+fileHDR   = namedtuple("fileHDR",  ["rectype","recFlag","recSize","fileID"])
+fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write"])
+fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","user","fileName"])
+fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
+fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
 
 def userInfo(message):
     prot,c = message.split('/',1)
@@ -72,11 +73,12 @@ def xfrInfo(message):
 def MonFile(d):
     up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
     
+    if up[0]==0: # isClose
+        return fileClose._make(struct.unpack("!BBHIQQQ",d[:32]))
     if up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
             userId=struct.unpack("!I",d[16:20])
-            #print up[2],len(d),d[20:]
             fileName=struct.unpack("!"+str(up[2]-20)+"s",d[20:up[2]])
         else:
             userId=0
