@@ -7,12 +7,11 @@ srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
 prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
-# fileHDR  = namedtuple()
-fileHDR   = namedtuple("fileHDR",  ["rectype","recFlag","recSize","fileID"])
 fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write"])
 fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","user","fileName"])
 fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
 fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
+fileXfr   = namedtuple("fileXfr",  ["rectype","recFlag","recSize","fileID","read","readv","write"])
 ops=namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
 
 def userInfo(message):
@@ -80,13 +79,9 @@ def MonFile(d):
             print O
         else:
             O=()
-        #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04,
-        #hasOPS XrdXroodMonFileOPS present
-        #hasSSQ XrdXroodMonFileSSQ present
-        
+        #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04
         return fileClose._make(struct.unpack("!BBHIQQQ",d[:32]))
-        
-    if up[0]==1: # isOpen
+    elif up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
             userId=struct.unpack("!I",d[16:20])[0]
@@ -95,15 +90,12 @@ def MonFile(d):
             userId=0
             fileName=''
         return fileOpen._make(fO + (userId,fileName))
-    if up[0]==2: # isTime
+    elif up[0]==2: # isTime
         return fileTime._make(struct.unpack("!BBHHHII",d[:16]))
-    if up[0]==4: # isDisc
+    elif up[0]==3: #isXfr
+        print "isXfr ..."
+        return fileXfr._make(struct.unpack("!BBHIQQQ",d[:32]))
+    else up[0]==4: # isDisc
         return fileDisc._make(up)
-    return fileHDR._make(up)
     
-    # isClose = 0,   // Record for close
-    # isOpen =1,        // Record for open
-    # isTime =2 ,        // Record for time
-    # isXfr =3,         // Record for transfers
-    # isDisc = 4         // Record for disconnection
     

@@ -86,21 +86,19 @@ def eventCreator():
         
         d=d[8:]
         
-        if (h.code=='f' or h.code=='r' or h.code=='t'):
-            print 'stream message'
-            if (h.code=='f'):
-                FileStruct=decoding.MonFile(d)
-                print FileStruct
-                d=d[FileStruct.recSize:]
-                for i in range(FileStruct.total_recs): # first one is always TOD
-                    hd=decoding.MonFile(d)
-                    print i, hd
-                    d=d[hd.recSize:]
-            elif (h.code=='r'):
-                pass
-            else:
-                pass
-            print '------------------------------------------------'
+        
+        if (h.code=='f'):
+            FileStruct=decoding.MonFile(d)
+            print FileStruct
+            d=d[FileStruct.recSize:]
+            for i in range(FileStruct.total_recs): # first one is always TOD
+                hd=decoding.MonFile(d)
+                print i, hd
+                d=d[hd.recSize:]
+        elif (h.code=='r'):
+            print "r - stream message."
+        elif (h.code=='t'):
+            print "t - stream message. The site should remove files, io, iov from the monitoring configuration."
         else:
             infolen=len(d)-4
             mm = mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
@@ -126,7 +124,9 @@ def eventCreator():
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
                 print authorizationInfo
-            print '------------------------------------------------'
+        
+        print '------------------------------------------------'
+        
         # m={}
         # try:
         #     m=xmltodict.parse(d)
