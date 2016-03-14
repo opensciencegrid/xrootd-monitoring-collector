@@ -13,6 +13,7 @@ fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read
 fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","user","fileName"])
 fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
 fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
+ops=namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
 
 def userInfo(message):
     prot,c = message.split('/',1)
@@ -74,7 +75,14 @@ def MonFile(d):
     up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
     
     if up[0]==0: # isClose
-        return fileClose._make(struct.unpack("!BBHIQQQ",d[:32]))
+        if up[1] & 0b010:  #hasOPS
+            
+        #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04,
+        #hasOPS XrdXroodMonFileOPS present
+        #hasSSQ XrdXroodMonFileSSQ present
+        
+        return (fileClose._make(struct.unpack("!BBHIQQQ",d[:32])), ops._make(struct.unpack("!IIIHHQIIIIII",d[32:80])) )
+        
     if up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
