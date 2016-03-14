@@ -69,7 +69,7 @@ def xfrInfo(message):
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
 def FileHDR(d):
-    up=struct.unpack("BBHI",d)
+    up=struct.unpack("BBhi",d) # XrdXrootdMonHeader
     if up[0]==2:
         return fileHDRtime._make(struct.unpack("BBhhh",d))
     if up[0]==4:
