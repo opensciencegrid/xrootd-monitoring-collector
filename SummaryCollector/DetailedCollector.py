@@ -109,15 +109,12 @@ def eventCreator():
                     except KeyError:
                         print 'User that disconnected was unknown.'
                 elif isinstance(hd, decoding.fileOpen):
-                    try:
-                        AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
-                    except KeyError:
-                        print 'server or user not known.'
-                        # if h.server_start not in AllTransfers:
-                        #     AllTransfers[h.server_start]={}
-                        # if hd.userID not it AllTransfers[h.server_start]:
-                        #     AllTransfers[h.server_start][hd.userID]={}
-                        # AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
+                    if h.server_start not in AllTransfers:
+                        AllTransfers[h.server_start]={}
+                    if hd.userID not it AllTransfers[h.server_start]:
+                        AllTransfers[h.server_start][hd.userID]={}
+                    AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
+                    
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
@@ -361,8 +358,11 @@ while (True):
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
         print "All Servers:"
-        for key, value in AllServers.iteritems() : print key, value
+        for tos, value in AllServers.iteritems(): 
+            print tos, value
         print "All Users:"
-        for key, value in AllUsers.iteritems() : print key, value
+        for tos, value in AllUsers.iteritems():
+            for userID,userInfo in value:
+            print tos, userID, userInfo 
         print "All Transfers:"
         for key, value in AllTransfers.iteritems() : print key, value
