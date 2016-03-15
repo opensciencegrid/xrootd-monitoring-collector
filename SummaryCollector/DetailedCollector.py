@@ -116,11 +116,14 @@ def eventCreator():
                     AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
                 elif isinstance(hd, decoding.fileClose):
                     if h.server_start in AllTransfers:
+                        found=0
                         for u in AllTransfers[h.server_start]:
                             if hd.fileID in AllTransfers[h.server_start][u]:
                                 print "file to close has been found"
-                            else:
-                                print "file to close NOT found."
+                                found=1
+                                break
+                        if not found:
+                            print "file to close NOT found."
                     else:
                         print "file closed on server that's not found"
         elif (h.code=='r'):
