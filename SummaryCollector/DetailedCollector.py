@@ -353,6 +353,7 @@ while (True):
         print "All Servers:"
         for s in AllServers: print s
         print "All Users:"
+        print AllUsers
         for s in AllUsers: print s
         print "All Transfers:"
         for s in AllTransfers: print s
