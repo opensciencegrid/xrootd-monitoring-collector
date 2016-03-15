@@ -107,15 +107,16 @@ def eventCreator():
         else: 
             infolen=len(d)-4
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
-            print 'mapping message: ', mm.dictID
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
-            print userInfo
+            print mm.dictID, userInfo
             
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
-                if h.server_start in AllServers:
-                    AllServers[h.server_start]=serverInfo
+                if h.server_start not in AllServers:
+                    AllServers[h.server_start]={}
+                if userInfo.sid not in AllServers[h.server_start]:
+                    AllServers[h.server_start][userInfo.sid]=serverInfo
                     print 'Adding new server info: ', serverInfo
             elif (h.code=='d'):
                 path=rest
@@ -129,7 +130,22 @@ def eventCreator():
                 print purgeInfo
             elif (h.code=='u'):
                 authorizationInfo=decoding.authorizationInfo(rest)
-                print authorizationInfo
+                if mm.dictID not in AllUsers:
+                    AllUsers[mm.dictID]={}
+                    AllUsers[mm.dictID][h.server_start]={}
+                    AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                    print "Adding new user:",authorizationInfo
+                else:
+                    if h.server_start not in AllUsers[mm.dictID]:
+                        AllUsers[mm.dictID][h.server_start]={}
+                        AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                        print "Adding new user:",authorizationInfo
+                    else:
+                        if userInfo.sid not in AllUsers[mm.dictID][h.server_start]:
+                            AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                            print "Adding new user:",authorizationInfo
+                        else:
+                            print "There is a problem. We already have this combination of userID, server start time and server id."
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
                 # print xfrInfo
@@ -326,3 +342,4 @@ while (nMessages<1000):
     nMessages+=1
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
+        print AllServers

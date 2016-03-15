@@ -43,10 +43,10 @@ def serverInfo(message):
     r=message.split('&')
     pgm =r[1].split('=')[1]
     ver =r[2].split('=')[1]
-    ints=r[3].split('=')[1]
+    inst=r[3].split('=')[1]
     port=r[4].split('=')[1]
     site=r[5].split('=')[1]
-    return srvinfo(pgm,ver,ints,port,site)
+    return srvinfo(pgm,ver,inst,port,site)
     
 def purgeInfo(message):
     xfn,rest=message.split('\n')
