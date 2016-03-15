@@ -74,7 +74,7 @@ def xfrInfo(message):
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
 def MonFile(d):
-    up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
+    up=struct.unpack("!BBHi",d[:8]) # XrdXrootdMonHeader
     
     if up[0]==0: # isClose
         if up[1] & 0b010:  #hasOPS
