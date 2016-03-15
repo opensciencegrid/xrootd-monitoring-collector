@@ -115,7 +115,14 @@ def eventCreator():
                         AllTransfers[h.server_start][hd.userID]={}
                     AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
                 elif isinstance(hd, decoding.fileClose):
-                    pass
+                    if h.server_start in AllTransfers:
+                        for u in AllTransfers[h.server_start]:
+                            if hd.fileID in u:
+                                print "file to close has been found"
+                            else:
+                                print "file to close NOT found."
+                    else:
+                        print "file closed on server that's not found"
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
@@ -148,20 +155,13 @@ def eventCreator():
                 authorizationInfo=decoding.authorizationInfo(rest)
                 if h.server_start not in AllUsers:
                     AllUsers[h.server_start]={}
+                if mm.dictID not in AllUsers[h.server_start]:
                     AllUsers[h.server_start][mm.dictID]={}
+                if userInfo.sid not in AllUsers[h.server_start][mm.dictID]:
                     AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
                     print "Adding new user:",authorizationInfo
                 else:
-                    if mm.dictID not in AllUsers[h.server_start]:
-                        AllUsers[h.server_start][mm.dictID]={}
-                        AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
-                        print "Adding new user:",authorizationInfo
-                    else:
-                        if userInfo.sid not in AllUsers[h.server_start][mm.dictID]:
-                            AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
-                            print "Adding new user:",authorizationInfo
-                        else:
-                            print "There is a problem. We already have this combination of userID, server start time and server id."
+                    print "There is a problem. We already have this combination of userID, server start time and server id."
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
                 # print xfrInfo
