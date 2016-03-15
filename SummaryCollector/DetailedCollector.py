@@ -98,6 +98,7 @@ def eventCreator():
             d=d[FileStruct.recSize:]
             for i in range(FileStruct.total_recs): # first one is always TOD
                 hd=decoding.MonFile(d)
+                d=d[hd.recSize:]
                 if i<1000: print i, hd
                 if isinstance(hd, decoding.fileDisc):
                     try:
@@ -107,7 +108,16 @@ def eventCreator():
                         del AllUsers[h.server_start][hd.userID]
                     except KeyError:
                         print 'User that disconnected was unknown.'
-                d=d[hd.recSize:]
+                elif isinstance(hd, decoding.fileOpen):
+                    try:
+                        AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
+                    except KeyError:
+                        print 'server or user not known.'
+                        # if h.server_start not in AllTransfers:
+                        #     AllTransfers[h.server_start]={}
+                        # if hd.userID not it AllTransfers[h.server_start]:
+                        #     AllTransfers[h.server_start][hd.userID]={}
+                        # AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
@@ -351,9 +361,8 @@ while (True):
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
         print "All Servers:"
-        for s in AllServers: print s
+        for key, value in AllServers.iteritems() : print key, value
         print "All Users:"
-        print AllUsers
-        for s in AllUsers: print s
+        for key, value in AllUsers.iteritems() : print key, value
         print "All Transfers:"
-        for s in AllTransfers: print s
+        for key, value in AllTransfers.iteritems() : print key, value
