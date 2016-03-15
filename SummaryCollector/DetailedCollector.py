@@ -82,6 +82,11 @@ def eventCreator():
         # print "\nByte Length of Message :", len(d)
         
         h=decoding.header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
+        
+        if h[3]!=1457990510:
+            q.task_done()
+            continue
+            
         print h
         
         d=d[8:]
