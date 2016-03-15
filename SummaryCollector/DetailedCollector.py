@@ -111,10 +111,11 @@ def eventCreator():
                 elif isinstance(hd, decoding.fileOpen):
                     if h.server_start not in AllTransfers:
                         AllTransfers[h.server_start]={}
-                    if hd.userID not it AllTransfers[h.server_start]:
+                    if hd.userID not in AllTransfers[h.server_start]:
                         AllTransfers[h.server_start][hd.userID]={}
                     AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
-                    
+                elif isinstance(hd, decoding.fileClose):
+                    pass
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
