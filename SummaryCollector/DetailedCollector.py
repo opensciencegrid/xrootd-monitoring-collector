@@ -150,7 +150,7 @@ def eventCreator():
                         print "Adding new user:",authorizationInfo
                     else:
                         if userInfo.sid not in AllUsers[h.server_start][mm.dictID]:
-                            AllUsers[[h.server_start]mm.dictID][userInfo.sid]=authorizationInfo
+                            AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
                             print "Adding new user:",authorizationInfo
                         else:
                             print "There is a problem. We already have this combination of userID, server start time and server id."
