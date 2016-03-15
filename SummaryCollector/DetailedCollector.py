@@ -364,6 +364,6 @@ while (True):
         print "All Users:"
         for tos, value in AllUsers.iteritems():
             for userID,userInfo in value:
-            print tos, userID, userInfo 
+                print tos, userID, userInfo 
         print "All Transfers:"
         for key, value in AllTransfers.iteritems() : print key, value
