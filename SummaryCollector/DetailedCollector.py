@@ -358,12 +358,6 @@ while (True):
     nMessages+=1
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
-        print "All Servers:"
-        for tos in AllServers: 
-            print tos, AllServers[tos]
-        print "All Users:"
-        for tos in AllUsers:
-            for userID in AllUsers[tos]:
-                print tos, userID, AllUsers[tos][userID]
-        print "All Transfers:"
-        for key, value in AllTransfers.iteritems() : print key, value
+        print "All Servers:", len(AllServers),AllServers
+        print "All Users:", len(AllUsers),AllUsers
+        print "All Transfers:", len(AllTransfers), AllTransfers
