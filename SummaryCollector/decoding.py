@@ -96,7 +96,7 @@ def MonFile(d):
     elif up[0]==2: # isTime
         if up[2]==16: # this and next 3 lines can be removed after the fixed montiring stream is deployed.
             t = struct.unpack("!BBHHHII",d[:16])
-            return fileTime.(t[0],t[1],t[2],t[3],t[4],0,0,t[5],t[6])
+            return fileTime(t[0],t[1],t[2],t[3],t[4],0,0,t[5],t[6])
         else:
             return fileTime._make(struct.unpack("!BBHHHIIII",d[:24]))
     elif up[0]==3: #isXfr
