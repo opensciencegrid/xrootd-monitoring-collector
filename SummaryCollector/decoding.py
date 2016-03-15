@@ -2,7 +2,7 @@ from collections import namedtuple
 import struct
 
 header = namedtuple("header", ["code", "pseq","plen","server_start"])
-mapheader = namedtuple("mapheader",["dictid","info"])
+mapheader = namedtuple("mapheader",["dictID","info"])
 
 userid   = namedtuple("userid",["username","pid","sid","host"])
 authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
@@ -74,7 +74,7 @@ def xfrInfo(message):
     return  xfrinfo([lfn,tod,sz,tm,op,rc,pd])
     
 def MonFile(d):
-    up=struct.unpack("!BBHi",d[:8]) # XrdXrootdMonHeader
+    up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
     
     if up[0]==0: # isClose
         if up[1] & 0b010:  #hasOPS

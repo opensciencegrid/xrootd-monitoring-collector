@@ -107,7 +107,7 @@ def eventCreator():
         else: 
             infolen=len(d)-4
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
-            # print 'mapping message: ', mm
+            print 'mapping message: ', mm.dictID
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
             print userInfo
