@@ -101,8 +101,9 @@ def eventCreator():
                 if i<1000: print i, hd
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        if len(AllUsers[hd.userID][h.server_start]) >= 1:
+                        if len(AllUsers[hd.userID][h.server_start]) > 1:
                             print "Non unique user. Don't know which one disconnected. Will remove all."
+                        print "Disconnecting: ", AllUsers[hd.userID][h.server_start]
                         del AllUsers[hd.userID][h.server_start]
                     except KeyError:
                         print 'User that disconnected was unknown.'
