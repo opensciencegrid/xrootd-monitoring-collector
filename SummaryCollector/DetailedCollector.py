@@ -99,6 +99,13 @@ def eventCreator():
             for i in range(FileStruct.total_recs): # first one is always TOD
                 hd=decoding.MonFile(d)
                 if i<1000: print i, hd
+                if type(hd)=='fileDisc':
+                    try:
+                        if len(AllUsers[hd.userID][h.server_start]) >= 1:
+                            print "Non unique user. Don't know which one disconnected. Will remove all."
+                        del AllUsers[hd.userID][h.server_start]
+                    except KeyError:
+                        print 'User that disconnected was unknown.'
                 d=d[hd.recSize:]
         elif (h.code=='r'):
             print "r - stream message."
@@ -335,11 +342,13 @@ for i in range(3):
      t.start()
      
 nMessages=0
-while (nMessages<1000):
+while (True):
     message, addr = sock.recvfrom(65536) # buffer size is 1024 bytes
     # print ("received message:", message, "from:", addr)
     q.put([message,addr[0]])
     nMessages+=1
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
-        print AllServers
+        print "All Servers:", AllServers
+        print "All Users:", AllUsers
+        print "All Transfers:", AllTransfers
