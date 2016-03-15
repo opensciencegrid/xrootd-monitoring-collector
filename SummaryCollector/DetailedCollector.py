@@ -101,10 +101,10 @@ def eventCreator():
                 if i<1000: print i, hd
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        if len(AllUsers[hd.userID][h.server_start]) > 1:
+                        if len(AllUsers[h.server_start][hd.userID]) > 1:
                             print "Non unique user. Don't know which one disconnected. Will remove all."
-                        print "Disconnecting: ", AllUsers[hd.userID][h.server_start]
-                        del AllUsers[hd.userID][h.server_start]
+                        print "Disconnecting: ", AllUsers[h.server_start][hd.userID]
+                        del AllUsers[h.server_start][hd.userID]
                     except KeyError:
                         print 'User that disconnected was unknown.'
                 d=d[hd.recSize:]
@@ -138,19 +138,19 @@ def eventCreator():
                 print purgeInfo
             elif (h.code=='u'):
                 authorizationInfo=decoding.authorizationInfo(rest)
-                if mm.dictID not in AllUsers:
-                    AllUsers[mm.dictID]={}
-                    AllUsers[mm.dictID][h.server_start]={}
-                    AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                if h.server_start not in AllUsers:
+                    AllUsers[h.server_start]={}
+                    AllUsers[h.server_start][mm.dictID]={}
+                    AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
                     print "Adding new user:",authorizationInfo
                 else:
-                    if h.server_start not in AllUsers[mm.dictID]:
-                        AllUsers[mm.dictID][h.server_start]={}
-                        AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                    if mm.dictID not in AllUsers[h.server_start]:
+                        AllUsers[h.server_start][mm.dictID]={}
+                        AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
                         print "Adding new user:",authorizationInfo
                     else:
-                        if userInfo.sid not in AllUsers[mm.dictID][h.server_start]:
-                            AllUsers[mm.dictID][h.server_start][userInfo.sid]=authorizationInfo
+                        if userInfo.sid not in AllUsers[h.server_start][mm.dictID]:
+                            AllUsers[[h.server_start]mm.dictID][userInfo.sid]=authorizationInfo
                             print "Adding new user:",authorizationInfo
                         else:
                             print "There is a problem. We already have this combination of userID, server start time and server id."
@@ -350,6 +350,9 @@ while (True):
     nMessages+=1
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
-        print "All Servers:", AllServers
-        print "All Users:", AllUsers
-        print "All Transfers:", AllTransfers
+        print "All Servers:"
+        for s in AllServers: print s
+        print "All Users:"
+        for s in AllUsers: print s
+        print "All Transfers:"
+        for s in AllTransfers: print s
