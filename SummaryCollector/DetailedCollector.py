@@ -99,7 +99,7 @@ def eventCreator():
             for i in range(FileStruct.total_recs): # first one is always TOD
                 hd=decoding.MonFile(d)
                 if i<1000: print i, hd
-                if isinstance(hd, 'decoding.fileDisc'):
+                if isinstance(hd, decoding.fileDisc):
                     try:
                         if len(AllUsers[hd.userID][h.server_start]) >= 1:
                             print "Non unique user. Don't know which one disconnected. Will remove all."
