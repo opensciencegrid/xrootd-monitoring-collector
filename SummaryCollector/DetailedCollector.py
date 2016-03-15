@@ -73,6 +73,16 @@ AllTransfers={}
 AllServers={}
 AllUsers={}
 
+def addRecord(server_start,userID,fileID):
+    rec={}
+    try:
+        rec['server'] = AllServers[server_start]
+        rec['user'] = AllUsers[server_start][userID]
+        rec['file'] = AllTransfers[server_start][userID][fileID]
+    except KeyError:
+        print 'Server, user or file info missing.'
+    return rec
+    
 def eventCreator():
     
     aLotOfData=[]
@@ -121,6 +131,8 @@ def eventCreator():
                             if hd.fileID in AllTransfers[h.server_start][u]:
                                 print "file to close has been found"
                                 found=1
+                                aLotOfData.append( addRecord(h.server_start,u,hd.fileID) )
+                                del AllTransfers[h.server_start][u][hd.fileID]
                                 break
                         if not found:
                             print "file to close NOT found."
