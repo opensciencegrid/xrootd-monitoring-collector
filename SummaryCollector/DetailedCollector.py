@@ -314,7 +314,7 @@ for i in range(3):
      t.start()
      
 nMessages=0
-while (True):
+while (nMessages<1000):
     message, addr = sock.recvfrom(65536) # buffer size is 1024 bytes
     # print ("received message:", message, "from:", addr)
     q.put([message,addr[0]])
