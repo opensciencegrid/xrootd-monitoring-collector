@@ -13,7 +13,7 @@ xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","userID","fileName"])
 fileXfr   = namedtuple("fileXfr",  ["rectype","recFlag","recSize","fileID","read","readv","write"])
 fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write"])
-fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","tBeg","tEnd"])
+fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","sid","reserved","tBeg","tEnd"])
 fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
 ops       = namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
 
@@ -94,7 +94,12 @@ def MonFile(d):
             fileName=''
         return fileOpen._make(fO + (userId,fileName))
     elif up[0]==2: # isTime
-        return fileTime._make(struct.unpack("!BBHHHII",d[:16]))
+        if up[2]==16: # this and next 4 lines can be removed after the fixed montiring stream is deployed.
+            temp = struct.unpack("!BBHHHII",d[:16])
+            temp = temp+('0','0')  # faking sid
+            return fileTime._make(temp)
+        else:
+            return fileTime._make(struct.unpack("!BBHHHIIII",d[:24]))
     elif up[0]==3: #isXfr
         # print "isXfr ..."
         return fileXfr._make(struct.unpack("!BBHIQQQ",d[:32]))
