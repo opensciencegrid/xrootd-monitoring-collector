@@ -74,13 +74,18 @@ AllServers={}
 AllUsers={}
 
 def addRecord(server_start,userID,fileID):
-    rec={}
+    rec={
+        '_type': 'detailed'
+    }
     try:
         rec['server'] = AllServers[server_start]
         rec['user'] = AllUsers[server_start][userID]
         rec['file'] = AllTransfers[server_start][userID][fileID]
     except KeyError:
         print 'Server, user or file info missing.'
+    d = datetime.now()
+    ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+    rec['_index']=ind
     return rec
     
 def eventCreator():
@@ -129,7 +134,6 @@ def eventCreator():
                         found=0
                         for u in AllTransfers[h.server_start]:
                             if hd.fileID in AllTransfers[h.server_start][u]:
-                                print "file to close has been found"
                                 found=1
                                 aLotOfData.append( addRecord(h.server_start,u,hd.fileID) )
                                 del AllTransfers[h.server_start][u][hd.fileID]
@@ -183,34 +187,12 @@ def eventCreator():
         
         print '------------------------------------------------'
         
-        # m={}
-        # try:
-        #     m=xmltodict.parse(d)
-        # except xml.parsers.expat.ExpatError:
-        #     print "could not parse: ", d
-        #     q.task_done()
-        #     continue
-        # except:
-        #     print "unexpected error. messsage was: ", d
-        #     print sys.exc_info()[0]
-        #     q.task_done()
-        #     continue
-        #
-        # d = datetime.now()
-        # ind="xrd_summary-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
-        # data = {
-        #     '_index': ind,
-        #     '_type': 'summary',
-        #     'IP':addr
-        # }
+        
+
         
         q.task_done()
         continue
         
-        # previousState=state()
-        # currState=state()
-        #
-        # # print m
         # s=m['statistics'] # top level
         # pgm         = s['@pgm'] # program name
         # #print "PGM >>> ", pgm
@@ -222,117 +204,12 @@ def eventCreator():
         # tod         = int(s['@tod'])  # Unix time when statistics gathering started.
         # pid         = int(s['@pid'])
         #
-        # currState.pid = pid
-        # currState.tod = tod
-        # data['pid'] = pid
         # data['timestamp'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         # data['tos'] = datetime.utcfromtimestamp(float(tos)).isoformat()
         # data['cstart'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         # data['version']  = s['@ver'] # version name of the servers
         # data['site'] = s['@site'] # site name specified in the configuration
-        #
-        #
-        # hasPrev=False
-        # if (addr in AllState):
-        #     pids=AllState[addr]
-        #     if (pid in pids):
-        #         hasPrev=True
-        #         previousState=AllState[addr][pid]
-        #         #print "Previous ----"
-        #         #AllState[addr][pid].prnt()
-        #         #print "IP has previous values."
-        #     else:
-        #         print "seen this IP before, but not PID."
-        # else:
-        #     print "new IP: ",addr
-        #
-        # stats=s['stats']
-        # for st in stats:
-        #     sw=st['@id']
-        #     if sw=='info':
-        #         # print 'host >>>', st
-        #         data['host']=st['host']
-        #     elif sw=='link':
-        #         data['link_num']     = int(st['num']) # not cumulative
-        #         currState.link_total = int(st['tot'])
-        #         currState.link_in    = int(st['in'])
-        #         currState.link_out   = int(st['out'])
-        #         currState.link_ctime = int(st['ctime'])
-        #         currState.link_tmo   = int(st['tmo'])
-        #         # currState.link_stall = int(st['stall'])
-        #         # currState.link_sfps  = int(st['sfps'])
-        #         # print "link >>> ", st
-        #     elif sw=='proc':
-        #         currState.proc_sys = int(st['sys']['s'])
-        #         currState.proc_usr = int(st['usr']['s'])
-        #         # print 'proc  >>>>', st
-        #     elif sw=='xrootd':
-        #         currState.xrootd_err = int(st['err'])
-        #         currState.xrootd_dly = int(st['dly'])
-        #         currState.xrootd_rdr = int(st['rdr'])
-        #         ops=st['ops']
-        #         currState.ops_open = int(ops['open'])
-        #         currState.ops_pr   = int(ops['pr'])
-        #         currState.ops_rd   = int(ops['rd'])
-        #         currState.ops_rv   = int(ops['rv'])
-        #         currState.ops_sync = int(ops['sync'])
-        #         currState.ops_wr   = int(ops['wr'])
-        #         lgn=st['lgn']
-        #         currState.lgn_num = int(lgn['num'])
-        #         currState.lgn_af  = int(lgn['af'])
-        #         currState.lgn_au  = int(lgn['au'])
-        #         currState.lgn_ua  = int(lgn['ua'])
-        #         # print 'xrootd >>>',st
-        #     elif sw=='sched':
-        #         data['sched_in_queue']  = int(st['inq'])
-        #         data['sched_threads']  = int(st['threads'])
-        #         data['sched_idle_threads']  = int(st['idle'])
-        #         # print 'sched >>>>',st
-        #     elif sw=='sgen':
-        #         data['sgen_as']  = int(st['as'])
-        #         # data['sgen_et']  = int(st['et']) # always 0
         #         data['cend'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
-        #     # elif sw=='ofs':
-        #         #print 'ofs    >>>',st
-        #
-        #
-        # q.task_done()
-        #
-        # if (hasPrev):
-        #     if (currState.tod<previousState.tod):
-        #         print "package came out of order. Skipping the message."
-        #         continue
-        #     data['link_total'] = currState.link_total - previousState.link_total
-        #     data['link_in']    = currState.link_in    - previousState.link_in
-        #     data['link_out']   = currState.link_out   - previousState.link_out
-        #     data['link_ctime'] = currState.link_ctime - previousState.link_ctime
-        #     data['link_tmo']   = currState.link_tmo   - previousState.link_tmo
-        #     # data['link_stall'] = currState.link_stall - previousState.link_stall
-        #     # data['link_sfps']  = currState.link_sfps  - previousState.link_sfps
-        #     data['proc_usr']  = currState.proc_usr  - previousState.proc_usr
-        #     data['proc_sys']  = currState.proc_sys  - previousState.proc_sys
-        #     data['xrootd_errors'] = currState.xrootd_err - previousState.xrootd_err
-        #     data['xrootd_delays'] = currState.xrootd_dly - previousState.xrootd_dly
-        #     data['xrootd_redirections'] = currState.xrootd_rdr - previousState.xrootd_rdr
-        #     data['ops_open'] = currState.ops_open - previousState.ops_open
-        #     data['ops_preread']   = currState.ops_pr   - previousState.ops_pr
-        #     data['ops_read']   = currState.ops_rd   - previousState.ops_rd
-        #     data['ops_readv']   = currState.ops_rv   - previousState.ops_rv
-        #     data['ops_sync'] = currState.ops_sync - previousState.ops_sync
-        #     data['ops_write']   = currState.ops_wr   - previousState.ops_wr
-        #     data['login_attempts']  = currState.lgn_num  - previousState.lgn_num
-        #     data['authentication_failures']   = currState.lgn_af   - previousState.lgn_af
-        #     data['authentication_successes']   = currState.lgn_au   - previousState.lgn_au
-        #     data['unauthenticated_successes']   = currState.lgn_ua   - previousState.lgn_ua
-        #     aLotOfData.append(data)
-        # else:
-        #     if addr not in AllState:
-        #         AllState[addr]={}
-        #
-        # AllState[addr][pid]=currState
-        #
-        # # print "current state ----"
-        # # currState.prnt()
         
         if len(aLotOfData)>50:
             try:
