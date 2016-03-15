@@ -108,35 +108,36 @@ def eventCreator():
         
         
         if (h.code=='f'):
-            FileStruct=decoding.MonFile(d)
-            print FileStruct
-            d=d[FileStruct.recSize:]
-            for i in range(FileStruct.total_recs): # first one is always TOD
+            TimeRecord=decoding.MonFile(d) # first one is always TOD
+            print TimeRecord
+            d=d[TimeRecord.recSize:]
+            sid=(h.server_start << 32) + TimeRecord.sid
+            for i in range(TimeRecord.total_recs): 
                 hd=decoding.MonFile(d)
                 d=d[hd.recSize:]
                 if i<1000: print i, hd
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        if len(AllUsers[h.server_start][hd.userID]) > 1:
+                        if len(AllUsers[sid][hd.userID]) > 1:
                             print "Non unique user. Don't know which one disconnected. Will remove all."
-                        print "Disconnecting: ", AllUsers[h.server_start][hd.userID]
-                        del AllUsers[h.server_start][hd.userID]
+                        print "Disconnecting: ", AllUsers[sid][hd.userID]
+                        del AllUsers[sid][hd.userID]
                     except KeyError:
                         print 'User that disconnected was unknown.'
                 elif isinstance(hd, decoding.fileOpen):
-                    if h.server_start not in AllTransfers:
-                        AllTransfers[h.server_start]={}
-                    if hd.userID not in AllTransfers[h.server_start]:
-                        AllTransfers[h.server_start][hd.userID]={}
-                    AllTransfers[h.server_start][hd.userID][hd.fileID]=hd
+                    if sid not in AllTransfers:
+                        AllTransfers[sid]={}
+                    if hd.userID not in AllTransfers[sid]:
+                        AllTransfers[sid][hd.userID]={}
+                    AllTransfers[sid][hd.userID][hd.fileID]=hd
                 elif isinstance(hd, decoding.fileClose):
-                    if h.server_start in AllTransfers:
+                    if sid in AllTransfers:
                         found=0
-                        for u in AllTransfers[h.server_start]:
-                            if hd.fileID in AllTransfers[h.server_start][u]:
+                        for u in AllTransfers[sid]:
+                            if hd.fileID in AllTransfers[sid][u]:
                                 found=1
-                                aLotOfData.append( addRecord(h.server_start,u,hd.fileID) )
-                                del AllTransfers[h.server_start][u][hd.fileID]
+                                aLotOfData.append( addRecord(sid,u,hd.fileID) )
+                                del AllTransfers[sid][u][hd.fileID]
                                 break
                         if not found:
                             print "file to close NOT found."
@@ -251,7 +252,7 @@ while (True):
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
         print "All Servers:", AllServers
-        print "All Users:", AllUsers
+        print "All Users:"
         for tos in AllUsers:
             print tos 
             for uid in AllUsers[tos]:
