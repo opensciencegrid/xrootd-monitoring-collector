@@ -362,8 +362,8 @@ while (True):
         for tos, value in AllServers.iteritems(): 
             print tos, value
         print "All Users:"
-        for tos, value in AllUsers.iteritems():
-            for userID,userInfo in value:
-                print tos, userID, userInfo 
+        for tos in AllUsers:
+            for userID in AllUsers[tos]:
+                print tos, userID, AllUsers[tos][userID]
         print "All Transfers:"
         for key, value in AllTransfers.iteritems() : print key, value
