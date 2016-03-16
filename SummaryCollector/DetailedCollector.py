@@ -17,7 +17,6 @@ from elasticsearch import helpers
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
 
-SUMMARY_PORT = 9931
 DETAILED_PORT = 9930
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
@@ -37,21 +36,31 @@ AllTransfers={}
 AllServers={}
 AllUsers={}
 
-def addRecord(sid,userID,fileID):
+def addRecord(sid,userID,fileID,timestamp):
     rec={
         '_type': 'detailed'
     }
+    rec['timestamp']=timestamp
+    
     if sid in AllServers:
-        rec['server'] = AllServers[sid]
+        s = AllServers[sid]
+        rec['serverID'] = sid
+        rec['server'] = s.addr
+        rec['site'] = s.site
     else:
         print 'server still not identified.' 
         
     try:
-        rec['user'] = AllUsers[sid][userID]
-        rec['file'] = AllTransfers[sid][userID][fileID]
+        u = AllUsers[sid][userID]
+        rec['user']=u.username
+        rec['host']=u.host
     except KeyError:
         print decoding.bcolors.WARNING + 'user ' + str(userID) + ' or file info ' + str(fileID) + ' missing.' + decoding.bcolors.ENDC
-        
+
+    f = AllTransfers[sid][userID][fileID]
+    rec['filename']=f.fileName
+    rec['filesize']=f.fileSize
+    
     d = datetime.now()
     ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
     rec['_index']=ind
@@ -82,7 +91,7 @@ def eventCreator():
         
         if (h.code=='f'):
             TimeRecord=decoding.MonFile(d) # first one is always TOD
-            print TimeRecord
+            if debug: print TimeRecord
             d=d[TimeRecord.recSize:]
             sid=(h.server_start << 32) + TimeRecord.sid
             for i in range(TimeRecord.total_recs): 
@@ -111,7 +120,7 @@ def eventCreator():
                         for u in AllTransfers[sid]:
                             if hd.fileID in AllTransfers[sid][u]:
                                 found=1
-                                aLotOfData.append( addRecord(sid,u,hd.fileID) )
+                                aLotOfData.append( addRecord(sid, u, hd.fileID, TimeRecord.tEnd) )
                                 del AllTransfers[sid][u][hd.fileID]
                                 if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
                                 break
@@ -139,7 +148,7 @@ def eventCreator():
             sid=(h.server_start << 32) + 0 #userInfo.sid - this has to go in place of 0 when the new version of server is there.
             
             if (h.code=='='):
-                serverInfo=decoding.serverInfo(rest)
+                serverInfo=decoding.serverInfo(rest,addr)
                 if sid not in AllServers:
                     AllServers[sid]=serverInfo
                     print 'Adding new server info: ', serverInfo
@@ -162,7 +171,7 @@ def eventCreator():
                 if sid not in AllUsers:
                     AllUsers[sid]={}
                 if mm.dictID not in AllUsers[sid]:
-                    AllUsers[sid][mm.dictID]=authorizationInfo
+                    AllUsers[sid][mm.dictID]=userInfo #authorizationInfo
                     #print "Adding new user:", authorizationInfo
                 else:
                     print decoding.bcolors.FAIL + "There is a problem. We already have this combination of sid and userID." + decoding.bcolors.ENDC
@@ -206,13 +215,18 @@ def eventCreator():
                 print 'TransportError ', e
             except helpers.BulkIndexError as e:
                 print e[0]
+                errcount=0
                 for i in e[1]:
+                    errcount+=1
+                    if errcount>5: break
                     print i
             except:
                 print 'Something seriously wrong happened. '
 
 
 
+
+        
 
 lastReconnectionTime=0
 es = GetESConnection(lastReconnectionTime)

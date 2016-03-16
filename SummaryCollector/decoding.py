@@ -6,7 +6,7 @@ mapheader = namedtuple("mapheader",["dictID","info"])
 
 userid   = namedtuple("userid",["username","pid","sid","host"])
 authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
-srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site"])
+srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site","addr"])
 prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
@@ -39,14 +39,14 @@ def authorizationInfo(message):
             elif kv[0]=='m': m =kv[1]
     return authinfo(ap,dn,hn,on,rn,gn,m)
 
-def serverInfo(message):
+def serverInfo(message, addr):
     r=message.split('&')
     pgm =r[1].split('=')[1]
     ver =r[2].split('=')[1]
     inst=r[3].split('=')[1]
     port=r[4].split('=')[1]
     site=r[5].split('=')[1]
-    return srvinfo(pgm,ver,inst,port,site)
+    return srvinfo(pgm,ver,inst,port,site, addr)
     
 def purgeInfo(message):
     xfn,rest=message.split('\n')
