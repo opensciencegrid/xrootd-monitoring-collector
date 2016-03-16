@@ -33,42 +33,6 @@ def GetESConnection(lastReconnectionTime):
     es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
     return es
 
-class state:
-    def __init__(self):
-        self.pid = -1
-        self.tod = 0  #this will be used to check if the packet came out of order.
-        #self.link_num  =0 # Current connections.
-        #self.link_maxn =0 # Maximum number of simultaneous connections. it is cumulative but not interesting for ES.
-        self.link_total=0 # Connections since startup
-        self.link_in   =0 # Bytes received.
-        self.link_out  =0 # Bytes sent
-        self.link_ctime=0 # Cumulative number of connect seconds. ctime/tot gives the average session time per connection
-        self.link_tmo  =0 # timouts
-        # self.link_stall=0 # Number of times partial data was received.
-        # self.link_sfps =0 # Partial sendfile() operations.
-        self.proc_usr  = 0
-        self.proc_sys  = 0
-        self.xrootd_err = 0
-        self.xrootd_dly = 0
-        self.xrootd_rdr = 0
-        self.ops_open = 0
-        self.ops_pr   = 0
-        self.ops_rd   = 0
-        self.ops_rv   = 0
-        self.ops_sync = 0
-        self.ops_wr   = 0
-        self.lgn_num  = 0
-        self.lgn_af   = 0
-        self.lgn_au   = 0
-        self.lgn_ua   = 0
-        
-        
-    def prnt(self):
-        print "pid:",self.pid, "\ttotal:",self.link_total, "\tin:",self.link_in, "\tout:",self.link_out, "\tctime:",self.link_ctime, "\ttmo:",self.link_tmo
-        
-
-
-
 AllTransfers={}
 AllServers={}
 AllUsers={}
@@ -86,7 +50,7 @@ def addRecord(sid,userID,fileID):
         rec['user'] = AllUsers[sid][userID]
         rec['file'] = AllTransfers[sid][userID][fileID]
     except KeyError:
-        print 'user or file info missing.'
+        print decoding.bcolors.WARNING + 'user or file info missing.' + decoding.bcolors.ENDC
         
     d = datetime.now()
     ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
@@ -128,7 +92,7 @@ def eventCreator():
                         print "Disconnecting: ", AllUsers[sid][hd.userID]
                         del AllUsers[sid][hd.userID]
                     except KeyError:
-                        print 'User that disconnected was unknown.'
+                        print decoding.bcolors.WARNING + 'User that disconnected was unknown.' + decoding.bcolors.ENDC
                 
                 elif isinstance(hd, decoding.fileOpen):
                     if sid not in AllTransfers:
@@ -145,11 +109,12 @@ def eventCreator():
                                 found=1
                                 aLotOfData.append( addRecord(sid,u,hd.fileID) )
                                 del AllTransfers[sid][u][hd.fileID]
+                                if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
                                 break
                         if not found:
-                            print decoding.bcolors.WARNING +"file to close not found." + decoding.bcolors.ENDC
+                            print decoding.bcolors.WARNING + "file to close not found." + decoding.bcolors.ENDC
                     else:
-                        print "file closed on server that's not found"
+                        print decoding.bcolors.WARNING + "file closed on server that's not found" + decoding.bcolors.ENDC
                         AllTransfers[sid]={}
                                 
                 
@@ -196,7 +161,7 @@ def eventCreator():
                     AllUsers[sid][mm.dictID]=authorizationInfo
                     #print "Adding new user:", authorizationInfo
                 else:
-                    print "There is a problem. We already have this combination of sid and userID."
+                    print decoding.bcolors.FAIL + "There is a problem. We already have this combination of sid and userID." + decoding.bcolors.ENDC
                     
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
@@ -205,9 +170,6 @@ def eventCreator():
         
         
         print '------------------------------------------------'
-        
-        
-
         
         q.task_done()
         continue
@@ -275,4 +237,10 @@ while (True):
             print sid 
             for uid in AllUsers[sid]:
                 print uid, AllUsers[sid][uid]
-        print "All Transfers:", AllTransfers
+        print "All Transfers:"
+        for sid in AllTransfers:
+            print sid
+            for uid in AllTransfers[sid]:
+                print uid
+                for fid in AllTransfers[sid][uid]:
+                    print fid, AllTransfers[sid][uid][fid]
