@@ -224,6 +224,7 @@ for i in range(3):
      t.start()
      
 nMessages=0
+debug=False
 while (True):
     message, addr = sock.recvfrom(65536) # buffer size is 1024 bytes
     # print ("received message:", message, "from:", addr)
@@ -232,15 +233,16 @@ while (True):
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
         print "All Servers:", AllServers
-        print "All Users:"
-        for sid in AllUsers:
-            print sid 
-            for uid in AllUsers[sid]:
-                print uid, AllUsers[sid][uid]
-        print "All Transfers:"
-        for sid in AllTransfers:
-            print sid
-            for uid in AllTransfers[sid]:
-                print uid
-                for fid in AllTransfers[sid][uid]:
-                    print fid, AllTransfers[sid][uid][fid]
+        if debug:
+            print "All Users:"
+            for sid in AllUsers:
+                print sid, len(AllUsers[sid]) 
+                    for uid in AllUsers[sid]:  # enabling this can crash it if size change during iteration
+                        print uid, AllUsers[sid][uid]
+            print "All Transfers:"
+            for sid in AllTransfers:
+                print sid
+                for uid in AllTransfers[sid]:
+                    print uid
+                    for fid in AllTransfers[sid][uid]:
+                        print fid, AllTransfers[sid][uid][fid]
