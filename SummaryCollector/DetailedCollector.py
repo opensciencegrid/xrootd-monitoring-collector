@@ -55,7 +55,7 @@ def addRecord(sid,userID,fileID,timestamp):
         rec['user']=u.username
         rec['host']=u.host
     except KeyError:
-        print decoding.bcolors.WARNING + 'user ' + str(userID) + ' or file info ' + str(fileID) + ' missing.' + decoding.bcolors.ENDC
+        print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
 
     f = AllTransfers[sid][userID][fileID]
     rec['filename']=f.fileName
@@ -115,14 +115,13 @@ def eventCreator():
                     AllTransfers[sid][hd.userID][hd.fileID]=hd
                     
                 elif isinstance(hd, decoding.fileClose):
-                    print i, hd
+                    # print i, hd
                     if sid in AllTransfers:
                         found=0
                         for u in AllTransfers[sid]:
                             if hd.fileID in AllTransfers[sid][u]:
                                 found=1
                                 rec = addRecord(sid, u, hd.fileID, TimeRecord.tEnd)
-                                print rec
                                 aLotOfData.append( rec  )
                                 del AllTransfers[sid][u][hd.fileID]
                                 if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
