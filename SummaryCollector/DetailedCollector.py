@@ -137,7 +137,7 @@ def eventCreator():
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
                 if sid not in AllServers:
-                    AllServers[sid]==serverInfo
+                    AllServers[sid]=serverInfo
                     print 'Adding new server info: ', serverInfo
                     
             elif (h.code=='d'):
