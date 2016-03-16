@@ -50,7 +50,7 @@ def addRecord(sid,userID,fileID):
         rec['user'] = AllUsers[sid][userID]
         rec['file'] = AllTransfers[sid][userID][fileID]
     except KeyError:
-        print decoding.bcolors.WARNING + 'user or file info missing.' + decoding.bcolors.ENDC
+        print decoding.bcolors.WARNING + 'user ' + str(userID) + 'or file info ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
         
     d = datetime.now()
     ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
