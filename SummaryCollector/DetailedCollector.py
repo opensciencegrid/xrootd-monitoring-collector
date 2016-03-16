@@ -120,7 +120,9 @@ def eventCreator():
                         for u in AllTransfers[sid]:
                             if hd.fileID in AllTransfers[sid][u]:
                                 found=1
-                                aLotOfData.append( addRecord(sid, u, hd.fileID, TimeRecord.tEnd) )
+                                rec = addRecord(sid, u, hd.fileID, TimeRecord.tEnd)
+                                print rec
+                                aLotOfData.append( rec  )
                                 del AllTransfers[sid][u][hd.fileID]
                                 if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
                                 break
