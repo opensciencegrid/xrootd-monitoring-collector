@@ -146,13 +146,15 @@ def eventCreator():
                     else:
                         print "file closed on server that's not found"
                         AllTransfers[sid]={}
-                    
-            
+                                
                 
         elif (h.code=='r'):
             print "r - stream message."
+            
         elif (h.code=='t'):
             print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
+            
+            
         else: 
             infolen=len(d)-4
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
@@ -160,37 +162,42 @@ def eventCreator():
             userInfo=decoding.userInfo(u)
             print mm.dictID, userInfo
             
+            sid=(h.server_start << 32) + 0 #userInfo.sid - this has to go in place of 0 when the new version of server is there.
+            
             if (h.code=='='):
                 serverInfo=decoding.serverInfo(rest)
-                if h.server_start not in AllServers:
-                    AllServers[h.server_start]={}
-                if userInfo.sid not in AllServers[h.server_start]:
-                    AllServers[h.server_start][userInfo.sid]=serverInfo
+                if sid not in AllServers:
+                    AllServers[sid]==serverInfo
                     print 'Adding new server info: ', serverInfo
+                    
             elif (h.code=='d'):
                 path=rest
                 # print 'path: ', path
                 print 'path information. Server started at', h[3], 'should remove files from the monitoring configuration.'
+                
             elif (h.code=='i'):
                 appinfo=rest
                 print 'appinfo:', appinfo
+                
             elif (h.code=='p'):
                 purgeInfo=decoding.purgeInfo(rest)
                 print purgeInfo
+                
             elif (h.code=='u'):
                 authorizationInfo=decoding.authorizationInfo(rest)
-                if h.server_start not in AllUsers:
-                    AllUsers[h.server_start]={}
-                if mm.dictID not in AllUsers[h.server_start]:
-                    AllUsers[h.server_start][mm.dictID]={}
-                if userInfo.sid not in AllUsers[h.server_start][mm.dictID]:
-                    AllUsers[h.server_start][mm.dictID][userInfo.sid]=authorizationInfo
-                    print "Adding new user:",authorizationInfo
+                if sid not in AllUsers:
+                    AllUsers[sid]={}
+                if mm.dictID not in AllUsers[sid]:
+                    AllUsers[sid][mm.dictID]=authorizationInfo
+                    #print "Adding new user:", authorizationInfo
                 else:
-                    print "There is a problem. We already have this combination of userID, server start time and server id."
+                    print "There is a problem. We already have this combination of sid and userID."
+                    
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
                 # print xfrInfo
+        
+        
         
         print '------------------------------------------------'
         
@@ -259,10 +266,8 @@ while (True):
         print ("messages received:", nMessages, " qsize:", q.qsize())
         print "All Servers:", AllServers
         print "All Users:"
-        for tos in AllUsers:
-            print tos 
-            for uid in AllUsers[tos]:
-                print uid, AllUsers[tos][uid]
-                for sid in AllUsers[tos][uid]:
-                    print sid,AllUsers[tos][uid][sid]
+        for sid in AllUsers:
+            print sid 
+            for uid in AllUsers[sid]:
+                print uid, AllUsers[sid][uid]
         print "All Transfers:", AllTransfers
