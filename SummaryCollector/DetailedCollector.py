@@ -115,6 +115,7 @@ def eventCreator():
                     AllTransfers[sid][hd.userID][hd.fileID]=hd
                     
                 elif isinstance(hd, decoding.fileClose):
+                    print i, hd
                     if sid in AllTransfers:
                         found=0
                         for u in AllTransfers[sid]:
