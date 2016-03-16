@@ -73,16 +73,21 @@ AllTransfers={}
 AllServers={}
 AllUsers={}
 
-def addRecord(server_start,userID,fileID):
+def addRecord(sid,userID,fileID):
     rec={
         '_type': 'detailed'
     }
+    if sid in AllServers:
+        rec['server'] = AllServers[sid]
+    else:
+        print 'server still not identified.' 
+        
     try:
-        rec['server'] = AllServers[server_start]
-        rec['user'] = AllUsers[server_start][userID]
-        rec['file'] = AllTransfers[server_start][userID][fileID]
+        rec['user'] = AllUsers[sid][userID]
+        rec['file'] = AllTransfers[sid][userID][fileID]
     except KeyError:
-        print 'Server, user or file info missing.'
+        print 'user or file info missing.'
+        
     d = datetime.now()
     ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
     rec['_index']=ind
