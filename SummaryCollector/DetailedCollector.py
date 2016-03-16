@@ -71,7 +71,11 @@ def eventCreator():
         #     q.task_done()
         #     continue
             
-        if debug: print h
+        if debug:
+            print '------------------------------------------------' 
+            print h
+        else:
+            print '*',
         
         d=d[8:]
         
@@ -89,7 +93,7 @@ def eventCreator():
                 
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        print "Disconnecting: ", AllUsers[sid][hd.userID]
+                        #print "Disconnecting: ", AllUsers[sid][hd.userID]
                         del AllUsers[sid][hd.userID]
                     except KeyError:
                         print decoding.bcolors.WARNING + 'User that disconnected was unknown.' + decoding.bcolors.ENDC
@@ -169,10 +173,9 @@ def eventCreator():
         
         
         
-        print '------------------------------------------------'
         
         q.task_done()
-        continue
+        #continue
         
         # s=m['statistics'] # top level
         # pgm         = s['@pgm'] # program name
