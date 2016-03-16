@@ -142,7 +142,7 @@ def eventCreator():
                                 del AllTransfers[sid][u][hd.fileID]
                                 break
                         if not found:
-                            print "file to close NOT found."
+                            print decoding.bcolors.WARNING +"file to close not found." + decoding.bcolors.ENDC
                     else:
                         print "file closed on server that's not found"
                         AllTransfers[sid]={}
