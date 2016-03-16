@@ -40,7 +40,7 @@ def addRecord(sid,userID,fileID,timestamp):
     rec={
         '_type': 'detailed'
     }
-    rec['timestamp']=timestamp
+    rec['timestamp']=timestamp*1000
     
     if sid in AllServers:
         s = AllServers[sid]
@@ -48,7 +48,7 @@ def addRecord(sid,userID,fileID,timestamp):
         rec['server'] = s.addr
         rec['site'] = s.site
     else:
-        print 'server still not identified.' 
+        print 'server still not identified:',sid 
         
     try:
         u = AllUsers[sid][userID]
