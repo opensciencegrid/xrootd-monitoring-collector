@@ -115,21 +115,23 @@ def eventCreator():
             for i in range(TimeRecord.total_recs): 
                 hd=decoding.MonFile(d)
                 d=d[hd.recSize:]
-                if i<1000: print i, hd
+                
+                print i, hd
+                
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        if len(AllUsers[sid][hd.userID]) > 1:
-                            print "Non unique user. Don't know which one disconnected. Will remove all."
                         print "Disconnecting: ", AllUsers[sid][hd.userID]
                         del AllUsers[sid][hd.userID]
                     except KeyError:
                         print 'User that disconnected was unknown.'
+                
                 elif isinstance(hd, decoding.fileOpen):
                     if sid not in AllTransfers:
                         AllTransfers[sid]={}
                     if hd.userID not in AllTransfers[sid]:
                         AllTransfers[sid][hd.userID]={}
                     AllTransfers[sid][hd.userID][hd.fileID]=hd
+                    
                 elif isinstance(hd, decoding.fileClose):
                     if sid in AllTransfers:
                         found=0
@@ -143,6 +145,10 @@ def eventCreator():
                             print "file to close NOT found."
                     else:
                         print "file closed on server that's not found"
+                        AllTransfers[sid]={}
+                    
+            
+                
         elif (h.code=='r'):
             print "r - stream message."
         elif (h.code=='t'):
