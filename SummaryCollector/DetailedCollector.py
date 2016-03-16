@@ -36,7 +36,7 @@ AllTransfers={}
 AllServers={}
 AllUsers={}
 
-def addRecord(sid,userID,fileID,timestamp):
+def addRecord(sid,userID,fileClose,timestamp):
     rec={
         '_type': 'detailed'
     }
@@ -57,9 +57,12 @@ def addRecord(sid,userID,fileID,timestamp):
     except KeyError:
         print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
 
-    f = AllTransfers[sid][userID][fileID]
-    rec['filename']=f.fileName
-    rec['filesize']=f.fileSize
+    f = AllTransfers[sid][userID][fileClose.fileID]
+    rec['filename'] = f.fileName
+    rec['filesize'] = f.fileSize
+    rec['read']     = fileClose.read
+    rec['readv']    = fileClose.readv
+    rec['write']    = fileClose.write
     
     d = datetime.now()
     ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
@@ -121,7 +124,7 @@ def eventCreator():
                         for u in AllTransfers[sid]:
                             if hd.fileID in AllTransfers[sid][u]:
                                 found=1
-                                rec = addRecord(sid, u, hd.fileID, TimeRecord.tEnd)
+                                rec = addRecord(sid, u, hd, TimeRecord.tEnd)
                                 aLotOfData.append( rec  )
                                 del AllTransfers[sid][u][hd.fileID]
                                 if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
