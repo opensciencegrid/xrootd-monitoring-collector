@@ -67,11 +67,11 @@ def eventCreator():
         
         h=decoding.header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
         
-        if h[3]!=1457990510:
-            q.task_done()
-            continue
+        # if h[3]!=1457990510:
+        #     q.task_done()
+        #     continue
             
-        print h
+        if debug: print h
         
         d=d[8:]
         
@@ -85,7 +85,7 @@ def eventCreator():
                 hd=decoding.MonFile(d)
                 d=d[hd.recSize:]
                 
-                print i, hd
+                if debug: print i, hd
                 
                 if isinstance(hd, decoding.fileDisc):
                     try:
@@ -130,7 +130,7 @@ def eventCreator():
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
-            print mm.dictID, userInfo
+            if debug: print mm.dictID, userInfo
             
             sid=(h.server_start << 32) + 0 #userInfo.sid - this has to go in place of 0 when the new version of server is there.
             
