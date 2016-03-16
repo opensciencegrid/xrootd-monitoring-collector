@@ -237,8 +237,8 @@ while (True):
             print "All Users:"
             for sid in AllUsers:
                 print sid, len(AllUsers[sid]) 
-                    for uid in AllUsers[sid]:  # enabling this can crash it if size change during iteration
-                        print uid, AllUsers[sid][uid]
+                for uid in AllUsers[sid]:  # enabling this can crash it if size change during iteration
+                    print uid, AllUsers[sid][uid]
             print "All Transfers:"
             for sid in AllTransfers:
                 print sid
