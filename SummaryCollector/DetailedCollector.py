@@ -185,29 +185,7 @@ def eventCreator():
                 xfrInfo=decoding.xfrInfo(rest)
                 # print xfrInfo
         
-        
-        
-        
         q.task_done()
-        #continue
-        
-        # s=m['statistics'] # top level
-        # pgm         = s['@pgm'] # program name
-        # #print "PGM >>> ", pgm
-        # if (pgm != 'xrootd'):
-        #     q.task_done()
-        #     continue
-        #
-        # tos         = int(s['@tos'])  # Unix time when the program was started.
-        # tod         = int(s['@tod'])  # Unix time when statistics gathering started.
-        # pid         = int(s['@pid'])
-        #
-        # data['timestamp'] = datetime.utcfromtimestamp(float(tod)).isoformat()
-        # data['tos'] = datetime.utcfromtimestamp(float(tos)).isoformat()
-        # data['cstart'] = datetime.utcfromtimestamp(float(tod)).isoformat()
-        # data['version']  = s['@ver'] # version name of the servers
-        # data['site'] = s['@site'] # site name specified in the configuration
-        #         data['cend'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
         
         if len(aLotOfData)>50:
             try:
@@ -227,10 +205,6 @@ def eventCreator():
                     print i
             except:
                 print 'Something seriously wrong happened. '
-
-
-
-
         
 
 lastReconnectionTime=0
@@ -254,8 +228,8 @@ while (True):
     nMessages+=1
     if (nMessages%100==0):
         print ("messages received:", nMessages, " qsize:", q.qsize())
-        print "All Servers:", AllServers
         if debug:
+            print "All Servers:", AllServers
             print "All Users:"
             for sid in AllUsers:
                 print sid, len(AllUsers[sid]) 

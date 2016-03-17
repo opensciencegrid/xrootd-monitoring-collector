@@ -18,10 +18,15 @@ fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
 ops       = namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
 
 def userInfo(message):
-    prot,c = message.split('/',1)
-    user,c  =c.split('.',1)
-    pid,c   =c.split(':',1)
-    sid,host=c.split('@',1)
+    try:
+        prot,c = message.split('/',1)
+        user,c  =c.split('.',1)
+        pid,c   =c.split(':',1)
+        sid,host=c.split('@',1)
+    except ValueError:
+        print 'problem with user info: ', message
+        user=host='Anon'
+        pid=sid='123'
     return userid(user,int(pid),int(sid),host)
 
 def authorizationInfo(message):
