@@ -208,7 +208,7 @@ def eventCreator():
         if len(aLotOfData)>50:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
-                logger.info('%s  inserted: %i  errors: %i',threading.current_thread().name, res[0], res[1])
+                logger.info('%s  inserted: %i  errors: %s',threading.current_thread().name, res[0], str(res[1]))
                 aLotOfData=[]
             except es_exceptions.ConnectionError as e:
                 logger.error('ConnectionError %s', e)
