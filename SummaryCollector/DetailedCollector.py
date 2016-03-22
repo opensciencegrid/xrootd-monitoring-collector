@@ -13,6 +13,16 @@ from datetime import datetime
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from elasticsearch import helpers
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+handler = logging.FileHandler('detailed.log')
+handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+# logger.addHandler(handler)
 
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
@@ -26,9 +36,9 @@ def GetESConnection(lastReconnectionTime):
     if ( time.time()-lastReconnectionTime < 60 ):
         return
     lastReconnectionTime=time.time()
-    print "make sure we are connected right..."
+    logger.info('make sure we are connected right...')
     res = requests.get('http://uct2-es-door.mwt2.org:9200')
-    print(res.content)
+    logger.info(res.content)
     es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
     return es
 
@@ -48,14 +58,15 @@ def addRecord(sid,userID,fileClose,timestamp):
         rec['server'] = s.addr
         rec['site'] = s.site
     else:
-        print 'server still not identified:',sid 
+        logger.warning('server still not identified: %i',sid) 
         
     try:
         u = AllUsers[sid][userID]
         rec['user']=u.username
         rec['host']=u.host
     except KeyError:
-        print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
+        logger.error( '%suser %i missing.%s',decoding.bcolors.WARNING, userID, decoding.bcolors.ENDC)
+        # print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
 
     f = AllTransfers[sid][userID][fileClose.fileID]
     rec['filename'] = f.fileName
@@ -82,33 +93,37 @@ def eventCreator():
         # if h[3]!=1457990510:
         #     q.task_done()
         #     continue
-            
-        if debug:
-            print '------------------------------------------------' 
-            print h
-        else:
-            print '*',
+        
+        # if debug:
+        #     print '------------------------------------------------'
+        #     print h
+        # else:
+        #     print '*',
+                        
+        logger.debug(h)    
         
         d=d[8:]
         
         
         if (h.code=='f'):
             TimeRecord=decoding.MonFile(d) # first one is always TOD
-            if debug: print TimeRecord
+            logger.debug(TimeRecord)
             d=d[TimeRecord.recSize:]
             sid=(h.server_start << 32) + TimeRecord.sid
             for i in range(TimeRecord.total_recs): 
                 hd=decoding.MonFile(d)
                 d=d[hd.recSize:]
                 
-                if debug: print i, hd
+                logger.debug('%i %s', i, hd)
+                # if debug: print i, hd
                 
                 if isinstance(hd, decoding.fileDisc):
                     try:
                         #print "Disconnecting: ", AllUsers[sid][hd.userID]
                         del AllUsers[sid][hd.userID]
                     except KeyError:
-                        print decoding.bcolors.WARNING + 'User that disconnected was unknown.' + decoding.bcolors.ENDC
+                        logger.error('%sUser that disconnected was unknown.%s', decoding.bcolors.WARNING, decoding.bcolors.ENDC)
+                        #print decoding.bcolors.WARNING + 'User that disconnected was unknown.' + decoding.bcolors.ENDC
                 
                 elif isinstance(hd, decoding.fileOpen):
                     if sid not in AllTransfers:
@@ -118,7 +133,7 @@ def eventCreator():
                     AllTransfers[sid][hd.userID][hd.fileID]=hd
                     
                 elif isinstance(hd, decoding.fileClose):
-                    # print i, hd
+                    logger.debug('%i %s', i, hd)
                     if sid in AllTransfers:
                         found=0
                         for u in AllTransfers[sid]:
@@ -130,17 +145,20 @@ def eventCreator():
                                 if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
                                 break
                         if not found:
-                            print decoding.bcolors.WARNING + "file to close not found." + decoding.bcolors.ENDC
+                            logger.error("%sfile to close not found.%s", decoding.bcolors.WARNING, decoding.bcolors.ENDC)
+                            # print decoding.bcolors.WARNING + "file to close not found." + decoding.bcolors.ENDC
                     else:
-                        print decoding.bcolors.WARNING + "file closed on server that's not found" + decoding.bcolors.ENDC
+                        logger.error("%sfile closed on server that's not found%s", decoding.bcolors.WARNING, decoding.bcolors.ENDC)
+                        # print decoding.bcolors.WARNING + "file closed on server that's not found" + decoding.bcolors.ENDC
                         AllTransfers[sid]={}
                                 
                 
         elif (h.code=='r'):
-            print "r - stream message."
+            logger.info("r - stream message.")
             
         elif (h.code=='t'):
-            print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
+            logger.warning("t - stream message. Server started at %i should remove files, io, iov from the monitoring configuration.", h[3])
+            # print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
             
             
         else: 
@@ -148,7 +166,7 @@ def eventCreator():
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             (u,rest) = mm.info.split('\n',1)
             userInfo=decoding.userInfo(u)
-            if debug: print mm.dictID, userInfo
+            logger.debug('%i %s', mm.dictID, userInfo)
             
             sid=(h.server_start << 32) + 0 #userInfo.sid - this has to go in place of 0 when the new version of server is there.
             
@@ -156,20 +174,20 @@ def eventCreator():
                 serverInfo=decoding.serverInfo(rest,addr)
                 if sid not in AllServers:
                     AllServers[sid]=serverInfo
-                    print 'Adding new server info: ', serverInfo
+                    logger.info('Adding new server info: %s', serverInfo)
                     
             elif (h.code=='d'):
                 path=rest
                 # print 'path: ', path
-                print 'path information. Server started at', h[3], 'should remove files from the monitoring configuration.'
+                logger.warning('path information. Server started at %i should remove files from the monitoring configuration.', h[3])
                 
             elif (h.code=='i'):
                 appinfo=rest
-                print 'appinfo:', appinfo
+                logger.info('appinfo:%s', appinfo)
                 
             elif (h.code=='p'):
                 purgeInfo=decoding.purgeInfo(rest)
-                print purgeInfo
+                logger.info('purgeInfo:%s', purgeInfo)
                 
             elif (h.code=='u'):
                 authorizationInfo=decoding.authorizationInfo(rest)
@@ -177,9 +195,9 @@ def eventCreator():
                     AllUsers[sid]={}
                 if mm.dictID not in AllUsers[sid]:
                     AllUsers[sid][mm.dictID]=userInfo #authorizationInfo
-                    #print "Adding new user:", authorizationInfo
+                    logger.debug("Adding new user:%s", authorizationInfo)
                 else:
-                    print decoding.bcolors.FAIL + "There is a problem. We already have this combination of sid and userID." + decoding.bcolors.ENDC
+                    logger.warning("%sThere is a problem. We already have this combination of sid and userID.%s",decoding.bcolors.FAIL, decoding.bcolors.ENDC)
                     
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
@@ -190,21 +208,21 @@ def eventCreator():
         if len(aLotOfData)>50:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
-                print threading.current_thread().name, "\t inserted:",res[0], '\tErrors:',res[1]
+                logger.info('%s  inserted: %i  errors: %i',threading.current_thread().name, res[0], res[1])
                 aLotOfData=[]
             except es_exceptions.ConnectionError as e:
-                print 'ConnectionError ', e
+                logger.error('ConnectionError %s', e)
             except es_exceptions.TransportError as e:
-                print 'TransportError ', e
+                logger.error('TransportError %s ', e)
             except helpers.BulkIndexError as e:
-                print e[0]
+                logger.error('%s',e[0])
                 errcount=0
                 for i in e[1]:
                     errcount+=1
                     if errcount>5: break
-                    print i
+                    logger.error('%s',i)
             except:
-                print 'Something seriously wrong happened. '
+                logger.error('Something seriously wrong happened.')
         
 
 lastReconnectionTime=0
@@ -227,7 +245,7 @@ while (True):
     q.put([message,addr[0]])
     nMessages+=1
     if (nMessages%100==0):
-        print ("messages received:", nMessages, " qsize:", q.qsize())
+        logger.info("messages received: %i   qsize: %i", nMessages, q.qsize())
         if debug:
             print "All Servers:", AllServers
             print "All Users:"
