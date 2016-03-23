@@ -174,7 +174,7 @@ def eventCreator():
                 serverInfo=decoding.serverInfo(rest,addr)
                 if sid not in AllServers:
                     AllServers[sid]=serverInfo
-                    logger.info('Adding new server info: %s', serverInfo)
+                    logger.info('Adding new server info: %s started at %i', serverInfo, h.server_start)
                     
             elif (h.code=='d'):
                 path=rest
@@ -197,7 +197,7 @@ def eventCreator():
                     AllUsers[sid][mm.dictID]=userInfo #authorizationInfo
                     logger.debug("Adding new user:%s", authorizationInfo)
                 else:
-                    logger.warning("%sThere is a problem. We already have this combination of sid and userID.%s",decoding.bcolors.FAIL, decoding.bcolors.ENDC)
+                    logger.warning("%sThere is a problem. We already have this sid: %i and userID:%s (%s).%s",decoding.bcolors.FAIL, sid, mm.dictID, userInfo, decoding.bcolors.ENDC)
                     
             elif (h.code=='x'):
                 xfrInfo=decoding.xfrInfo(rest)
