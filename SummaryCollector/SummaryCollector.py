@@ -119,7 +119,7 @@ def eventCreator():
         pgm         = s['@pgm'] # program name
         logger.debug("Program: %s", pgm)
         if (pgm != 'xrootd'):
-            logger.warning("Program: %s should not be sending summary information. Message: %s", pgm, s)
+            logger.warning("Program: %s should not be sending summary information. Source: %s", pgm, s['@src'])
             q.task_done()
             continue
             
@@ -241,7 +241,7 @@ def eventCreator():
         if len(aLotOfData)>20:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
-                logger.info("%s \tinserted: %i \terrors: %s", threading.current_thread().name, res[0], '\tErrors:', str(res[1]) )
+                logger.info("%s \tinserted: %i \terrors: %s", threading.current_thread().name, res[0], str(res[1]) )
                 aLotOfData=[]
             except es_exceptions.ConnectionError as e:
                 logger.error('ConnectionError %s', e)
