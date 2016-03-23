@@ -12,6 +12,17 @@ from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from elasticsearch import helpers
 
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+handler = logging.FileHandler('summary.log')
+handler.setLevel(logging.INFO)
+
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
 
@@ -25,9 +36,9 @@ def GetESConnection(lastReconnectionTime):
     if ( time.time()-lastReconnectionTime < 60 ):
         return
     lastReconnectionTime=time.time()
-    print "make sure we are connected right..."
+    logger.info('make sure we are connected right...')
     res = requests.get('http://uct2-es-door.mwt2.org:9200')
-    print(res.content)
+    logger.info(res.content)
     es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
     return es
 
@@ -62,7 +73,8 @@ class state:
         
         
     def prnt(self):
-        print "pid:",self.pid, "\ttotal:",self.link_total, "\tin:",self.link_in, "\tout:",self.link_out, "\tctime:",self.link_ctime, "\ttmo:",self.link_tmo
+        logger.info("pid: %i \ttotal: %i \tin: %i \tout: %i \tctime: %i \ttmo: %i",self.pid, self.link_total, self.link_in, self.link_out,self.link_ctime, self.link_tmo)
+        #print "pid:",self.pid, "\ttotal:",self.link_total, "\tin:",self.link_in, "\tout:",self.link_out, "\tctime:",self.link_ctime, "\ttmo:",self.link_tmo
         
 #([(u'@id', u'info'), (u'host', u'ceph36'), (u'port', u'1094'), (u'name', u'anon')])
 #([(u'@id', u'link'), (u'num', u'0'), (u'maxn', u'0'), (u'tot', u'0'), (u'in', u'0'), (u'out', u'0'), (u'ctime', u'0'), (u'tmo', u'0'), (u'stall', u'0'), (u'sfps', u'0')])
@@ -82,11 +94,11 @@ def eventCreator():
         try:
             m=xmltodict.parse(d)
         except xml.parsers.expat.ExpatError:
-            print "could not parse: ", d
+            logger.error ("could not parse: %s", d)
             q.task_done()
             continue
         except:
-            print "unexpected error. messsage was: ", d
+            logger.error ("unexpected error. messsage was: %s", d)
             print sys.exc_info()[0]
             q.task_done()
             continue
@@ -105,8 +117,9 @@ def eventCreator():
         # print m
         s=m['statistics'] # top level
         pgm         = s['@pgm'] # program name
-        #print "PGM >>> ", pgm
+        logger.debug("Program: %s", pgm)
         if (pgm != 'xrootd'):
+            logger.warning("Program: %s should not be sending summary information. Message: %s", pgm, s)
             q.task_done()
             continue
             
@@ -134,9 +147,9 @@ def eventCreator():
                 #AllState[addr][pid].prnt()
                 #print "IP has previous values."
             else:
-                print "seen this IP before, but not PID."
+                logger.warning("seen this IP (%s) before, but not PID (%i).", addr, pid)
         else:
-            print "new IP: ",addr
+            logger.info("new IP: %s", addr)
         
         stats=s['stats']
         for st in stats:
@@ -153,11 +166,10 @@ def eventCreator():
                 currState.link_tmo   = int(st['tmo'])
                 # currState.link_stall = int(st['stall'])
                 # currState.link_sfps  = int(st['sfps'])
-                # print "link >>> ", st
             elif sw=='proc':
                 currState.proc_sys = int(st['sys']['s'])
                 currState.proc_usr = int(st['usr']['s'])
-                # print 'proc  >>>>', st
+                logger.debug("proc %s", st)
             elif sw=='xrootd':
                 currState.xrootd_err = int(st['err'])
                 currState.xrootd_dly = int(st['dly'])
@@ -174,12 +186,12 @@ def eventCreator():
                 currState.lgn_af  = int(lgn['af'])
                 currState.lgn_au  = int(lgn['au'])
                 currState.lgn_ua  = int(lgn['ua'])
-                # print 'xrootd >>>',st
+                logger.debug("xrootd %s", st)
             elif sw=='sched':
                 data['sched_in_queue']  = int(st['inq'])
                 data['sched_threads']  = int(st['threads'])
                 data['sched_idle_threads']  = int(st['idle'])
-                # print 'sched >>>>',st
+                logger.debug("sched %s", st)
             elif sw=='sgen':
                 data['sgen_as']  = int(st['as'])
                 # data['sgen_et']  = int(st['et']) # always 0
@@ -192,7 +204,7 @@ def eventCreator():
                
         if (hasPrev):        
             if (currState.tod<previousState.tod):
-                print "package came out of order. Skipping the message."
+                logger.warning("package came out of order. Skipping the message.")
                 continue
             data['link_total'] = currState.link_total - previousState.link_total
             data['link_in']    = currState.link_in    - previousState.link_in
@@ -226,21 +238,24 @@ def eventCreator():
         # print "current state ----"
         # currState.prnt()
         
-        if len(aLotOfData)>10:
+        if len(aLotOfData)>20:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
-                print threading.current_thread().name, "\t inserted:",res[0], '\tErrors:',res[1]
+                logger.info("%s \tinserted: %i \terrors: %s", threading.current_thread().name, "\t inserted:",res[0], '\tErrors:', str(res[1]) )
                 aLotOfData=[]
             except es_exceptions.ConnectionError as e:
-                print 'ConnectionError ', e
+                logger.error('ConnectionError %s', e)
             except es_exceptions.TransportError as e:
-                print 'TransportError ', e
+                logger.error('TransportError %s ', e)
             except helpers.BulkIndexError as e:
-                print e[0]
+                logger.error('%s',e[0])
+                errcount=0
                 for i in e[1]:
-                    print i
+                    errcount+=1
+                    if errcount>5: break
+                    logger.error('%s',i)
             except:
-                print 'Something seriously wrong happened. '
+                logger.error('Something seriously wrong happened.')
 
 
 
@@ -252,7 +267,7 @@ while (not es):
 
 q=Queue.Queue()
 #start eventCreator threads
-for i in range(3):
+for i in range(2):
      t = Thread(target=eventCreator)
      t.daemon = True
      t.start()
@@ -264,4 +279,4 @@ while (True):
     q.put([message,addr[0]])
     nMessages+=1
     if (nMessages%100==0):
-        print ("messages received:", nMessages, " qsize:", q.qsize())
+        logger.info("messages received: %i   qsize: %i", nMessages, q.qsize())
