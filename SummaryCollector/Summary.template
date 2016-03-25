@@ -12,7 +12,7 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary' -d '{
                 "version" : { "type" : "string", "index" : "not_analyzed" },
                 "site" : { "type" : "string", "index" : "not_analyzed" },
                 "IP" : { "type" : "string", "index" : "not_analyzed" },
-                "location" : { "type" : "geo_point" }
+                "location" : { "type" : "geo_point", "fielddata" : { "format" : "compressed", "precision" : "1km"} }
             }
         }
     }
