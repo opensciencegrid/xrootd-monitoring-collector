@@ -1,5 +1,6 @@
 from collections import namedtuple
 import struct,requests
+import sys
 
 header = namedtuple("header", ["code", "pseq","plen","server_start"])
 mapheader = namedtuple("mapheader",["dictID","info"])
