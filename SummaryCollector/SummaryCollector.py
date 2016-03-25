@@ -159,7 +159,7 @@ def eventCreator():
             if sw=='info':
                 # print 'host >>>', st
                 data['host']=st['host']
-                # data['location'] = decoding.getLongLat(addr)
+                data['location'] = decoding.getLongLat(addr)
             elif sw=='link':
                 data['link_num']     = int(st['num']) # not cumulative
                 currState.link_total = int(st['tot'])
