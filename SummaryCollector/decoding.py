@@ -128,6 +128,7 @@ def getLongLat(IP):
             r=res.json()
             lon=r['longitude']
             lat=r['latitude']
+            print [lon,lat]
             AllCoordinates[IP]=[lon,lat]
             return [lon,lat]
     except:
