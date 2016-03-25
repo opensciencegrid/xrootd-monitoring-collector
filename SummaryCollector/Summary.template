@@ -5,7 +5,7 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary' -d '{
         "number_of_replicas" : 1
     },
     "mappings" : {
-        "jobs_data" : {
+        "summary" : {
             "_source" : { "enabled" : true },
             "properties" : {
                 "host" : { "type" : "string", "index" : "not_analyzed" },
