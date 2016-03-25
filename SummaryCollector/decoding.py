@@ -125,6 +125,7 @@ def getLongLat(IP):
     try:
         res = requests.get('http://geoip.mwt2.org:4288/json/'+IP)
         if res.status_code==200:
+            print res.content
             r=res.json()
             lon=r['longitude']
             lat=r['latitude']
