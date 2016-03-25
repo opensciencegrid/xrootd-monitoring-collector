@@ -127,8 +127,8 @@ def getLongLat(IP):
         print IP
         if res.status_code==200:
             r=res.json()
-            lon=r(['longitude'])
-            lat=r(['latitude'])
+            lon=r['longitude']
+            lat=r['latitude']
             AllCoordinates[IP]=[lon,lat]
             return [lon,lat]
     except:
