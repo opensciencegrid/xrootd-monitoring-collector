@@ -13,7 +13,8 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/detailed' -d '{
                 "user"   : { "type" : "string", "index" : "not_analyzed" },
                 "host"   : { "type" : "string", "index" : "not_analyzed" },
                 "filename" : { "type" : "string", "index" : "not_analyzed" },
-                "timestamp" : { "type" : "date" }
+                "timestamp" : { "type" : "date" },
+                "location" : { "type" : "geo_point", "fielddata" : { "format" : "compressed", "precision" : "1km"} }
             }
         }
     }

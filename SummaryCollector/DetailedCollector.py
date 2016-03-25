@@ -56,6 +56,7 @@ def addRecord(sid,userID,fileClose,timestamp):
         s = AllServers[sid]
         rec['serverID'] = sid
         rec['server'] = s.addr
+        rec['location'] = decoding.getLongLat(s.addr)
         rec['site'] = s.site
     else:
         logger.warning('server still not identified: %i',sid) 
