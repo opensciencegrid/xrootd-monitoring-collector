@@ -15,15 +15,15 @@ from elasticsearch import helpers
 
 
 import logging
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+
+logger = logging.getLogger('SummaryCollector')
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-handler = logging.FileHandler('summary.log')
-handler.setLevel(logging.INFO)
-
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
