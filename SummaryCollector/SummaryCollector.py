@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import decoding
+
 import xmltodict
 import Queue, os, sys, time
 import threading
