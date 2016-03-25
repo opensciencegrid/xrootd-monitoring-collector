@@ -1,5 +1,5 @@
 from collections import namedtuple
-import struct
+import struct,requests
 
 header = namedtuple("header", ["code", "pseq","plen","server_start"])
 mapheader = namedtuple("mapheader",["dictID","info"])
@@ -116,3 +116,19 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    
+AllCoordinates={}
+def getLongLat(IP):
+    if IP in AllCoordinates:
+        return AllCoordinates[IP]
+    try:
+        res = requests.get('http://geoip.mwt2.org:4288/json/'+IP)
+        if res.status_code==200:
+            r=res.json()
+            lon=r(['longitude'])
+            lat=r(['latitude'])
+            AllCoordinates[IP]=[lon,lat]
+            return [lon,lat]
+    except:
+        print "# Can't determine client coordinates using geoip.mwt2.org ", sys.exc_info()[0]
+            
