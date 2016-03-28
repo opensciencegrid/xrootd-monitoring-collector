@@ -14,15 +14,11 @@ from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from elasticsearch import helpers
 
 import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+import logging.config
 
-handler = logging.FileHandler('detailed.log')
-handler.setLevel(logging.INFO)
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('DetailedCollector')
 
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
@@ -56,7 +52,6 @@ def addRecord(sid,userID,fileClose,timestamp):
         s = AllServers[sid]
         rec['serverID'] = sid
         rec['server'] = s.addr
-        rec['location'] = decoding.getLongLat(s.addr)
         rec['site'] = s.site
     else:
         logger.warning('server still not identified: %i',sid) 
@@ -65,6 +60,7 @@ def addRecord(sid,userID,fileClose,timestamp):
         u = AllUsers[sid][userID]
         rec['user']=u.username
         rec['host']=u.host
+        rec['location']=decoding.getLongLat(u.host)
     except KeyError:
         logger.error( '%suser %i missing.%s',decoding.bcolors.WARNING, userID, decoding.bcolors.ENDC)
         # print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC

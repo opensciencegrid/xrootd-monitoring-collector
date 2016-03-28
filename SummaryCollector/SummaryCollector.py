@@ -18,11 +18,7 @@ import logging
 import logging.config
 
 logging.config.fileConfig('logging.conf')
-
 logger = logging.getLogger('SummaryCollector')
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
 
 
 #hostIP="192.170.227.128"
