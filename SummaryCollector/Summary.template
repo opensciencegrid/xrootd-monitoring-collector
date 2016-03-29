@@ -18,3 +18,22 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary' -d '{
     }
 }'
 
+curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary_redirectors' -d '{
+    "template" : "xrd_redirectors-*",
+    "settings" : {
+        "number_of_shards" : 5,
+        "number_of_replicas" : 1
+    },
+    "mappings" : {
+        "summary" : {
+            "_source" : { "enabled" : true },
+            "properties" : {
+                "host" : { "type" : "string", "index" : "not_analyzed" },
+                "version" : { "type" : "string", "index" : "not_analyzed" },
+                "site" : { "type" : "string", "index" : "not_analyzed" },
+                "IP" : { "type" : "string", "index" : "not_analyzed" },
+                "location" : { "type" : "geo_point", "fielddata" : { "format" : "compressed", "precision" : "1km"} }
+            }
+        }
+    }
+}'
