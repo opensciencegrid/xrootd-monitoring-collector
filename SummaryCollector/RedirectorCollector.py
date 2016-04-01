@@ -3,6 +3,8 @@
 import decoding
 
 import xmltodict
+from xml.parsers.expat import ExpatError
+
 import Queue, os, sys, time
 import threading
 from threading import Thread
@@ -90,7 +92,7 @@ def eventCreator():
         m={}
         try:
             m=xmltodict.parse(d)
-        except xml.parsers.expat.ExpatError:
+        except ExpatError:
             logger.error ("could not parse: %s", d)
             q.task_done()
             continue
