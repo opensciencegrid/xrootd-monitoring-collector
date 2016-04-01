@@ -242,7 +242,7 @@ def eventCreator():
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
             RefreshConnection()
             
-        if len(aLotOfData)%20==1:
+        if len(aLotOfData)%21==20:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True,request_timeout=60)
                 logger.info("%s \tinserted: %i \terrors: %s", threading.current_thread().name, res[0], str(res[1]) )

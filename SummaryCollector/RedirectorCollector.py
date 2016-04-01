@@ -31,8 +31,9 @@ SUMMARY_PORT = 9932
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 sock.bind((hostIP, SUMMARY_PORT))
 
-def RefreshConnection(lastReconnectionTime):
+def RefreshConnection():
     global es
+    global lastReconnectionTime
     if ( time.time()-lastReconnectionTime < 60 ):
         return
     lastReconnectionTime=time.time()
@@ -238,11 +239,11 @@ def eventCreator():
         
         # print "current state ----"
         # currState.prnt()
-        if len(aLotOfData)>50:
+        if len(aLotOfData)%50==49:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
-            RefreshConnection(lastReconnectionTime)
+            RefreshConnection()
             
-        if len(aLotOfData)>20:
+        if len(aLotOfData)%21==20:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True,request_timeout=60)
                 logger.info("%s \tinserted: %i \terrors: %s", threading.current_thread().name, res[0], str(res[1]) )
@@ -270,7 +271,7 @@ def eventCreator():
 lastReconnectionTime=0
 es = None
 while (not es):
-    RefreshConnection(lastReconnectionTime)
+    RefreshConnection()
 
 q=Queue.Queue()
 #start eventCreator threads
