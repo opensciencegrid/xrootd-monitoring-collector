@@ -28,7 +28,8 @@ DETAILED_PORT = 9930
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 sock.bind((hostIP, DETAILED_PORT))
 
-def GetESConnection(lastReconnectionTime):
+def RefreshConnection(lastReconnectionTime):
+    global es
     if ( time.time()-lastReconnectionTime < 60 ):
         return
     lastReconnectionTime=time.time()
@@ -36,7 +37,6 @@ def GetESConnection(lastReconnectionTime):
     res = requests.get('http://uct2-es-door.mwt2.org:9200')
     logger.info(res.content)
     es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
-    return es
 
 AllTransfers={}
 AllServers={}
@@ -204,7 +204,7 @@ def eventCreator():
         
         if len(aLotOfData)>100:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
-            es = GetESConnection(lastReconnectionTime)
+            RefreshConnection(lastReconnectionTime)
             
         if len(aLotOfData)>50:
             try:
@@ -229,9 +229,9 @@ def eventCreator():
         
 
 lastReconnectionTime=0
-es = GetESConnection(lastReconnectionTime)
+es = None
 while (not es):
-    es = GetESConnection(lastReconnectionTime)
+    RefreshConnection(lastReconnectionTime)
 
 q=Queue.Queue()
 #start eventCreator threads
