@@ -1,6 +1,18 @@
 from collections import namedtuple
 import struct,requests
-import sys
+import sys, time
+from elasticsearch import Elasticsearch, exceptions as es_exceptions
+
+def RefreshConnection(lastReconnectionTime):
+    global es
+    global lastReconnectionTime
+    if ( time.time()-lastReconnectionTime < 60 ):
+        return
+    lastReconnectionTime=time.time()
+    logger.info('make sure we are connected right...')
+    res = requests.get('http://uct2-es-door.mwt2.org:9200')
+    logger.info(res.content)
+    es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
 
 header = namedtuple("header", ["code", "pseq","plen","server_start"])
 mapheader = namedtuple("mapheader",["dictID","info"])

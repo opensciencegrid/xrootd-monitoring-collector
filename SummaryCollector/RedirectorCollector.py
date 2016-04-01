@@ -8,7 +8,7 @@ from xml.parsers.expat import ExpatError
 import Queue, os, sys, time
 import threading
 from threading import Thread
-import socket, requests
+import socket
 
 import json
 from datetime import datetime
@@ -31,15 +31,6 @@ SUMMARY_PORT = 9932
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 sock.bind((hostIP, SUMMARY_PORT))
 
-def GetESConnection(lastReconnectionTime):
-    if ( time.time()-lastReconnectionTime < 60 ):
-        return
-    lastReconnectionTime=time.time()
-    logger.info('make sure we are connected right...')
-    res = requests.get('http://uct2-es-door.mwt2.org:9200')
-    logger.info(res.content)
-    es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
-    return es
 
 class state:
     def __init__(self):
@@ -239,7 +230,7 @@ def eventCreator():
         # currState.prnt()
         if len(aLotOfData)>50:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
-            es = GetESConnection(lastReconnectionTime)
+            decoding.RefreshConnection(lastReconnectionTime)
             
         if len(aLotOfData)>20:
             try:
@@ -267,9 +258,9 @@ def eventCreator():
 
 
 lastReconnectionTime=0
-es = GetESConnection(lastReconnectionTime)
+es = None
 while (not es):
-    es = GetESConnection(lastReconnectionTime)
+    decoding.RefreshConnection(lastReconnectionTime)
 
 q=Queue.Queue()
 #start eventCreator threads
