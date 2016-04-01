@@ -230,6 +230,7 @@ def eventCreator():
         
 
 es = None
+lastReconnectionTime=0
 while (not es):
     RefreshConnection()
 
