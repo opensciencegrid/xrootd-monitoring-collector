@@ -235,7 +235,10 @@ def eventCreator():
         
         # print "current state ----"
         # currState.prnt()
-        
+        if len(aLotOfData)>50:
+            logger.error('Some problem in sending data to ES. Trying to reconnect.')
+            es = GetESConnection(lastReconnectionTime)
+            
         if len(aLotOfData)>20:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True,request_timeout=60)

@@ -202,6 +202,10 @@ def eventCreator():
         
         q.task_done()
         
+        if len(aLotOfData)>100:
+            logger.error('Some problem in sending data to ES. Trying to reconnect.')
+            es = GetESConnection(lastReconnectionTime)
+            
         if len(aLotOfData)>50:
             try:
                 res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
