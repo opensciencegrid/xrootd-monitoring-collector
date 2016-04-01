@@ -5,7 +5,6 @@ from elasticsearch import Elasticsearch, exceptions as es_exceptions
 
 def RefreshConnection(lastReconnectionTime):
     global es
-    global lastReconnectionTime
     if ( time.time()-lastReconnectionTime < 60 ):
         return
     lastReconnectionTime=time.time()
