@@ -118,7 +118,7 @@ def eventCreator():
         pgm         = s['@pgm'] # program name
         logger.debug("Program: %s", pgm)
         if (pgm != 'xrootd'):
-            logger.warning("Program: %s should not be sending summary information. Source: %s", pgm, s['@src'])
+            logger.debug("Program: %s should not be sending summary information. Source: %s", pgm, s['@src'])
             q.task_done()
             continue
             
@@ -258,7 +258,10 @@ def eventCreator():
                     if errcount>5: break
                     logger.error('%s',i)
             except:
-                logger.error('Something seriously wrong happened.')
+                logger.error('Something seriously wrong happened:')
+                e = sys.exc_info()[0]
+                logger.error(e)
+                
 
 
 

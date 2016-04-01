@@ -224,6 +224,8 @@ def eventCreator():
                     logger.error('%s',i)
             except:
                 logger.error('Something seriously wrong happened.')
+                e = sys.exc_info()[0]
+                logger.error(e)
         
 
 lastReconnectionTime=0
