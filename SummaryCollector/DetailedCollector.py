@@ -155,8 +155,7 @@ def eventCreator():
             logger.info("r - stream message.")
             
         elif (h.code=='t'):
-            logger.warning("t - stream message. Server started at %i should remove files, io, iov from the monitoring configuration.", h[3])
-            # print "t - stream message. Server started at", h[3],"should remove files, io, iov from the monitoring configuration."
+            logger.warning("t - stream message. Server at %s should remove files, io, iov from the monitoring configuration.", addr)
             
             
         else: 
@@ -166,8 +165,7 @@ def eventCreator():
                 (u,rest) = mm.info.split('\n',1)
             except ValueError as e:
                 logger.error('%s',e[0])
-                logger.warning("Strange mapping message? mm: %s", mm)
-                logger.warning("h.code: %s  from:%s", h.code, addr)
+                logger.warning("Strange >>%s<< mapping message from %s mm: %s", h.code, addr, mm)
                 rest=''
                 
             userInfo=decoding.userInfo(u)
