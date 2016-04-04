@@ -162,7 +162,13 @@ def eventCreator():
         else: 
             infolen=len(d)-4
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
-            (u,rest) = mm.info.split('\n',1)
+            try:
+                (u,rest) = mm.info.split('\n',1)
+            except ValueError e:
+                logger.error('%s',e[0])
+                logger.warning("Strange mapping message? mm: %s", mm)
+                rest=''
+                
             userInfo=decoding.userInfo(u)
             logger.debug('%i %s', mm.dictID, userInfo)
             
