@@ -183,7 +183,7 @@ def eventCreator():
             elif (h.code=='d'):
                 path=rest
                 # print 'path: ', path
-                logger.warning('path information. Server started at %i should remove files from the monitoring configuration.', h[3])
+                logger.warning('path information. Server at %s should remove files from the monitoring configuration.', addr)
                 
             elif (h.code=='i'):
                 appinfo=rest
