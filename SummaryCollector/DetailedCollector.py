@@ -164,7 +164,7 @@ def eventCreator():
             mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
             try:
                 (u,rest) = mm.info.split('\n',1)
-            except ValueError e:
+            except ValueError as e:
                 logger.error('%s',e[0])
                 logger.warning("Strange mapping message? mm: %s", mm)
                 rest=''
