@@ -167,6 +167,7 @@ def eventCreator():
             except ValueError as e:
                 logger.error('%s',e[0])
                 logger.warning("Strange mapping message? mm: %s", mm)
+                logger.warning("h.code: %s  from:%s", h.code, addr)
                 rest=''
                 
             userInfo=decoding.userInfo(u)
