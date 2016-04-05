@@ -238,7 +238,7 @@ def eventCreator():
         
         # print "current state ----"
         # currState.prnt()
-        if len(aLotOfData)%50==49:
+        if q.qsize()%200==0:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
             RefreshConnection()
             

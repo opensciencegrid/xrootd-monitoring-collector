@@ -152,7 +152,7 @@ def eventCreator():
                                 
                 
         elif (h.code=='r'):
-            logger.info("r - stream message.")
+            logger.debug("r - stream message.")
             
         elif (h.code=='t'):
             logger.warning("t - stream message. Server at %s should remove files, io, iov from the monitoring configuration.", addr)
@@ -209,7 +209,7 @@ def eventCreator():
         
         q.task_done()
         
-        if len(aLotOfData)>100:
+        if q.qsize()%200==0:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
             RefreshConnection()
             
