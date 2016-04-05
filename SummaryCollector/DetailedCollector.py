@@ -209,7 +209,7 @@ def eventCreator():
         
         q.task_done()
         
-        if q.qsize()%200==0:
+        if q.qsize()%200==199:
             logger.error('Some problem in sending data to ES. Trying to reconnect.')
             RefreshConnection()
             
