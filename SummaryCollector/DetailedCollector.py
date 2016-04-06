@@ -233,7 +233,7 @@ def eventCreator():
                 logger.error('Something seriously wrong happened.')
                 e = sys.exc_info()[0]
                 logger.error(e)
-        
+    logger.error('SOMEHOW WENT OUT OF THE LOOP!')
 
 es = None
 lastReconnectionTime=0
