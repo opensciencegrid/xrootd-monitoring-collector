@@ -36,7 +36,15 @@ def userInfo(message):
     user,c  =c.split('.',1)
     pid,c   =c.split(':',1)
     sid,host=c.split('@',1)
-    return userid(user,int(pid),int(sid),host)
+    pi=0
+    si=0
+    try:
+        pi=int(pid)
+        si=int(sid)
+    except ValueError as e: 
+        logger.error("serious value error: ", pid, sid)
+        logger.error("message was:", message)
+    return userid(user,pi,si,host)
 
 def authorizationInfo(message):
     r=message.split('&')

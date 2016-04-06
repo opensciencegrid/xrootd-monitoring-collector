@@ -230,7 +230,7 @@ def eventCreator():
                     if errcount>5: break
                     logger.error('%s',i)
             except:
-                logger.error('Something seriously wrong happened.')
+                logger.error('Something serious happened.')
                 e = sys.exc_info()[0]
                 logger.error(e)
     logger.error('SOMEHOW WENT OUT OF THE LOOP!')
