@@ -23,17 +23,20 @@ def userInfo(message):
     c = message
     if '/' in message:
         prot,c = message.split('/',1)
-    user,c  =c.split('.',1)
-    pid,c   =c.split(':',1)
-    sid,host=c.split('@',1)
+    hind = c.rfind('@')
+    host = c[hind+1:]
+    c=c[:hind]
+    c,sid = c.split(':',1)
+    hind = c.rfind('.')
+    pid = c[hind+1:]
+    user = c[:hind]
     pi=0
     si=0
     try:
         pi=int(pid)
         si=int(sid)
     except ValueError as e: 
-        print("serious value error: ", pid, sid)
-        print("message was:", message)
+        print("serious value error: ", pid, sid, "message was:", message)
     return userid(user,pi,si,host)
 
 def authorizationInfo(message):
