@@ -207,24 +207,52 @@ def eventCreator():
             if (currState.tod<previousState.tod):
                 logger.warning("package came out of order. Skipping the message.")
                 continue
+            
             data['link_total'] = currState.link_total - previousState.link_total
+            if data['link_total']<0: data['link_total'] = currState.link_total
+            
             data['link_in']    = currState.link_in    - previousState.link_in
+            if data['link_in']<0: data['link_in'] = currState.link_in
+            
             data['link_out']   = currState.link_out   - previousState.link_out
+            if data['link_out']<0: data['link_out'] = currState.link_out
+            
             data['link_ctime'] = currState.link_ctime - previousState.link_ctime
+            if data['link_ctime']<0: data['link_ctime'] = currState.link_ctime
+            
             data['link_tmo']   = currState.link_tmo   - previousState.link_tmo
+            if data['link_tmo']<0: data['link_tmo'] = currState.link_tmo
+            
             # data['link_stall'] = currState.link_stall - previousState.link_stall
             # data['link_sfps']  = currState.link_sfps  - previousState.link_sfps
             data['proc_usr']  = currState.proc_usr  - previousState.proc_usr
+            if data['proc_usr']<0: data['proc_usr'] = currState.proc_usr
+            
             data['proc_sys']  = currState.proc_sys  - previousState.proc_sys
-            data['xrootd_errors'] = currState.xrootd_err - previousState.xrootd_err 
+            if data['proc_sys']<0: data['proc_sys'] = currState.proc_sys
+            
+            data['xrootd_errors'] = currState.xrootd_err - previousState.xrootd_err # these should not overflow
             data['xrootd_delays'] = currState.xrootd_dly - previousState.xrootd_dly 
             data['xrootd_redirections'] = currState.xrootd_rdr - previousState.xrootd_rdr 
+            
             data['ops_open'] = currState.ops_open - previousState.ops_open
+            if data['ops_open']<0: data['ops_open'] = currState.ops_open
+            
             data['ops_preread']   = currState.ops_pr   - previousState.ops_pr  
+            if data['ops_preread']<0: data['ops_preread'] = currState.ops_pr
+            
             data['ops_read']   = currState.ops_rd   - previousState.ops_rd  
+            if data['ops_read']<0: data['ops_read'] = currState.ops_rd
+            
             data['ops_readv']   = currState.ops_rv   - previousState.ops_rv  
+            if data['ops_readv']<0: data['ops_readv'] = currState.ops_rv
+            
             data['ops_sync'] = currState.ops_sync - previousState.ops_sync
+            if data['ops_sync']<0: data['ops_sync'] = currState.ops_sync
+            
             data['ops_write']   = currState.ops_wr   - previousState.ops_wr  
+            if data['ops_write']<0: data['ops_write'] = currState.ops_wr
+            
             data['login_attempts']  = currState.lgn_num  - previousState.lgn_num 
             data['authentication_failures']   = currState.lgn_af   - previousState.lgn_af  
             data['authentication_successes']   = currState.lgn_au   - previousState.lgn_au  
