@@ -39,7 +39,7 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary_redirectors' -d
 }'
 
 
-curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary' -d '{
+curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/sc_summary' -d '{
     "template" : "SC_xrd_summary*",
     "settings" : {
         "number_of_shards" : 2,

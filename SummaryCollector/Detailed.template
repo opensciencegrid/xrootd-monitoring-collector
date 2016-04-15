@@ -20,7 +20,7 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/detailed' -d '{
     }
 }'
 
-curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/detailed' -d '{
+curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/sc_detailed' -d '{
     "template" : "SC_xrd_detailed*",
     "settings" : {
         "number_of_shards" : 2,
