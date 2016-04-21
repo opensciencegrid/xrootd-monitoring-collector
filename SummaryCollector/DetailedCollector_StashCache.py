@@ -74,7 +74,7 @@ def addRecord(sid,userID,fileClose,timestamp):
     rec['write']    = fileClose.write
     
     d = datetime.now()
-    ind="SC_xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+    ind="sc_xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
     rec['_index']=ind
     return rec
     

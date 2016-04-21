@@ -104,7 +104,7 @@ def eventCreator():
             continue
             
         d = datetime.now()
-        ind="SC_xrd_summary-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+        ind="sc_xrd_summary-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
         data = {
             '_index': ind,
             '_type': 'summary',
