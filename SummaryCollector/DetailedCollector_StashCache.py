@@ -74,7 +74,7 @@ def addRecord(sid,userID,fileClose,timestamp):
     rec['write']    = fileClose.write
     
     d = datetime.now()
-    ind="sc_xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+    ind="sc_xrd_detailed-"+str(d.year)+"."+str(d.month)
     rec['_index']=ind
     return rec
     
@@ -242,7 +242,7 @@ while (not es):
 
 q=Queue.Queue()
 #start eventCreator threads
-for i in range(3):
+for i in range(1):
      t = Thread(target=eventCreator)
      t.daemon = True
      t.start()

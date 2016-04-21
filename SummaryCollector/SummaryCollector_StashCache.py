@@ -104,7 +104,7 @@ def eventCreator():
             continue
             
         d = datetime.now()
-        ind="sc_xrd_summary-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+        ind="sc_xrd_summary-"+str(d.year)+"."+str(d.month)
         data = {
             '_index': ind,
             '_type': 'summary',
@@ -301,7 +301,7 @@ while (not es):
 
 q=Queue.Queue()
 #start eventCreator threads
-for i in range(2):
+for i in range(1):
      t = Thread(target=eventCreator)
      t.daemon = True
      t.start()
