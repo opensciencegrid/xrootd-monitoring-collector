@@ -40,7 +40,7 @@ curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/summary_redirectors' -d
 
 
 curl -XPOST 'http://uct2-es-door.mwt2.org:9200/_template/sc_summary' -d '{
-    "template" : "se_xrd_summary*",
+    "template" : "sc_xrd_summary*",
     "settings" : {
         "number_of_shards" : 2,
         "number_of_replicas" : 1
