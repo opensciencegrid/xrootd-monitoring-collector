@@ -164,8 +164,9 @@ def eventCreator():
             try:
                 (u,rest) = mm.info.split('\n',1)
             except ValueError as e:
-                logger.error('%s',e[0])
-                logger.warning("Strange >>%s<< mapping message from %s mm: %s", h.code, addr, mm)
+                if (not h.code=='u'):
+                    logger.error('%s',e[0])
+                    logger.warning("Strange >>%s<< mapping message from %s mm: %s", h.code, addr, mm)
                 u=mm.info
                 rest=''
                 
