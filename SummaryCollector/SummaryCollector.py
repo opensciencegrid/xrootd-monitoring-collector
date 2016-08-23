@@ -22,11 +22,17 @@ import logging.config
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('SummaryCollector')
 
+if len(sys.argv)<5:
+    logger.error('Usage: SummaryCollector.py <port to listen at> <ES index> <ES server> <ES port>')
+    sys.exit(0)
 
 #hostIP="192.170.227.128"
 hostIP=socket.gethostbyname(socket.gethostname())
 
-SUMMARY_PORT = 9931
+SUMMARY_PORT = int(sys.argv[1])
+ESindex      = sys.argv[2]
+ESserver     = sys.argv[3]
+ESport       = int(sys.argv[4])
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 sock.bind((hostIP, SUMMARY_PORT))
@@ -38,9 +44,9 @@ def RefreshConnection():
         return
     lastReconnectionTime=time.time()
     logger.info('make sure we are connected right...')
-    res = requests.get('http://uct2-es-door.mwt2.org:9200')
+    res = requests.get('http://' + ESserver + ':' + str(ESport) )
     logger.info(res.content)
-    es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
+    es = Elasticsearch([{'host':ESserver, 'port':ESport}])
 
 class state:
     def __init__(self):
@@ -104,7 +110,7 @@ def eventCreator():
             continue
             
         d = datetime.now()
-        ind="xrd_summary-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+        ind = ESindex + str(d.year) + "." + str(d.month) + "." + str(d.day)
         data = {
             '_index': ind,
             '_type': 'summary',
