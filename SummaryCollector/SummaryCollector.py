@@ -140,8 +140,11 @@ def eventCreator():
         data['tos'] = datetime.utcfromtimestamp(float(tos)).isoformat()
         data['cstart'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         data['version']  = s['@ver'] # version name of the servers 
-        data['site'] = s['@site'] # site name specified in the configuration
-        
+        if '@site' in s:
+            data['site'] = s['@site'] # site name specified in the configuration
+        else:
+            print 'Server', addr, 'has no site name defined!'
+            data['site'] = 'UnknownSite'
 
         hasPrev=False
         if (addr in AllState):
