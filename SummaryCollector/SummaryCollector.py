@@ -145,6 +145,9 @@ def eventCreator():
         else:
             print 'Server', addr, 'has no site name defined!'
             data['site'] = 'UnknownSite'
+            q.task_done()
+            aLotOfData.append(data)
+            continue
 
         hasPrev=False
         if (addr in AllState):
