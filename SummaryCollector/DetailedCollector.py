@@ -35,9 +35,9 @@ def RefreshConnection():
         return
     lastReconnectionTime=time.time()
     logger.info('make sure we are connected right...')
-    res = requests.get('http://uct2-es-door.mwt2.org:9200')
+    res = requests.get('http://atlas-kibana.mwt2.org:9200')
     logger.info(res.content)
-    es = Elasticsearch([{'host':'uct2-es-door.mwt2.org', 'port':9200}])
+    es = Elasticsearch([{'host':'atlas-kibana.mwt2.org', 'port':9200}])
 
 AllTransfers={}
 AllServers={}
@@ -74,7 +74,9 @@ def addRecord(sid,userID,fileClose,timestamp):
     rec['write']    = fileClose.write
     
     d = datetime.now()
-    ind="xrd_detailed-"+str(d.year)+"."+str(d.month)+"."+str(d.day)
+    mont=str(d.month)
+    if len(mont)<2: mont = '0' + mont
+    ind="xrd_detailed-"+str(d.year) + "." + mont
     rec['_index']=ind
     return rec
     
