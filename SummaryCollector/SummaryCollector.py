@@ -110,7 +110,9 @@ def eventCreator():
             continue
             
         d = datetime.now()
-        ind = ESindex + str(d.year) + "." + str(d.month) + "." + str(d.day)
+        mont=str(d.month)
+        if len(mont)<2: mont = '0' + mont
+        ind = ESindex + str(d.year) + "." + mont
         data = {
             '_index': ind,
             '_type': 'summary',

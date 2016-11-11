@@ -8,29 +8,22 @@
 # Source init functions
 . /etc/rc.d/init.d/functions
 
-title="StashCache"
-prog="SummaryCollector.py"
-
-portToListen="9931"
-ESindex="xrd_summary-"
-ESserver="atlas-kibana.mwt2.org"
-ESport="9200"
-
+title=""
+prog="DetailedCollector_StashCache.py"
 prefix="/home/ivukotic/FAXtools/IlijaCollector/SummaryCollector/"
 exec_prefix="${prefix}"
 prog_bin="${exec_prefix}/${prog}"
-options="$portToListen $ESindex $ESserver $ESport"
 
 PIDFILE="/var/run/${prog}.pid"
 
 start()
 {
        [ -f $PIDFILE ] && echo "Already started" && exit
-       echo -n $"Starting ${prog}_${title}: "
+       echo -n $"Starting $prog: "
        cd $prefix
-       nohup $prog_bin $options 2>&1 > /var/log/${prog}_${title}.log & echo $! > $PIDFILE
+       nohup $prog_bin 2>&1 > /var/log/${prog}.log & echo $! > $PIDFILE
        daemon --pidfile $PIDFILE
-       [ -f $PIDFILE ] && success $"$prog startup" || failure $"$prog_$title startup"
+       [ -f $PIDFILE ] && success $"$prog startup" || failure $"$prog-$title startup"
        echo
 }
 
