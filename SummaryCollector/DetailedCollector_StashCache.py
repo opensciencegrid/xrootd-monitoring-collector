@@ -37,7 +37,7 @@ def RefreshConnection():
     logger.info('make sure we are connected right...')
     res = requests.get('http://atlas-kibana.mwt2.org:9200')
     logger.info(res.content)
-    es = Elasticsearch([{'host':'atlas-kibana.mrwt2.org', 'port':9200}])
+    es = Elasticsearch([{'host':'atlas-kibana.mwt2.org', 'port':9200}])
 
 AllTransfers={}
 AllServers={}
