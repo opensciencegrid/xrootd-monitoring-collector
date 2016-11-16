@@ -13,7 +13,7 @@ prog="SummaryCollector.py"
 
 portToListen="9931"
 ESindex="AAA_xrd_summary-"
-ESserver="uct2-es-door.mwt2.org"
+ESserver="atlas-kibana.mwt2.org"
 ESport="9200"
 
 prefix="/root/FAXtools/IlijaCollector/SummaryCollector/"
