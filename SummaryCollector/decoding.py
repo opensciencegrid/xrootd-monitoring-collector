@@ -132,6 +132,7 @@ class bcolors:
     
 AllCoordinates={}
 def getLongLat(IP):
+    return None
     if IP in AllCoordinates:
         return AllCoordinates[IP]
     try:
