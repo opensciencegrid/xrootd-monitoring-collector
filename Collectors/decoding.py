@@ -14,7 +14,7 @@ xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
 
 fileOpen  = namedtuple("fileOpen", ["rectype","recFlag","recSize","fileID", "fileSize","userID","fileName"])
 fileXfr   = namedtuple("fileXfr",  ["rectype","recFlag","recSize","fileID","read","readv","write"])
-fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write"])
+fileClose = namedtuple("fileClose",["rectype","recFlag","recSize","fileID","read","readv","write","ops"])
 fileTime  = namedtuple("fileTime", ["rectype","recFlag","recSize","isXfr_recs","total_recs","sid","reserved","tBeg","tEnd"])
 fileDisc  = namedtuple("fileDisc", ["rectype","recFlag","recSize","userID"])
 ops       = namedtuple("ops",["read","readv","write","rsMin","rsMax","rsegs","rdMin","rdMax","rvMin","rvMax","wrMin","wrMax"])
@@ -93,13 +93,13 @@ def MonFile(d):
     up=struct.unpack("!BBHI",d[:8]) # XrdXrootdMonHeader
     
     if up[0]==0: # isClose
+        O = ()
         if up[1] & 0b010:  #hasOPS
             O=ops._make(struct.unpack("!IIIHHQIIIIII",d[32:80]))
-            #print O
-        else:
-            O=()
         #forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04
-        return fileClose._make(struct.unpack("!BBHIQQQ",d[:32]))
+        unpacked = struct.unpack("!BBHIQQQ",d[:32])
+        unpacked = unpacked + (O,)
+        return fileClose._make(unpacked)
     elif up[0]==1: # isOpen
         fO=struct.unpack("!BBHIQ",d[:16])
         if up[1]==1:
