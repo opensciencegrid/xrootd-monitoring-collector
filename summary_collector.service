@@ -1,0 +1,18 @@
+[Unit]
+Description=StashCache Summary Collector
+Documentation=https://opensciencegrid.github.io/gracc
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=centos
+Group=centos
+Type=simple
+Restart=always
+WorkingDirectory=/home/centos/xrootd-summary-collector/SummaryCollector
+ExecStart=/home/centos/xrootd-summary-collector/venv/bin/python DetailedCollector.py
+#TimeoutStopSec=20
+#RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
