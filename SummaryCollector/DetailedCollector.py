@@ -1,275 +1,388 @@
 #!/usr/bin/env python
 
-import decoding
-import struct
-from collections import namedtuple
-import Queue, os, sys, time
-import threading
-from threading import Thread
-import socket, requests
+"""
+A simple daemon for collecting monitoring packets from a remote XRootD
+host, performing simple aggregations, and forwarding the resulting data
+to a message queue.
+"""
 
+import ConfigParser
 import json
-from datetime import datetime
-from elasticsearch import Elasticsearch, exceptions as es_exceptions
-from elasticsearch import helpers
-
 import logging
 import logging.config
+import re
+import socket
+import struct
+import sys
+import time
+
+from multiprocessing import Process, Queue
+
+import pika
+import decoding
+
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('DetailedCollector')
 
-
-#hostIP="192.170.227.128"
-hostIP=socket.gethostbyname(socket.gethostname())
-
 DETAILED_PORT = 9930
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
-sock.bind((hostIP, DETAILED_PORT))
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024*1024*4)
+sock.bind(("0.0.0.0", DETAILED_PORT))
 
-def RefreshConnection():
-    global es
-    global lastReconnectionTime
-    if ( time.time()-lastReconnectionTime < 60 ):
-        return
-    lastReconnectionTime=time.time()
-    logger.info('make sure we are connected right...')
-    res = requests.get('http://atlas-kibana.mwt2.org:9200')
-    logger.info(res.content)
-    es = Elasticsearch([{'host':'atlas-kibana.mwt2.org', 'port':9200}])
+AllTransfers = {}
+AllServers = {}
+AllUsers = {}
 
-AllTransfers={}
-AllServers={}
-AllUsers={}
+connect_config = ConfigParser.ConfigParser()
+connect_config.read('connection.conf')
 
-def addRecord(sid,userID,fileClose,timestamp):
-    rec={
-        '_type': 'detailed'
-    }
-    rec['timestamp']=timestamp*1000
+channel = None
+
+class LoggerWriter(object):
+    """
+    Set stdout / stderr to the logger
+    https://stackoverflow.com/questions/19425736/how-to-redirect-stdout-and-stderr-to-logger-in-python
+    """
+
+    def __init__(self, level):
+        # self.level is really like using log.debug(message)
+        # at least in my case
+        self.level = level
+
+    def write(self, message):
+        """
+        if statement reduces the amount of newlines that are
+        printed to the logger
+        """
+        if message != '\n':
+            self.level(message)
+
+    def flush(self):
+        """
+        create a flush method so things can be flushed when
+        the system wants to. Not sure if simply 'printing'
+        sys.stderr is the correct way to do it, but it seemed
+        to work properly for me.
+        """
+        self.level(sys.stderr)
+
+
+def CreateRabbitConnection():
+    """
+    Create a fresh connection to RabbitMQ
+    """
+    global channel
+    parameters = pika.URLParameters(connect_config.get('AMQP', 'url'))
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+
+
+def addRecord(sid, userID, fileClose, timestamp, addr):
+    """
+    Given information to create a record, send it up to the message queue.
+    """
+    rec = {}
+    rec['timestamp'] = timestamp*1000 # expected to be in MS since Unix epoch
     
+    try:
+        rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
+    except:
+        pass
+
+    rec['server_ip'] = addr
     if sid in AllServers:
         s = AllServers[sid]
         rec['serverID'] = sid
         rec['server'] = s.addr
         rec['site'] = s.site
     else:
-        logger.warning('server still not identified: %i',sid) 
-        
-    try:
-        u = AllUsers[sid][userID]
-        rec['user']=u.username
-        rec['host']=u.host
-        rec['location']=decoding.getLongLat(u.host)
-    except KeyError:
-        logger.error( '%suser %i missing.%s',decoding.bcolors.WARNING, userID, decoding.bcolors.ENDC)
-        # print decoding.bcolors.WARNING + 'user ' + str(userID) + ' missing.' + decoding.bcolors.ENDC
+        rec['server'] = addr
+        # logger.warning('server still not identified: %s',sid)
 
-    f = AllTransfers[sid][userID][fileClose.fileID]
-    rec['filename'] = f.fileName
-    rec['filesize'] = f.fileSize
-    rec['read']     = fileClose.read
-    rec['readv']    = fileClose.readv
-    rec['write']    = fileClose.write
-    
-    d = datetime.now()
-    mont=str(d.month)
-    if len(mont)<2: mont = '0' + mont
-    ind="xrd_detailed-"+str(d.year) + "." + mont
-    rec['_index']=ind
+    try:
+        (u, auth) = AllUsers[sid][userID]
+        if u is not None:
+            rec['user'] = u.username
+            rec['host'] = u.host
+            if not re.match(r"^[\[\:f\d\.]+", u.host):
+                rec['user_domain'] = ".".join(u.host.split('.')[-2:])
+            rec['location'] = decoding.getLongLat(u.host)
+        if auth is not None:
+            if auth.inetv != '':
+                rec['ipv6'] = True if auth.inetv == 6 else False
+    except KeyError:
+        logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
+        AllUsers.setdefault(sid, {})[userID] = None
+    except TypeError as e:
+        logger.error("File close record from unknown UserID=%i, SID=%s: %s", userID, sid, str(e))
+        AllUsers.setdefault(sid, {})[userID] = None
+    transfer_key = str(sid) + "." + str(fileClose.fileID)
+    if transfer_key in AllTransfers:
+        f = AllTransfers[transfer_key][1]
+        rec['filename'] = f.fileName
+        rec['filesize'] = f.fileSize
+        rec['dirname1'] = "/".join(f.fileName.split('/', 2)[:2])
+        rec['dirname2'] = "/".join(f.fileName.split('/', 3)[:3])
+        if f.fileName.startswith('/user'):
+            rec['logical_dirname'] = rec['dirname2']
+        elif f.fileName.startswith('/pnfs/fnal.gov/usr'):
+            rec['logical_dirname'] = "/".join(f.fileName.split('/')[:5])
+        elif f.fileName.startswith('/gwdata'):
+            rec['logical_dirname'] = rec['dirname2']
+    else:
+        rec['filename'] = "unknown"
+        rec['filesize'] = "-1"
+        rec['logical_dirname'] = "unknown"
+    rec['read'] = fileClose.read
+    rec['readv'] = fileClose.readv
+    rec['write'] = fileClose.write
+
+    try:
+        channel.basic_publish(connect_config.get('AMQP', 'exchange'),
+                              "file-close",
+                              json.dumps(rec),
+                              pika.BasicProperties(content_type='application/json',
+                                                   delivery_mode=1))
+    except Exception:
+        logger.exception('Error while sending rabbitmq message')
+        CreateRabbitConnection()
+        channel.basic_publish(connect_config.get('AMQP', 'exchange'),
+                              "file-close",
+                              json.dumps(rec),
+                              pika.BasicProperties(content_type='application/json',
+                                                   delivery_mode=1))
+
     return rec
-    
-def eventCreator():
-    
-    aLotOfData=[]
-    while(True):
-        [d,addr]=q.get()
-        
-        # print "\nByte Length of Message :", len(d)
-        
-        h=decoding.header._make(struct.unpack("!cBHI",d[:8])) # XrdXrootdMonHeader
-        
-        # if h[3]!=1457990510:
-        #     q.task_done()
-        #     continue
-        
-        # if debug:
-        #     print '------------------------------------------------'
-        #     print h
-        # else:
-        #     print '*',
-                        
-        logger.debug(h)    
-        
-        d=d[8:]
-        
-        
-        if (h.code=='f'):
-            TimeRecord=decoding.MonFile(d) # first one is always TOD
-            logger.debug(TimeRecord)
-            d=d[TimeRecord.recSize:]
-            sid=(h.server_start << 32) + TimeRecord.sid
-            for i in range(TimeRecord.total_recs): 
-                hd=decoding.MonFile(d)
-                d=d[hd.recSize:]
-                
-                logger.debug('%i %s', i, hd)
-                # if debug: print i, hd
-                
+
+
+def eventCreator(message_q):
+    """
+    Helper process target for parsing incoming packets and sending them to
+    the message queue.
+    """
+
+    last_flush = time.time()
+    seq_data = {}
+    sys.stdout = LoggerWriter(logger.debug)
+    sys.stderr = LoggerWriter(logger.error)
+    while True:
+        [d, addr, port] = message_q.get()
+
+        #print "Byte Length of Message: {0}".format(len(d))
+        h = decoding.header._make(struct.unpack("!cBHI", d[:8])) # XrdXrootdMonHeader
+        #print "Byte Length of Message: {0}, expected: {1}".format(len(d), h.plen)
+        if len(d) != h.plen:
+            logger.error("Packet Length incorrect: expected=%s, got=%s", h.plen, len(d))
+
+        #print h
+        logger.debug(h)
+        d = d[8:]
+        # Summarize current datastructure
+        #num_servers = len(AllTransfers)
+        #num_users = 0
+        #num_files = 0
+        #for sid in AllTransfers:
+        #    num_users += len(AllTransfers[sid])
+        #    for user in AllTransfers[sid]:
+        #        num_files += len(AllTransfers[sid][user])
+
+        #print "Servers: {0}, Users: {1}, Files: {2}".format(num_servers, num_users, num_files)
+
+        sid = str(h.server_start) + "#" + str(addr) + "#" + str(port)
+
+        if h.code == 'f':
+            #logger.debug("Got fstream object")
+            time_record = decoding.MonFile(d) # first one is always TOD
+            logger.debug(time_record)
+            d = d[time_record.recSize:]
+
+            if sid not in seq_data:
+                seq_data[sid] = h.pseq
+                logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
+            else:
+                # What is the last seq number we got
+                last_seq = seq_data[sid]
+                expected_seq = (last_seq + 1)
+                if expected_seq == 256:
+                    expected_seq = 0
+                if expected_seq != h.pseq:
+                    missed_packets = abs(h.pseq - expected_seq)
+                    logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                                 "Missed %s packets! from %s", expected_seq, h.pseq,
+                                 missed_packets, addr)
+                seq_data[sid] = h.pseq
+
+            logger.debug("Size of seq_data: %i, Number of sub-records: %i",
+                         len(seq_data), time_record.total_recs)
+            now = time.time()
+
+            for i in range(time_record.total_recs):
+                hd = decoding.MonFile(d)
+                d = d[hd.recSize:]
+
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        #print "Disconnecting: ", AllUsers[sid][hd.userID]
-                        del AllUsers[sid][hd.userID]
+                        user_info = AllUsers.setdefault(sid, {})
+                        del user_info[hd.userID]
                     except KeyError:
-                        logger.error('%sUser that disconnected was unknown.%s', decoding.bcolors.WARNING, decoding.bcolors.ENDC)
-                        #print decoding.bcolors.WARNING + 'User that disconnected was unknown.' + decoding.bcolors.ENDC
-                
+                        logger.error('Disconnect event for unknown UserID=%i with SID=%s',
+                                     hd.userID, sid)
+
                 elif isinstance(hd, decoding.fileOpen):
-                    if sid not in AllTransfers:
-                        AllTransfers[sid]={}
-                    if hd.userID not in AllTransfers[sid]:
-                        AllTransfers[sid][hd.userID]={}
-                    AllTransfers[sid][hd.userID][hd.fileID]=hd
-                    
-                elif isinstance(hd, decoding.fileClose):
+                    transfer_key = str(sid) + "." + str(hd.fileID)
                     logger.debug('%i %s', i, hd)
-                    if sid in AllTransfers:
-                        found=0
-                        for u in AllTransfers[sid]:
-                            if hd.fileID in AllTransfers[sid][u]:
-                                found=1
-                                rec = addRecord(sid, u, hd, TimeRecord.tEnd)
-                                aLotOfData.append( rec  )
-                                del AllTransfers[sid][u][hd.fileID]
-                                if len(AllTransfers[sid][u])==0: del AllTransfers[sid][u]
-                                break
-                        if not found:
-                            logger.error("%sfile to close not found.%s", decoding.bcolors.WARNING, decoding.bcolors.ENDC)
-                            # print decoding.bcolors.WARNING + "file to close not found." + decoding.bcolors.ENDC
+                    AllTransfers[transfer_key] = ((now, addr), hd)
+
+                elif isinstance(hd, decoding.fileClose):
+                    #logger.debug('%i %s', i, hd)
+                    transfer_key = str(sid) + "." + str(hd.fileID)
+                    if transfer_key in AllTransfers:
+                        u = AllTransfers[transfer_key][1].userID
+                        rec = addRecord(sid, u, hd, time_record.tEnd, addr)
+                        logger.debug("Record to send: %s", str(rec))
+                        del AllTransfers[transfer_key]
+                        logger.debug('%i %s', i, hd)
                     else:
-                        logger.error("%sfile closed on server that's not found%s", decoding.bcolors.WARNING, decoding.bcolors.ENDC)
-                        # print decoding.bcolors.WARNING + "file closed on server that's not found" + decoding.bcolors.ENDC
-                        AllTransfers[sid]={}
-                                
-                
-        elif (h.code=='r'):
-            logger.debug("r - stream message.")
-            
-        elif (h.code=='t'):
-            logger.warning("t - stream message. Server at %s should remove files, io, iov from the monitoring configuration.", addr)
-            
-            
-        else: 
-            infolen=len(d)-4
-            mm = decoding.mapheader._make(struct.unpack("!I"+str(infolen)+"s",d))
+                        rec = addRecord(sid, 0, hd, time_record.tEnd, addr)
+                        logger.error("file to close not found. fileID: %i, serverID: %s. close=%s",
+                                     hd.fileID, sid, str(hd))
+
+                elif isinstance(hd, decoding.fileXfr):
+                    transfer_key = str(sid) + "." + str(hd.fileID)
+                    if transfer_key in AllTransfers:
+                        cur_value = AllTransfers[transfer_key]
+                        AllTransfers[transfer_key] = ((now, cur_value[0][1]), cur_value[1], hd)
+                        logger.debug("f-stream index=%i Known xfrInfo: %s. sid=%s", i, str(hd), sid)
+                    else:
+                        logger.debug("f-stream index=%i Unknown xfrInfo: %s. sid=%s", i, str(hd),
+                                     sid)
+
+            d = d[hd.recSize:]
+            if d:
+                logger.error("Bytes leftover! %i bytes left!", len(d))
+
+        elif h.code == 'r':
+            logger.debug("r - redirect stream message.")
+
+        elif h.code == 't':
+            logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
+                           "'iov' directives from the monitoring configuration.", addr)
+
+        else:
+            infolen = len(d) - 4
+            mm = decoding.mapheader._make(struct.unpack("!I" + str(infolen) + "s", d))
             try:
-                (u,rest) = mm.info.split('\n',1)
+                (u, rest) = mm.info.split('\n', 1)
             except ValueError as e:
-                if (not h.code=='u'):
-                    logger.error('%s',e[0])
-                    logger.warning("Strange >>%s<< mapping message from %s mm: %s", h.code, addr, mm)
-                u=mm.info
-                rest=''
-                
-            userInfo=decoding.userInfo(u)
+                if not h.code == 'u':
+                    logger.error('%s', e[0])
+                    logger.warning("Strange >>%s<< mapping message from %s mm: %s", h.code, addr,
+                                   mm)
+                u = mm.info
+                rest = ''
+
+            userInfo = decoding.userInfo(u)
             logger.debug('%i %s', mm.dictID, userInfo)
-            
-            sid=(h.server_start << 32) + 0 #userInfo.sid - this has to go in place of 0 when the new version of server is there.
-            
-            if (h.code=='='):
-                serverInfo=decoding.serverInfo(rest,addr)
+
+            if h.code == '=':
+                serverInfo = decoding.serverInfo(rest, addr)
                 if sid not in AllServers:
-                    AllServers[sid]=serverInfo
-                    logger.info('Adding new server info: %s started at %i', serverInfo, h.server_start)
-                    
-            elif (h.code=='d'):
-                path=rest
-                # print 'path: ', path
-                logger.warning('path information. Server at %s should remove files from the monitoring configuration.', addr)
-                
-            elif (h.code=='i'):
-                appinfo=rest
+                    AllServers[sid] = serverInfo
+                    logger.info('Adding new server info: %s started at %i', serverInfo,
+                                h.server_start)
+
+            elif h.code == 'd':
+                path = rest
+                logger.warning('Path information sent (%s). Server at %s should remove "files" '
+                               'directive from the monitoring configuration.', path, addr)
+
+            elif h.code == 'i':
+                appinfo = rest
                 logger.info('appinfo:%s', appinfo)
-                
-            elif (h.code=='p'):
-                purgeInfo=decoding.purgeInfo(rest)
+
+            elif h.code == 'p':
+                purgeInfo = decoding.purgeInfo(rest)
                 logger.info('purgeInfo:%s', purgeInfo)
-                
-            elif (h.code=='u'):
-                authorizationInfo=decoding.authorizationInfo(rest)
+
+            elif h.code == 'u':
+                authorizationInfo = decoding.authorizationInfo(rest)
+                if authorizationInfo.inetv != '':
+                    logger.debug("Inet version detected to be %s", authorizationInfo.inetv)
                 if sid not in AllUsers:
-                    AllUsers[sid]={}
+                    AllUsers[sid] = {}
                 if mm.dictID not in AllUsers[sid]:
-                    AllUsers[sid][mm.dictID]=userInfo #authorizationInfo
-                    logger.debug("Adding new user:%s", authorizationInfo)
-                else:
-                    logger.warning("%sThere is a problem. We already have this sid: %i and userID:%s (%s).%s",decoding.bcolors.FAIL, sid, mm.dictID, userInfo, decoding.bcolors.ENDC)
-                    
-            elif (h.code=='x'):
-                xfrInfo=decoding.xfrInfo(rest)
+                    AllUsers[sid][mm.dictID] = (userInfo, authorizationInfo)
+                    logger.debug("Adding new user: %s", authorizationInfo)
+                elif AllUsers[sid][mm.dictID] is None:
+                    logger.warning("Received a user ID (%i) from sid %s after corresponding "
+                                   "f-stream usage information.", mm.dictID, sid)
+                    AllUsers[sid][mm.dictID] = (userInfo, authorizationInfo)
+                elif AllUsers[sid][mm.dictID]:
+                    logger.error("Received a repeated userID; SID: %s and UserID: %s (%s).", sid,
+                                 mm.dictID, userInfo)
+
+            elif h.code == 'x':
+                decoding.xfrInfo(rest)
+                #transfer_key = str(sid) + "." + str(xfrInfo.fileID)
+                #if transfer_key in AllTransfers:
+                #    cur_value = AllTransfers[transfer_key]
+                #    AllTransfers[transfer_key] = (time.time(), cur_value[1], xfrInfo)
+                #    print "Adding xfrInfo"
+
                 # print xfrInfo
-        
-        q.task_done()
-        
-        if q.qsize()>200:
-            logger.error('Some problem in sending data to ES. Trying to reconnect.')
-            RefreshConnection()
-            
-        if len(aLotOfData)>50:
-            try:
-                res = helpers.bulk(es, aLotOfData, raise_on_exception=True)
-                logger.info('%s  inserted: %i  errors: %s',threading.current_thread().name, res[0], str(res[1]))
-                aLotOfData=[]
-            except es_exceptions.ConnectionError as e:
-                logger.error('ConnectionError %s', e)
-            except es_exceptions.TransportError as e:
-                logger.error('TransportError %s ', e)
-            except helpers.BulkIndexError as e:
-                logger.error('%s',e[0])
-                errcount=0
-                for i in e[1]:
-                    errcount+=1
-                    if errcount>5: break
-                    logger.error('%s',i)
-            except:
-                logger.error('Something serious happened.')
-                e = sys.exc_info()[0]
-                logger.error(e)
-    logger.error('SOMEHOW WENT OUT OF THE LOOP!')
 
-es = None
-lastReconnectionTime=0
-while (not es):
-    RefreshConnection()
+        #q.task_done()
 
-q=Queue.Queue()
-#start eventCreator threads
-for i in range(3):
-     t = Thread(target=eventCreator)
-     t.daemon = True
-     t.start()
-     
-nMessages=0
-debug=False
-while (True):
-    message, addr = sock.recvfrom(65536) # buffer size is 1024 bytes
-    # print ("received message:", message, "from:", addr)
-    q.put([message,addr[0]])
-    nMessages+=1
-    if (nMessages%100==0):
-        logger.info("messages received: %i   qsize: %i", nMessages, q.qsize())
-        if debug:
-            print "All Servers:", AllServers
-            print "All Users:"
-            for sid in AllUsers:
-                print sid, len(AllUsers[sid]) 
-                for uid in AllUsers[sid]:  # enabling this can crash it if size change during iteration
-                    print uid, AllUsers[sid][uid]
-            print "All Transfers:"
-            for sid in AllTransfers:
-                print sid
-                for uid in AllTransfers[sid]:
-                    print uid
-                    for fid in AllTransfers[sid][uid]:
-                        print fid, AllTransfers[sid][uid][fid]
+        # Check if we have to flush the AllTransfer
+        now_time = time.time()
+        if (now_time - last_flush) > (60*5):
+            # Have to use .keys() because we are 'del' keys as we go
+            for key in AllTransfers.keys():
+                cur_value = AllTransfers[key]
+                # TODO: since we don't update based on the xfr info, we don't
+                # track progress or bump the timestamps... that needs to be done.
+                if (now_time - cur_value[0][0]) > (3600*5):
+                    if len(cur_value) == 3:
+                        (sid, _) = key.rsplit(".", 1)
+                        u = cur_value[1].userID
+                        addr = cur_value[0][1]
+                        rec = addRecord(sid, u, cur_value[2], now_time, addr)
+                    del AllTransfers[key]
+
+        if message_q.qsize() > 200:
+            logger.error('QSize is large: %d', message_q.qsize())
+
+
+def main():
+    """
+    Main driver for the daemon.
+    """
+
+    CreateRabbitConnection()
+
+    message_q = Queue()
+
+    p = Process(target=eventCreator, args=(message_q,))
+    p.daemon = True
+    p.start()
+
+    #start eventCreator threads
+    #for i in range(1):
+    #     t = Thread(target=eventCreator)
+    #     t.daemon = True
+    #     t.start()
+
+    n_messages = 0
+
+    while True:
+        message, addr = sock.recvfrom(65536)
+
+        message_q.put([message, addr[0], addr[1]])
+        n_messages += 1
+        if n_messages % 10000 == 0:
+            logger.info("Current UDP packets processed count: %i", n_messages)
+
+if __name__ == '__main__':
+    main()

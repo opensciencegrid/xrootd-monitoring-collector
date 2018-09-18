@@ -7,7 +7,7 @@ header = namedtuple("header", ["code", "pseq","plen","server_start"])
 mapheader = namedtuple("mapheader",["dictID","info"])
 
 userid   = namedtuple("userid",["username","pid","sid","host"])
-authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info"])
+authinfo = namedtuple("authinfo",["ap","dn","hn","on","rn","gn","info","inetv"])
 srvinfo  = namedtuple("srvinfo",["program","version","instance","port","site","addr"])
 prginfo  = namedtuple("prginfo",["xfn","tod","sz","at","ct","mt","fn"])
 xfrinfo  = namedtuple("xfrinfo",["lfn","tod","sz","tm","op","rc","pd"])
@@ -41,7 +41,7 @@ def userInfo(message):
 
 def authorizationInfo(message):
     r=message.split('&')
-    ap=dn=hn=on=rn=gn=m=''
+    ap=dn=hn=on=rn=gn=m=inetv=''
     for i in r:
         kv=i.split('=')
         if len(kv)==2:
@@ -52,7 +52,8 @@ def authorizationInfo(message):
             elif kv[0]=='r': rn=kv[1]
             elif kv[0]=='g': gn=kv[1]
             elif kv[0]=='m': m =kv[1]
-    return authinfo(ap,dn,hn,on,rn,gn,m)
+            elif kv[0]=='I': inetv =kv[1]
+    return authinfo(ap,dn,hn,on,rn,gn,m,inetv)
 
 def serverInfo(message, addr):
     r=message.split('&')
