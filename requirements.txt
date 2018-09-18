@@ -1,0 +1,4 @@
+elasticsearch
+pika
+requests
+urllib3
