@@ -131,10 +131,12 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
             rec['logical_dirname'] = "/".join(f.fileName.split('/')[:5])
         elif f.fileName.startswith('/gwdata'):
             rec['logical_dirname'] = rec['dirname2']
+        else:
+            rec['logical_dirname'] = rec['unknown directory']
     else:
-        rec['filename'] = "unknown"
+        rec['filename'] = "missing directory"
         rec['filesize'] = "-1"
-        rec['logical_dirname'] = "unknown"
+        rec['logical_dirname'] = "missing directory"
     rec['read'] = fileClose.read
     rec['readv'] = fileClose.readv
     rec['write'] = fileClose.write
