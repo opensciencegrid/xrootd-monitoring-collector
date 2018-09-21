@@ -6,7 +6,6 @@ host, performing simple aggregations, and forwarding the resulting data
 to a message queue.
 """
 
-import ConfigParser
 import json
 import logging
 import logging.config
@@ -18,12 +17,20 @@ import time
 
 from multiprocessing import Process, Queue
 
+import six
+from six.moves import configparser
+
 import pika
 import decoding
 
-
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('DetailedCollector')
+
+if len(sys.argv) != 2:
+    logger.error('Usage: DetailedCollector.py <connection.conf>')
+    sys.exit(1)
+connect_config = configparser.ConfigParser()
+connect_config.read(sys.argv[1])
 
 DETAILED_PORT = 9930
 
@@ -34,9 +41,6 @@ sock.bind(("0.0.0.0", DETAILED_PORT))
 AllTransfers = {}
 AllServers = {}
 AllUsers = {}
-
-connect_config = ConfigParser.ConfigParser()
-connect_config.read('connection.conf')
 
 channel = None
 
@@ -85,7 +89,7 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
     """
     rec = {}
     rec['timestamp'] = timestamp*1000 # expected to be in MS since Unix epoch
-    
+
     try:
         rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
     except:
@@ -341,7 +345,7 @@ def eventCreator(message_q):
         now_time = time.time()
         if (now_time - last_flush) > (60*5):
             # Have to use .keys() because we are 'del' keys as we go
-            for key in AllTransfers.keys():
+            for key in list(AllTransfers.keys()):
                 cur_value = AllTransfers[key]
                 # TODO: since we don't update based on the xfr info, we don't
                 # track progress or bump the timestamps... that needs to be done.
