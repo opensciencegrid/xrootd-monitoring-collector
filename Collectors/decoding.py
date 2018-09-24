@@ -142,9 +142,9 @@ def getLongLat(IP):
             r=res.json()
             lon=r['longitude']
             lat=r['latitude']
-            print r['country_name'], r['city'], [lon,lat]
+            print(r['country_name'], r['city'], [lon,lat])
             AllCoordinates[IP]=[lon,lat]
             return [lon,lat]
     except:
-        print "# Can't determine client coordinates using geoip.mwt2.org ", sys.exc_info()[0]
+        print("# Can't determine client coordinates using geoip.mwt2.org ", sys.exc_info()[0])
             

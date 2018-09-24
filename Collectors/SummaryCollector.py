@@ -5,10 +5,13 @@ import decoding
 import xmltodict
 from xml.parsers.expat import ExpatError
 
-import Queue, os, sys, time
+import os, sys, time
 import threading
 from threading import Thread
 import socket, requests
+
+import six
+from six.moves import queue
 
 import json
 from datetime import datetime
@@ -105,7 +108,7 @@ def eventCreator():
             continue
         except:
             logger.error ("unexpected error. messsage was: %s", d)
-            print sys.exc_info()[0]
+            print(sys.exc_info()[0])
             q.task_done()
             continue
             
@@ -145,7 +148,7 @@ def eventCreator():
         if '@site' in s:
             data['site'] = s['@site'] # site name specified in the configuration
         else:
-            print 'Server', addr, 'has no site name defined!'
+            print('Server', addr, 'has no site name defined!')
             data['site'] = 'UnknownSite'
             q.task_done()
             aLotOfData.append(data)
@@ -313,7 +316,7 @@ es = None
 while (not es):
     RefreshConnection()
 
-q=Queue.Queue()
+q=queue.Queue()
 #start eventCreator threads
 for i in range(2):
      t = Thread(target=eventCreator)
