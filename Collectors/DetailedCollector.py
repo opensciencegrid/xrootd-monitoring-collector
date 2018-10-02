@@ -22,6 +22,7 @@ from six.moves import configparser
 
 import pika
 import decoding
+import wlcg_converter
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('DetailedCollector')
@@ -116,6 +117,8 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
         if auth is not None:
             if auth.inetv != '':
                 rec['ipv6'] = True if auth.inetv == 6 else False
+            if auth.dn != '':
+                rec['user_dn'] = auth.dn
     except KeyError:
         logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
         AllUsers.setdefault(sid, {})[userID] = None
@@ -144,11 +147,20 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
     rec['read'] = fileClose.read
     rec['readv'] = fileClose.readv
     rec['write'] = fileClose.write
+    
+    wlcg_packet = wlcg_converter.Convert(rec)
+    logger.debug("WLCG record to send: %s", str(wlcg_packet))
 
     try:
         channel.basic_publish(connect_config.get('AMQP', 'exchange'),
                               "file-close",
                               json.dumps(rec),
+                              pika.BasicProperties(content_type='application/json',
+                                                   delivery_mode=1))
+
+        channel.basic_publish(connect_config.get('AMQP', 'wlcg_exchange'),
+                              "file-close",
+                              json.dumps(wlcg_packet),
                               pika.BasicProperties(content_type='application/json',
                                                    delivery_mode=1))
     except Exception:
@@ -157,6 +169,11 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
         channel.basic_publish(connect_config.get('AMQP', 'exchange'),
                               "file-close",
                               json.dumps(rec),
+                              pika.BasicProperties(content_type='application/json',
+                                                   delivery_mode=1))
+        channel.basic_publish(connect_config.get('AMQP', 'wlcg_exchange'),
+                              "file-close",
+                              json.dumps(wlcg_packet),
                               pika.BasicProperties(content_type='application/json',
                                                    delivery_mode=1))
 
