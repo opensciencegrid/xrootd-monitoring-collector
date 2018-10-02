@@ -157,7 +157,7 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
                               json.dumps(rec),
                               pika.BasicProperties(content_type='application/json',
                                                    delivery_mode=1))
-                                                   
+
         channel.basic_publish(connect_config.get('AMQP', 'wlcg_exchange'),
                               "file-close",
                               json.dumps(wlcg_packet),
