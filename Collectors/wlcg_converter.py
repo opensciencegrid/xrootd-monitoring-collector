@@ -41,24 +41,24 @@ def Convert(source_record):
     https://twiki.cern.ch/twiki/bin/view/Main/GenericFileMonitoring
     """
     to_return = {}
-    to_return["site_name"] = source_record.get('site', "")
-    to_return['fallback'] = True
+    to_return["site_name"] = source_record.get("site", "")
+    to_return["fallback"] = True
     to_return["user_dn"] = source_record.get("user_dn", "")
     # client_host (without domain information)
-    to_return['client_host'] = source_record.get('host', '')
+    to_return["client_host"] = source_record.get("host", "")
     to_return["client_domain"] = source_record.get("user_domain", "")
-    to_return['server_host'] = source_record.get('server_hostname', '').split(".")[0]
-    if 'server_hostname' in source_record and source_record['server_hostname'] != '':
-        to_return['server_domain'] = ".".join(source_record['server_hostname'].split(".")[1:])
+    to_return["server_host"] = source_record.get("server_hostname", "").split(".")[0]
+    if "server_hostname" in source_record and source_record["server_hostname"] != "":
+        to_return["server_domain"] = ".".join(source_record["server_hostname"].split(".")[1:])
     else:
-        to_return['server_hostname'] = ''
+        to_return["server_hostname"] = ""
     # Generate a random uuid
-    to_return['unique_id'] = str(uuid.uuid4())
-    to_return['file_lfn'] = source_record.get('filename', "")
-    to_return['fize_size'] = source_record.get('filesize', 0)
-    to_return['read_bytes'] = source_record['read'] + source_record['readv']
-    to_return["read_single_bytes"] = source_record.get('read', 0)
-    to_return["read_vector_bytes"] = source_record.get('readv', 0)
+    to_return["unique_id"] = str(uuid.uuid4())
+    to_return["file_lfn"] = source_record.get("filename", "")
+    to_return["fize_size"] = source_record.get("filesize", 0)
+    to_return["read_bytes"] = source_record["read"] + source_record["readv"]
+    to_return["read_single_bytes"] = source_record.get("read", 0)
+    to_return["read_vector_bytes"] = source_record.get("readv", 0)
     to_return["ipv6"] = source_record.get("ipv6", False)
     
     return to_return
