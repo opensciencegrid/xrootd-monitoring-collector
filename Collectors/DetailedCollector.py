@@ -138,6 +138,8 @@ def addRecord(sid, userID, fileClose, timestamp, addr):
             rec['logical_dirname'] = "/".join(f.fileName.split('/')[:5])
         elif f.fileName.startswith('/gwdata'):
             rec['logical_dirname'] = rec['dirname2']
+        elif f.fileName.startswith('/chtc/'):
+            rec['logical_dirname'] = '/chtc'
         else:
             rec['logical_dirname'] = 'unknown directory'
     else:
