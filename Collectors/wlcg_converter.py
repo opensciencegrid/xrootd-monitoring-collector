@@ -33,7 +33,8 @@ Convert to a format WLCG would like.
 """
 
 import uuid
-
+import time
+import socket
 
 def Convert(source_record):
     """
@@ -60,6 +61,16 @@ def Convert(source_record):
     to_return["read_single_bytes"] = source_record.get("read", 0)
     to_return["read_vector_bytes"] = source_record.get("readv", 0)
     to_return["ipv6"] = source_record.get("ipv6", False)
+    
+    
+    # Add the metadata
+    to_return["metadata"] = {
+        "producer": "xrootd-monitoring-collector",
+        "type": "xrootd-transfer",
+        "timestamp": int(round(time.time()*1000)),
+        "type_prefix": "raw",
+        "host": socket.gethostname()
+    }
     
     return to_return
     
