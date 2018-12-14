@@ -65,11 +65,12 @@ def Convert(source_record):
     
     # Add the metadata
     to_return["metadata"] = {
-        "producer": "xrootd-monitoring-collector",
-        "type": "xrootd-transfer",
+        "producer": "cms",
+        "type": "aaa-test",
         "timestamp": int(round(time.time()*1000)),
         "type_prefix": "raw",
-        "host": socket.gethostname()
+        "host": socket.gethostname(),
+        "_id": to_return['unique_id']
     }
     
     return to_return
