@@ -1,7 +1,8 @@
 from collections import namedtuple
-import struct,requests
-import sys, time
-from elasticsearch import Elasticsearch, exceptions as es_exceptions
+import requests
+import struct
+import sys
+import time
 
 header = namedtuple("header", ["code", "pseq","plen","server_start"])
 mapheader = namedtuple("mapheader",["dictID","info"])
