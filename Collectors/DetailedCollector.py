@@ -61,7 +61,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['host'] = hostname
                 if not re.match(r"^[\[\:f\d\.]+", hostname):
                     rec['user_domain'] = ".".join(hostname.split('.')[-2:])
-                rec['location'] = decoding.getLongLat(u.host)
                 if u.protocol:
                     rec['protocol'] = u.protocol.decode('ascii')
             if auth is not None:

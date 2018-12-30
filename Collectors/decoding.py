@@ -150,23 +150,3 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-
-
-AllCoordinates = {}
-
-
-def getLongLat(IP):
-    return None
-    if IP in AllCoordinates:
-        return AllCoordinates[IP]
-    try:
-        res = requests.get('http://geoip.mwt2.org:4288/json/' + IP)
-        if res.status_code == 200:
-            r = res.json()
-            lon = r['longitude']
-            lat = r['latitude']
-            print(r['country_name'], r['city'], [lon, lat])
-            AllCoordinates[IP] = [lon, lat]
-            return [lon, lat]
-    except:
-        print("# Can't determine client coordinates using geoip.mwt2.org ", sys.exc_info()[0])

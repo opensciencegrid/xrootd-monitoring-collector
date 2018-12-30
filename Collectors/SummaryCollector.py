@@ -134,7 +134,6 @@ class SummaryCollector(UdpCollector.UdpCollector):
             sw = st['@id']
             if sw == 'info':
                 rmq_data['host'] = st['host']
-                rmq_data['location'] = decoding.getLongLat(addr)
             elif sw == 'link':
                 rmq_data['link_num'] = int(st['num'])  # not cumulative
                 currState.link_total = int(st['tot'])
