@@ -8,15 +8,9 @@ For information about the packet formatting, see:
 """
 
 import collections
-import json
-import os
-import socket
-import sys
-import time
 from datetime import datetime
 from xml.parsers.expat import ExpatError
 
-import requests
 import xmltodict
 
 import UdpCollector
@@ -30,16 +24,16 @@ class ProcessState(object):
 
     def __init__(self):
         self.pid = -1
-        self.tod = 0  #this will be used to check if the packet came out of order.
-        #self.link_num  =0 # Current connections.
-        #self.link_maxn =0 # Maximum number of simultaneous connections. it is cumulative but not interesting for ES.
-        self.link_total = 0 # Connections since startup
-        self.link_in    = 0 # Bytes received.
-        self.link_out   = 0 # Bytes sent
-        self.link_ctime = 0 # Cumulative number of connect seconds. ctime/tot gives the average session time per connection
-        self.link_tmo   = 0 # timouts
-        # self.link_stall=0 # Number of times partial data was received.
-        # self.link_sfps =0 # Partial sendfile() operations.
+        self.tod = 0  # this will be used to check if the packet came out of order.
+        # self.link_num  =0 # Current connections.
+        # self.link_maxn =0 # Maximum number of simultaneous connections. it is cumulative but not interesting for ES.
+        self.link_total = 0  # Connections since startup
+        self.link_in    = 0  # Bytes received.
+        self.link_out   = 0  # Bytes sent
+        self.link_ctime = 0  # Cumulative number of connect seconds. ctime/tot gives the average session time per connection
+        self.link_tmo   = 0  # timouts
+        # self.link_stall=0  # Number of times partial data was received.
+        # self.link_sfps =0  # Partial sendfile() operations.
         self.proc_usr    = 0
         self.proc_sys    = 0
         self.xrootd_err  = 0
@@ -58,7 +52,7 @@ class ProcessState(object):
 
 
     def prnt(self):
-        logger.info("pid: {} \ttotal: {} \tin: {} \tout: {} \tctime: {} \ttmo: {}".format(
+        self.logger.info("pid: {} \ttotal: {} \tin: {} \tout: {} \tctime: {} \ttmo: {}".format(
                     self.pid, self.link_total, self.link_in, self.link_out,
                     self.link_ctime, self.link_tmo))
 
@@ -87,19 +81,19 @@ class SummaryCollector(UdpCollector.UdpCollector):
         try:
             summary = xmltodict.parse(data)
         except ExpatError:
-            self.logger.error("Could not parse received data: %s", d)
+            self.logger.error("Could not parse received data: %s", data)
             return
         except:
-            self.logger.exception("Unexpected error. Original data was: %s", d)
+            self.logger.exception("Unexpected error. Original data was: %s", data)
             return
 
         currState = ProcessState()
 
-        statistics = summary['statistics'] # top level
-        pgm = statistics['@pgm'] # program name
+        statistics = summary['statistics']  # top level
+        pgm = statistics['@pgm']  # program name
         self.logger.debug("Program: %s", pgm)
         if pgm != 'xrootd':
-            self.logger.warning("Program: %s should not be sending summary information. Source: %s", pgm, s['@src'])
+            self.logger.warning("Program: %s should not be sending summary information. Source: %s", pgm, statistics['@src'])
             return
 
         tos = int(statistics['@tos'])  # Unix time when the program was started.
@@ -116,12 +110,12 @@ class SummaryCollector(UdpCollector.UdpCollector):
         rmq_data['timestamp'] = datetime.utcfromtimestamp(float(tod)).isoformat()
         rmq_data['tos'] = datetime.utcfromtimestamp(float(tos)).isoformat()
         rmq_data['cstart'] = datetime.utcfromtimestamp(float(tod)).isoformat()
-        rmq_data['version']  = statistics['@ver'] # version name of the servers 
+        rmq_data['version'] = statistics['@ver']  # version name of the servers
 
         if '@site' in statistics:
-            rmq_data['site'] = statistics['@site'] # site name specified in the configuration
+            rmq_data['site'] = statistics['@site']  # site name specified in the configuration
         else:
-            log.debug('Server {} has no site name defined!'.format(addr))
+            self.logger.debug('Server {} has no site name defined!'.format(addr))
             rmq_data['site'] = 'UnknownSite'
             self.publish('summary', rmq_data)
             return
@@ -142,7 +136,7 @@ class SummaryCollector(UdpCollector.UdpCollector):
                 rmq_data['host'] = st['host']
                 rmq_data['location'] = decoding.getLongLat(addr)
             elif sw == 'link':
-                rmq_data['link_num']     = int(st['num']) # not cumulative
+                rmq_data['link_num'] = int(st['num'])  # not cumulative
                 currState.link_total = int(st['tot'])
                 currState.link_in    = int(st['in'])
                 currState.link_out   = int(st['out'])
@@ -169,19 +163,19 @@ class SummaryCollector(UdpCollector.UdpCollector):
                 currState.lgn_au  = int(lgn['au'])
                 currState.lgn_ua  = int(lgn['ua'])
                 self.logger.debug("xrootd %s", st)
-            elif sw=='sched':
+            elif sw == 'sched':
                 rmq_data['sched_in_queue']  = int(st['inq'])
                 rmq_data['sched_threads']  = int(st['threads'])
                 rmq_data['sched_idle_threads']  = int(st['idle'])
                 self.logger.debug("sched %s", st)
-            elif sw=='sgen':
+            elif sw == 'sgen':
                 rmq_data['sgen_as']  = int(st['as'])
                 # data['sgen_et']  = int(st['et']) # always 0
                 rmq_data['cend'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
-            elif sw=='ofs':
+            elif sw == 'ofs':
                 pass
                 # TODO: fixup this information
-                #print 'ofs    >>>',st
+                # print 'ofs    >>>',st
 
         if hasPrev:
             if currState.tod < previousState.tod:
@@ -196,9 +190,9 @@ class SummaryCollector(UdpCollector.UdpCollector):
             # data['link_stall'] = currState.link_stall - previousState.link_stall
             # data['link_sfps']  = currState.link_sfps  - previousState.link_sfps
 
-            rmq_data['xrootd_errors'] = currState.xrootd_err - previousState.xrootd_err # these should not overflow
-            rmq_data['xrootd_delays'] = currState.xrootd_dly - previousState.xrootd_dly 
-            rmq_data['xrootd_redirections'] = currState.xrootd_rdr - previousState.xrootd_rdr 
+            rmq_data['xrootd_errors'] = currState.xrootd_err - previousState.xrootd_err  # these should not overflow
+            rmq_data['xrootd_delays'] = currState.xrootd_dly - previousState.xrootd_dly
+            rmq_data['xrootd_redirections'] = currState.xrootd_rdr - previousState.xrootd_rdr
             rmq_data['login_attempts'] = currState.lgn_num - previousState.lgn_num
             rmq_data['authentication_failures'] = currState.lgn_af - previousState.lgn_af
             rmq_data['authentication_successes'] = currState.lgn_au - previousState.lgn_au

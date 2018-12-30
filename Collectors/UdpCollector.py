@@ -14,14 +14,10 @@ import logging.config
 import multiprocessing
 import os
 import queue
-import re
-import select
 import socket
-import struct
 import sys
 import time
 
-import six
 from six.moves import configparser
 
 import pika
@@ -53,7 +49,7 @@ class _LoggerWriter(object):
         sys.stderr is the correct way to do it, but it seemed
         to work properly for me.
         """
-        #self.level()
+        # self.level()
 
 
 class UdpCollector(object):
@@ -89,7 +85,7 @@ class UdpCollector(object):
                                        routing_key,
                                        json.dumps(record),
                                        pika.BasicProperties(content_type='application/json',
-                                       delivery_mode=pika.spec.TRANSIENT_DELIVERY_MODE))
+                                                            delivery_mode=pika.spec.TRANSIENT_DELIVERY_MODE))
         except Exception:
             if retry:
                 self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
@@ -110,9 +106,9 @@ class UdpCollector(object):
 
 
     def _shutdown_child(self):
-       if self.child_process.join(1) is None:
-           self.child_process.terminate()
-           self.child_process.join()
+        if self.child_process.join(1) is None:
+            self.child_process.terminate()
+            self.child_process.join()
 
 
     def _launch_child(self):
@@ -233,7 +229,7 @@ class UdpCollector(object):
 
             if self.message_q.qsize() > 200:
                 if time.time() - last_warning > 5:
-                    logger.error('QSize is large: %d', self.message_q.qsize())
+                    self.logger.error('QSize is large: %d', self.message_q.qsize())
                     last_warning = time.time()
 
 
@@ -249,7 +245,7 @@ class UdpCollector(object):
                 sys.exit(1)
         if host is None:
             host = Collector.DEFAULT_HOST
-    
+
         parser = argparse.ArgumentParser()
         parser.add_argument("config", nargs=1, help="Location of configuration file.")
         args = parser.parse_args()
