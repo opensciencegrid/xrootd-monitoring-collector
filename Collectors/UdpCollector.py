@@ -215,7 +215,7 @@ class UdpCollector(object):
             if now - last_heartbeat > 20:
                 logging.error("No heartbeat received in {} seconds.".format(now - last_heartbeat))
             try:
-                info = self.message_q.get(True, 10)
+                info = self.message_q.get(True, 20)
             except queue.Empty:
                 self.logger.info('No messages parsed in the last 10 seconds.')
                 continue
