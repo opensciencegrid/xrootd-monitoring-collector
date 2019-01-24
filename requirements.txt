@@ -1,5 +1,4 @@
-elasticsearch
 pika
 requests
 six
-urllib3
+xmltodict
