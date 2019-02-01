@@ -85,7 +85,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             if fname.startswith('/user'):
                 rec['logical_dirname'] = rec['dirname2']
             elif fname.startswith('/pnfs/fnal.gov/usr'):
-                rec['logical_dirname'] = "/".join(f.fileName.split('/')[:5])
+                rec['logical_dirname'] = "/".join(f.fileName.decode('utf-8').split('/')[:5])
             elif fname.startswith('/gwdata'):
                 rec['logical_dirname'] = rec['dirname2']
             elif fname.startswith('/chtc/'):
