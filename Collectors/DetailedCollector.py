@@ -36,6 +36,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         Given information to create a record, send it up to the message queue.
         """
         rec = {}
+        lcg_record = False
         rec['timestamp'] = timestamp*1000  # expected to be in MS since Unix epoch
 
         try:
@@ -90,6 +91,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['logical_dirname'] = rec['dirname2']
             elif fname.startswith('/chtc/'):
                 rec['logical_dirname'] = '/chtc'
+
+            # Check for CMS files
+            elif fname.startswith('/store'):
+                rec['logical_dirname'] = rec['dirname2']
+                lcg_record = True
             else:
                 rec['logical_dirname'] = 'unknown directory'
         else:
@@ -103,8 +109,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
         wlcg_packet = wlcg_converter.Convert(rec)
         self.logger.debug("WLCG record to send: %s", str(wlcg_packet))
 
-        self.publish("file-close", rec, exchange=self._exchange)
-        self.publish("file-close", rec, exchange=self._wlcg_exchange)
+        if not lcg_record:
+            self.publish("file-close", rec, exchange=self._exchange)
+        else:
+            self.publish("file-close", rec, exchange=self._wlcg_exchange)
 
         return rec
 
