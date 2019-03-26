@@ -16,7 +16,7 @@ xfrinfo  = namedtuple("xfrinfo", ["lfn", "tod", "sz", "tm", "op", "rc", "pd"])
 fileOpen  = namedtuple("fileOpen",  ["rectype", "recFlag", "recSize", "fileID", "fileSize", "userID", "fileName"])
 fileXfr   = namedtuple("fileXfr",   ["rectype", "recFlag", "recSize", "fileID", "read", "readv", "write"])
 fileClose = namedtuple("fileClose", ["rectype", "recFlag", "recSize", "fileID", "read", "readv", "write", "ops"])
-fileTime  = namedtuple("fileTime",  ["rectype", "recFlag", "recSize", "isXfr_recs", "total_recs", "sid", "reserved", "tBeg", "tEnd"])
+fileTime  = namedtuple("fileTime",  ["rectype", "recFlag", "recSize", "isXfr_recs", "total_recs", "tBeg", "tEnd", "sid"])
 fileDisc  = namedtuple("fileDisc",  ["rectype", "recFlag", "recSize", "userID"])
 ops       = namedtuple("ops", ["read", "readv", "write", "rsMin", "rsMax", "rsegs", "rdMin", "rdMax", "rvMin", "rvMax", "wrMin", "wrMax"])
 
@@ -133,7 +133,7 @@ def MonFile(d):
             t = struct.unpack("!BBHHHII", d[:16])
             return fileTime(t[0], t[1], t[2], t[3], t[4], 0, 0, t[5], t[6])
         else:
-            return fileTime._make(struct.unpack("!BBHHHIIII", d[:24]))
+            return fileTime._make(struct.unpack("!BBHHHIIQ", d[:24]))
     elif up[0] == 3:  # isXfr
         # print "isXfr ..."
         return fileXfr._make(struct.unpack("!BBHIQQQ", d[:32]))
