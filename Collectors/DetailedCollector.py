@@ -112,7 +112,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if not lcg_record:
             self.publish("file-close", rec, exchange=self._exchange)
         else:
-            self.publish("file-close", rec, exchange=self._wlcg_exchange)
+            self.publish("file-close", wlcg_packet, exchange=self._wlcg_exchange)
 
         return rec
 
