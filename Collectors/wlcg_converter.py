@@ -66,7 +66,7 @@ def Convert(source_record):
     # Add the metadata
     to_return["metadata"] = {
         "producer": "cms",
-        "type": "aaa-test",
+        "type": "aaa-ng",
         "timestamp": int(round(time.time()*1000)),
         "type_prefix": "raw",
         "host": socket.gethostname(),
