@@ -66,7 +66,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     rec['protocol'] = u.protocol.decode('ascii')
             if auth is not None:
                 if auth.inetv != b'':
-                    rec['ipv6'] = True if auth.inetv == '6' else False
+                    rec['ipv6'] = True if auth.inetv == b'6' else False
                 if auth.info != b'':
                     rec['user_dn'] = auth.info.decode('utf-8').split("::")[0]
                 if auth.on != b'':
