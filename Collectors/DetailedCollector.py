@@ -67,8 +67,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
             if auth is not None:
                 if auth.inetv != b'':
                     rec['ipv6'] = True if auth.inetv == '6' else False
-                if auth.dn != b'':
-                    rec['user_dn'] = auth.dn.decode('utf-8')
+                if auth.info != b'':
+                    rec['user_dn'] = auth.info.decode('utf-8').split("::")[0]
+                if auth.on != b'':
+                    if auth.on == b"cms" or auth.on == b"dteam":
+                        lcg_record = True
+                    
         except KeyError:
             self.logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
             self._users.setdefault(sid, {})[userID] = None
@@ -93,7 +97,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['logical_dirname'] = '/chtc'
 
             # Check for CMS files
-            elif fname.startswith('/store'):
+            elif fname.startswith('/store') or fname.startswith('/user/dteam'):
                 rec['logical_dirname'] = rec['dirname2']
                 lcg_record = True
             else:
@@ -106,12 +110,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
 
-        wlcg_packet = wlcg_converter.Convert(rec)
-        self.logger.debug("WLCG record to send: %s", str(wlcg_packet))
 
         if not lcg_record:
+            self.logger.debug("OSG record to send: %s", str(rec))
             self.publish("file-close", rec, exchange=self._exchange)
         else:
+            wlcg_packet = wlcg_converter.Convert(rec)
+            self.logger.debug("WLCG record to send: %s", str(wlcg_packet))
             self.publish("file-close", wlcg_packet, exchange=self._wlcg_exchange)
 
         return rec
