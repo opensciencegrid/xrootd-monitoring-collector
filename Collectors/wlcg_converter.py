@@ -56,7 +56,7 @@ def Convert(source_record):
     # Generate a random uuid
     to_return["unique_id"] = str(uuid.uuid4())
     to_return["file_lfn"] = source_record.get("filename", "")
-    to_return["fize_size"] = source_record.get("filesize", 0)
+    to_return["file_size"] = source_record.get("filesize", 0)
     to_return["read_bytes"] = source_record["read"] + source_record["readv"]
     to_return["read_single_bytes"] = source_record.get("read", 0)
     to_return["read_vector_bytes"] = source_record.get("readv", 0)
