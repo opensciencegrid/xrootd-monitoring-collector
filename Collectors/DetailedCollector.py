@@ -95,6 +95,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['logical_dirname'] = rec['dirname2']
             elif fname.startswith('/chtc/'):
                 rec['logical_dirname'] = '/chtc'
+            elif fname.startswith('/icecube/'):
+                rec['logical_dirname'] = '/icecube'
 
             # Check for CMS files
             elif fname.startswith('/store') or fname.startswith('/user/dteam'):
