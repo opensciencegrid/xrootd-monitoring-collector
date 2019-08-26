@@ -14,6 +14,7 @@ import time
 import decoding
 import wlcg_converter
 import UdpCollector
+import ttldict
 
 
 class DetailedCollector(UdpCollector.UdpCollector):
@@ -268,7 +269,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 if authorizationInfo.inetv != b'':
                     self.logger.debug("Inet version detected to be %s", authorizationInfo.inetv)
                 if sid not in self._users:
-                    self._users[sid] = {}
+                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 if mm.dictID not in self._users[sid]:
                     self._users[sid][mm.dictID] = (userInfo, authorizationInfo)
                     self.logger.debug("Adding new user: %s", authorizationInfo)
@@ -293,6 +294,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
         # Check if we have to flush the AllTransfer
         now_time = time.time()
         if (now_time - self.last_flush) > (60*5):
+            self.logger.debug("Flushing data structures")
+
+            # Flush the users data structure
+            for sid in self._users:
+                removed = self._users[sid].purge()
+                self.logger.debug("Removed {} items from Users".format(removed))
+
             # Have to make a copy of .keys() because we 'del' as we go
             for key in list(self._transfers.keys()):
                 cur_value = self._transfers[key]
