@@ -41,6 +41,9 @@ def userInfo(message):
         print("serious value error: ", pid, sid, "message was:", message)
     return userid(prot, user, pi, si, host)
 
+def revUserInfo(useridStruct):
+    return str.encode("{}/{}.{}:{}@{}".format(useridStruct.protocol, useridStruct.username, useridStruct.pid, useridStruct.sid, useridStruct.host))
+
 
 def authorizationInfo(message):
     r = message.split(b'&')
@@ -70,6 +73,22 @@ def authorizationInfo(message):
                 moninfo = kv[1]
     return authinfo(ap, dn, hn, on, rn, gn, info, execname, moninfo, inetv)
 
+def revAuthorizationInfo(authinfo):
+    # ["ap", "dn", "hn", "on", "rn", "gn", "info", 'execname', 'moninfo', "inetv"])
+    # [&p=ap&n=[dn]&h=[hn]&o=[on]&r=[rn]&g=[gn]&m=[info]][loginfo]
+    # &x=[xeqname]&y=[minfo]&I={4|6}
+    message = "&p=" + authinfo.ap
+    message += "&n=" + authinfo.dn
+    message += "&h=" + authinfo.hn
+    message += "&o=" + authinfo.on
+    message += "&r=" + authinfo.rn
+    message += "&g=" + authinfo.gn
+    message += "&m=" + authinfo.info
+    message += "&x=" + authinfo.execname
+    message += "&y=" + authinfo.moninfo
+    message += "&I=" + authinfo.inetv
+
+    return str.encode(message)
 
 def serverInfo(message, addr):
     r = message.split(b'&')
@@ -79,6 +98,18 @@ def serverInfo(message, addr):
     port = r[4].split(b'=')[1]
     site = r[5].split(b'=')[1]
     return srvinfo(pgm, ver, inst, port, site, addr)
+
+def revServerInfo(serverInfoStruct):
+    """
+    &pgm=prog&ver=vname&inst=iname&port=pnum&site=sname
+    ["program", "version", "instance", "port", "site", "addr"]
+    """
+    message = "&pgm=" + serverInfoStruct.program
+    message += "&ver=" + serverInfoStruct.version
+    message += "&inst=" + serverInfoStruct.instance
+    message += "&port=" + serverInfoStruct.port
+    message += "&site=" + serverInfoStruct.site
+    return str.encode(message)
 
 
 def purgeInfo(message):
