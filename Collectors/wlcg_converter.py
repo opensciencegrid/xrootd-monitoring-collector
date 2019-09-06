@@ -48,9 +48,9 @@ def Convert(source_record):
     # client_host (without domain information)
     to_return["client_host"] = source_record.get("host", "")
     to_return["client_domain"] = source_record.get("user_domain", "")
-    to_return["server_host"] = source_record.get("server_hostname", "").split(".")[0]
+    to_return["server_host"] = source_record.get("server_hostname", "")
     if "server_hostname" in source_record and source_record["server_hostname"] != "":
-        to_return["server_domain"] = ".".join(source_record["server_hostname"].split(".")[1:])
+        to_return["server_domain"] = ".".join(source_record["server_hostname"].split(".")[-2:])
     else:
         to_return["server_hostname"] = ""
     # Generate a random uuid
@@ -61,6 +61,33 @@ def Convert(source_record):
     to_return["read_single_bytes"] = source_record.get("read", 0)
     to_return["read_vector_bytes"] = source_record.get("readv", 0)
     to_return["ipv6"] = source_record.get("ipv6", False)
+
+    if 'appinfo' in source_record:
+        # Convert from 
+        # 162_https://glidein.cern.ch/162/190501:101553:heewon:crab:RPCEfficiency:SingleMuon:Run2018D-PromptReco-v2_0
+        # would translate into:
+        # CRAB_Workflow= 190501:101553:heewon:crab:RPCEfficiency:SingleMuon:Run2018D-PromptReco-v2
+        # CRAB_Id= 162
+        # CRAB_Rerty=0
+        # or
+        # b) 3-99_https://glidein.cern.ch/3-99/190608:212153:dseith:crab:SingleMuon:2017:E_2
+        # would translate into:
+        # CRAB_Workflow= 190608:212153:dseith:crab:SingleMuon:2017:E
+        # CRAB_Id= 3-99
+        # CRAB_Rerty=2
+
+        # Try to split the appinfo by "_"
+        split_appinfo = source_record['appinfo'].split("_")
+        if len(split_appinfo) == 3:
+            to_return['CRAB_Id'] = split_appinfo[0]
+            to_return['CRAB_Retry'] = split_appinfo[2]
+
+            # Grab everything after the last "/"
+            try:
+                to_return['CRAB_Workflow'] = split_appinfo[1].split("/")[-1]
+            except:
+                pass
+
     
     
     # Add the metadata

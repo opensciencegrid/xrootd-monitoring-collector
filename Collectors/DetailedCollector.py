@@ -56,7 +56,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # logger.warning('server still not identified: %s',sid)
 
         try:
-            u, auth = self._users[sid][userID]
+            u = self._users[sid][userID].get('userinfo', None)
+            auth = self._users[sid][userID].get('authinfo', None)
+            appinfo = self._users[sid][userID].get('appinfo', None)
+
             if u is not None:
                 hostname = u.host.decode('idna')
                 rec['user'] = u.username.decode('utf-8')
@@ -73,6 +76,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 if auth.on != b'':
                     if auth.on == b"cms" or auth.on == b"dteam":
                         lcg_record = True
+            if appinfo is not None:
+                rec['appinfo'] = appinfo
                     
         except KeyError:
             self.logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
@@ -258,6 +263,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             elif header.code == b'i':
                 appinfo = rest
+                self._users[sid][mm.dictID]['appinfo'] = rest
                 self.logger.info('appinfo:%s', appinfo)
 
             elif header.code == b'p':
@@ -271,12 +277,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 if mm.dictID not in self._users[sid]:
-                    self._users[sid][mm.dictID] = (userInfo, authorizationInfo)
+                    self._users[sid][mm.dictID] = {
+                        'userinfo': userInfo,
+                        'authinfo': authorizationInfo
+                    }
                     self.logger.debug("Adding new user: %s", authorizationInfo)
                 elif self._users[sid][mm.dictID] is None:
                     self.logger.warning("Received a user ID (%i) from sid %s after corresponding "
                                         "f-stream usage information.", mm.dictID, sid)
-                    self._users[sid][mm.dictID] = (userInfo, authorizationInfo)
+                    self._users[sid][mm.dictID] = {
+                        'userinfo': userInfo,
+                        'authinfo': authorizationInfo
+                    }
                 elif self._users[sid][mm.dictID]:
                     self.logger.error("Received a repeated userID; SID: %s and UserID: %s (%s).",
                                       sid, mm.dictID, userInfo)
