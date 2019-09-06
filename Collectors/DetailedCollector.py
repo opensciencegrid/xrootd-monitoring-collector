@@ -263,6 +263,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             elif header.code == b'i':
                 appinfo = rest
+                if sid not in self._users:
+                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
+                if mm.dictID not in self._users[sid]:
+                    self._users[sid][mm.dictID] = {}
                 self._users[sid][mm.dictID]['appinfo'] = rest
                 self.logger.info('appinfo:%s', appinfo)
 
