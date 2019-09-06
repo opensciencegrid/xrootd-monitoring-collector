@@ -85,6 +85,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
         except TypeError as e:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
             self._users.setdefault(sid, {})[userID] = None
+        except AttributeError:
+            self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
+            self._users.setdefault(sid, {})[userID] = None
         transfer_key = str(sid) + "." + str(fileClose.fileID)
         if transfer_key in self._transfers:
             f = self._transfers[transfer_key][1]
