@@ -2,6 +2,7 @@ import struct
 import decoding
 import argparse
 import socket
+import random
 
 
 # A single packet is:
@@ -72,9 +73,13 @@ def main():
     counter = 0
     while counter < 1:
         # ["ap", "dn", "hn", "on", "rn", "gn", "info", 'execname', 'moninfo', "inetv"])
+        rand_id = int(random.uniform(1,100000))
         user_encoded = decoding.revUserInfo(userid)
-        wrapped_user = wrap_user_pack(counter, user_encoded + b"\n" + auth_encoded)
+        wrapped_user = wrap_user_pack(rand_id, user_encoded + b"\n" + auth_encoded)
         final_packet = create_header("u", len(wrapped_user)) + wrapped_user
+        sock.sendto(final_packet, (host, args.port))
+        wrapped_user = wrap_user_pack(rand_id, user_encoded + b"\n" + b"162_https://glidein.cern.ch/162/190501:101553:heewon:crab:RPCEfficiency:SingleMuon:Run2018D-PromptReco-v2_0")
+        final_packet = create_header("i", len(wrapped_user)) + wrapped_user
         sock.sendto(final_packet, (host, args.port))
         counter += 1
 
