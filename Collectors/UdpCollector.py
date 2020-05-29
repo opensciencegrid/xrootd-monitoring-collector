@@ -90,7 +90,7 @@ class UdpCollector(object):
             if retry:
                 self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
                 self._create_rmq_channel()
-                self.publish(routing_key, record, retry=False)
+                self.publish(routing_key, record, retry=False, exchange=exchange)
 
 
     def _init_logging(self):
