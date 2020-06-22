@@ -130,6 +130,7 @@ class UdpCollector(object):
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
 
+    def _launch_metrics(self):
         # Metrics process
         self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q,))
         self.metrics_process.name = "Collector metrics thread"
@@ -176,6 +177,7 @@ class UdpCollector(object):
 
 
         self._launch_child()
+        self._launch_metrics()
 
         try:
             n_messages = 0
@@ -183,10 +185,14 @@ class UdpCollector(object):
             while True:
                 sock_list = list(self.socks)
                 sock_list.append(self.child_process.sentinel)
+                sock_list.append(self.metrics_process.sentinel)
                 rlist = multiprocessing.connection.wait(sock_list, timeout=10)
                 if self.child_process.sentinel in rlist:
                     self.logger.error("Child event process died; restarting")
                     self._launch_child()
+                if self.metrics_process.sentinel in rlist:
+                    self.logger.error("Metrics process died; restarting")
+                    self._launch_metrics()
                 for sock in self.socks:
                     if sock in rlist:
                         message, addr = sock.recvfrom(65536)
