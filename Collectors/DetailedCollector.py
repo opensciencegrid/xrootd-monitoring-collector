@@ -185,17 +185,23 @@ class DetailedCollector(UdpCollector.UdpCollector):
             else:
                 missed_packets = abs(header.pseq - expected_seq)
 
+            hostname = addr
+            try:
+                hostname = socket.gethostbyaddr(addr)[0]
+            except:
+                pass
+
             # Remove re-ordering errors
             if missed_packets < 253:
                 self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
                                     "Missed %s packets! from %s", expected_seq,
                                     header.pseq, missed_packets, addr)
-                self.metrics_q.put({'type': 'missing packets', 'count': missed_packets})
+                self.metrics_q.put({'type': 'missing packets', 'count': missed_packets, 'addr': hostname})
             else:
                 self.logger.error("Packet Reording packet(s)!  Expected seq=%s, got=%s.  "
                                     "Missed %s packets! from %s", expected_seq,
                                     header.pseq, missed_packets, addr)
-                self.metrics_q.put({'type': 'reordered packets', 'count': 1})
+                self.metrics_q.put({'type': 'reordered packets', 'count': 1, 'addr': hostname})
         self.seq_data[sid][str_header_code] = header.pseq
 
         if header.code == b'f':

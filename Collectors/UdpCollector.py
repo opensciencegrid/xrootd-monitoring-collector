@@ -240,13 +240,13 @@ class UdpCollector(object):
 
             # Number of missing messages
             if metrics_message['type'] == "missing packets":
-                missing_counter.inc(metrics_message['count'])
+                missing_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
             elif metrics_message['type'] == "messages":
                 messages.inc(metrics_message['count'])
             elif metrics_message['type'] == "packets":
                 packets.inc(metrics_message['count'])
             elif metrics_message['type'] == "reordered packets":
-                reorder_counter.inc(metrics_message['count'])
+                reorder_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
 
 
 
