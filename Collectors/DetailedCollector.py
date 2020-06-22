@@ -30,6 +30,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self.last_flush = time.time()
+        self.seq_data = {}
 
 
     def addRecord(self, sid, userID, fileClose, timestamp, addr):
@@ -139,7 +140,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
     def process(self, data, addr, port):
 
-        seq_data = {}
         self.metrics_q.put({'type': 'packets', 'count': 1})
 
         # print "Byte Length of Message: {0}".format(len(d))
@@ -170,12 +170,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug(time_record)
             data = data[time_record.recSize:]
 
-            if sid not in seq_data:
-                seq_data[sid] = header.pseq
+            if sid not in self.seq_data:
+                self.seq_data[sid] = header.pseq
                 self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
             else:
                 # What is the last seq number we got
-                last_seq = seq_data[sid]
+                last_seq = self.seq_data[sid]
                 expected_seq = (last_seq + 1)
                 if expected_seq == 256:
                     expected_seq = 0
@@ -185,10 +185,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                       "Missed %s packets! from %s", expected_seq,
                                       header.pseq, missed_packets, addr)
                     self.metrics_q({'type': 'missing packets', 'count': missed_packets})
-                seq_data[sid] = header.pseq
+                self.seq_data[sid] = header.pseq
 
             self.logger.debug("Size of seq_data: %i, Number of sub-records: %i",
-                              len(seq_data), time_record.total_recs)
+                              len(self.seq_data), time_record.total_recs)
             now = time.time()
 
             for idx in range(time_record.total_recs):
