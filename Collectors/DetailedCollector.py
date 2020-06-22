@@ -174,7 +174,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
             if expected_seq == 256:
                 expected_seq = 0
             if expected_seq != header.pseq:
-                missed_packets = abs(header.pseq - expected_seq)
+                if header.pseq < expected_seq:
+                    # Handle the roll over
+                    missed_packets = (header.pseq + 255) - expected_seq
+                else:
+                    missed_packets = abs(header.pseq - expected_seq)
                 self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
                                     "Missed %s packets! from %s", expected_seq,
                                     header.pseq, missed_packets, addr)
