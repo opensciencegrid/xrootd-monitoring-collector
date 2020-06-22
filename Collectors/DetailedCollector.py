@@ -10,6 +10,7 @@ import re
 import socket
 import struct
 import time
+import collections
 
 import decoding
 import wlcg_converter
@@ -27,6 +28,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._transfers = {}
         self._servers = {}
         self._users = {}
+        self._dictid_map = collections.defaultdict({})
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self.last_flush = time.time()
@@ -57,9 +59,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # logger.warning('server still not identified: %s',sid)
 
         try:
-            u = self._users[sid][userID].get('userinfo', None)
-            auth = self._users[sid][userID].get('authinfo', None)
-            appinfo = self._users[sid][userID].get('appinfo', None)
+            # Get userinfo from the map
+            userInfo = self._dictid_map[sid][userID]
+            u = self._users[sid][userInfo].get('userinfo', None)
+            auth = self._users[sid][userInfo].get('authinfo', None)
+            appinfo = self._users[sid][userInfo].get('appinfo', None)
 
             if u is not None:
                 hostname = u.host.decode('idna')
@@ -82,13 +86,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     
         except KeyError:
             self.logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
-            self._users.setdefault(sid, {})[userID] = None
+            #self._users.setdefault(sid, {})[userID] = None
         except TypeError as e:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
-            self._users.setdefault(sid, {})[userID] = None
+            #self._users.setdefault(sid, {})[userID] = None
         except AttributeError:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
-            self._users.setdefault(sid, {})[userID] = None
+            #self._users.setdefault(sid, {})[userID] = None
         transfer_key = str(sid) + "." + str(fileClose.fileID)
         if transfer_key in self._transfers:
             f = self._transfers[transfer_key][1]
@@ -220,8 +224,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
                 if isinstance(hd, decoding.fileDisc):
                     try:
-                        user_info = self._users.setdefault(sid, {})
-                        del user_info[hd.userID]
+                        userInfo = self._dictid_map[sid][hd.userID]
+                        del self._users[userInfo]
+                        del self._dictid_map[sid][hd.userID]
                     except KeyError:
                         self.logger.error('Disconnect event for unknown UserID=%i with SID=%s',
                                           hd.userID, sid)
@@ -297,9 +302,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 appinfo = rest
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
-                if mm.dictID not in self._users[sid]:
-                    self._users[sid][mm.dictID] = {}
-                self._users[sid][mm.dictID]['appinfo'] = rest
+
+                self._dictid_map[sid][mm.dictID] = userInfo
+
+                # Check if userInfo is available in _users
+                if userInfo not in self._users[sid]:
+                    self._users[sid][userInfo] = {}
+                self._users[sid][userInfo]['appinfo'] = rest
                 self.logger.info('appinfo:%s', appinfo)
 
             elif header.code == b'p':
@@ -310,22 +319,36 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 authorizationInfo = decoding.authorizationInfo(rest)
                 if authorizationInfo.inetv != b'':
                     self.logger.debug("Inet version detected to be %s", authorizationInfo.inetv)
+
+                # New server seen
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
-                if mm.dictID not in self._users[sid]:
-                    self._users[sid][mm.dictID] = {
+
+                # Add the dictid to the userinfo map
+                self._dictid_map[sid][mm.dictID] = userInfo
+                # New user signed in
+                if userInfo not in self._users[sid]:
+                    self._users[sid][userInfo] = {
                         'userinfo': userInfo,
                         'authinfo': authorizationInfo
                     }
                     self.logger.debug("Adding new user: %s", authorizationInfo)
-                elif self._users[sid][mm.dictID] is None:
+
+                # Seen the user, but not the auth stuff yet
+                elif self._users[sid][userInfo] is None:
                     self.logger.warning("Received a user ID (%i) from sid %s after corresponding "
                                         "f-stream usage information.", mm.dictID, sid)
-                    self._users[sid][mm.dictID] = {
+                    self._users[sid][userInfo] = {
                         'userinfo': userInfo,
                         'authinfo': authorizationInfo
                     }
-                elif self._users[sid][mm.dictID]:
+
+                # Seen the user, and added the stuff
+                elif self._users[sid][userInfo]:
+                    self._users[sid][userInfo].update({
+                        'userinfo': userInfo,
+                        'authinfo': authorizationInfo
+                    })
                     self.logger.error("Received a repeated userID; SID: %s and UserID: %s (%s).",
                                       sid, mm.dictID, userInfo)
 
@@ -343,6 +366,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
         now_time = time.time()
         if (now_time - self.last_flush) > (60*5):
             self.logger.debug("Flushing data structures")
+
+            # Flush the dictid mapping
+            for sid in self._dictid_map:
+                removed = self._dictid_map[sid].purge()
+                self.logger.debug("Removed {} items from DictID Mapping".format(removed))
 
             # Flush the users data structure
             for sid in self._users:
