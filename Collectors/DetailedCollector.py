@@ -136,6 +136,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
     def process(self, data, addr, port):
 
         seq_data = {}
+        self.metrics_q.put({'type': 'packets', 'count': 1})
 
         # print "Byte Length of Message: {0}".format(len(d))
         header = decoding.header._make(struct.unpack("!cBHI", data[:8]))  # XrdXrootdMonHeader

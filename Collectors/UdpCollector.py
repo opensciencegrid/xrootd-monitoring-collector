@@ -193,7 +193,6 @@ class UdpCollector(object):
 
                         self.message_q.put([message, addr[0], addr[1]])
                         n_messages += 1
-                        self.metrics_q.put({'type': 'packets', 'count': 1})
                         if n_messages % 10000 == 0:
                             self.logger.info("Current UDP packets processed count: %i", n_messages)
                 if time.time() - last_message >= 10:
