@@ -233,6 +233,9 @@ class UdpCollector(object):
         messages = Counter('messages', 'Number of messages')
         packets = Counter('packets', 'Number of packets')
         reorder_counter = Counter("reordered_packets", "Reordered Packets", ['host'])
+        failed_user = Counter("xrootd_mon_failed_user", "Failed User Collection")
+        failed_filename = Counter("xrootd_mon_failed_filename", "Failed Filename Collection")
+        messages_sent = Counter("xrootd_mon_messages_sent", "Number of messages sent to the message bus", ['message_type'])
 
         # Number of messages
         while True:
@@ -247,6 +250,13 @@ class UdpCollector(object):
                 packets.inc(metrics_message['count'])
             elif metrics_message['type'] == "reordered packets":
                 reorder_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
+            elif metrics_message['type'] == "failed user":
+                failed_user.inc(metrics_message['count'])
+            elif metrics_message['type'] == "failed filename":
+                failed_filename.inc(metrics_message['count'])
+            elif metrics_message['type'] == "message sent":
+                messages_sent.labels(metrics_message['message_type']).inc(metrics_message['count'])
+
 
 
 

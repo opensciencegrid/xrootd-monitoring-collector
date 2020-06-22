@@ -130,14 +130,21 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
 
+        if 'user' not in rec:
+            self.metrics_q.put({'type': 'failed user', 'count': 1})
+
+        if 'filename' not in rec:
+            self.metrics_q.put({'type': 'failed filename', 'count': 1})
 
         if not lcg_record:
             self.logger.debug("OSG record to send: %s", str(rec))
             self.publish("file-close", rec, exchange=self._exchange)
+            self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'stashcache'})
         else:
             wlcg_packet = wlcg_converter.Convert(rec)
             self.logger.debug("WLCG record to send: %s", str(wlcg_packet))
             self.publish("file-close", wlcg_packet, exchange=self._wlcg_exchange)
+            self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'wlcg'})
 
         return rec
 
