@@ -28,7 +28,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._transfers = {}
         self._servers = {}
         self._users = {}
-        self._dictid_map = collections.defaultdict({})
+        self._dictid_map = collections.defaultdict(dict)
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self.last_flush = time.time()
