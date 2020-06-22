@@ -164,28 +164,28 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         sid = str(header.server_start) + "#" + str(addr) + "#" + str(port)
 
+        if sid not in self.seq_data:
+            self.seq_data[sid] = header.pseq
+            self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
+        else:
+            # What is the last seq number we got
+            last_seq = self.seq_data[sid]
+            expected_seq = (last_seq + 1)
+            if expected_seq == 256:
+                expected_seq = 0
+            if expected_seq != header.pseq:
+                missed_packets = abs(header.pseq - expected_seq)
+                self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                                    "Missed %s packets! from %s", expected_seq,
+                                    header.pseq, missed_packets, addr)
+                self.metrics_q({'type': 'missing packets', 'count': missed_packets})
+            self.seq_data[sid] = header.pseq
+
         if header.code == b'f':
             # self.logger.debug("Got fstream object")
             time_record = decoding.MonFile(data)  # first one is always TOD
             self.logger.debug(time_record)
             data = data[time_record.recSize:]
-
-            if sid not in self.seq_data:
-                self.seq_data[sid] = header.pseq
-                self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
-            else:
-                # What is the last seq number we got
-                last_seq = self.seq_data[sid]
-                expected_seq = (last_seq + 1)
-                if expected_seq == 256:
-                    expected_seq = 0
-                if expected_seq != header.pseq:
-                    missed_packets = abs(header.pseq - expected_seq)
-                    self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
-                                      "Missed %s packets! from %s", expected_seq,
-                                      header.pseq, missed_packets, addr)
-                    self.metrics_q({'type': 'missing packets', 'count': missed_packets})
-                self.seq_data[sid] = header.pseq
 
             self.logger.debug("Size of seq_data: %i, Number of sub-records: %i",
                               len(self.seq_data), time_record.total_recs)
