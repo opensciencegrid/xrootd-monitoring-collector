@@ -19,6 +19,8 @@ import sys
 import time
 
 from six.moves import configparser
+import prometheus_client
+from prometheus_client import start_http_server, Counter
 
 import pika
 
@@ -66,6 +68,7 @@ class UdpCollector(object):
         self.message_q = None
         self.child_process = None
         self.exchange = config.get('AMQP', 'exchange')
+        self.metrics_q = None
 
     def _create_rmq_channel(self):
         """
@@ -114,7 +117,7 @@ class UdpCollector(object):
     def _launch_child(self):
         if self.child_process:
             self._shutdown_child()
-        self.child_process = multiprocessing.Process(target=self._start_child, args=(self.config, self.message_q))
+        self.child_process = multiprocessing.Process(target=self._start_child, args=(self.config, self.message_q, self.metrics_q))
         self.child_process.name = "Collector processing thread"
         self.child_process.daemon = True
         orig_stdout = sys.stdout
@@ -127,6 +130,21 @@ class UdpCollector(object):
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
 
+        # Metrics process
+        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q,))
+        self.metrics_process.name = "Collector metrics thread"
+        self.metrics_process.daemon = True
+        orig_stdout = sys.stdout
+        orig_stderr = sys.stderr
+        sys.stdout = self.orig_stdout
+        sys.stderr = self.orig_stderr
+        try:
+            self.metrics_process.start()
+        finally:
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+
+
 
     def start(self):
         """
@@ -135,6 +153,7 @@ class UdpCollector(object):
         self._init_logging()
 
         self.message_q = multiprocessing.Queue()
+        self.metrics_q = multiprocessing.Queue()
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -174,6 +193,7 @@ class UdpCollector(object):
 
                         self.message_q.put([message, addr[0], addr[1]])
                         n_messages += 1
+                        self.metrics_q.put({'type': 'packets', 'count': 1})
                         if n_messages % 10000 == 0:
                             self.logger.info("Current UDP packets processed count: %i", n_messages)
                 if time.time() - last_message >= 10:
@@ -186,17 +206,39 @@ class UdpCollector(object):
 
 
     @classmethod
-    def _start_child(Collector, config, message_q):
+    def _start_child(Collector, config, message_q, metrics_q):
         coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT))
         coll._init_logging()
         coll._create_rmq_channel()
         coll.message_q = message_q
+        coll.metrics_q = metrics_q
         try:
             coll.run()
         except KeyboardInterrupt:
             pass
         except:
             coll.logger.exception("Child process has failed:")
+
+    @staticmethod
+    def _metrics_child(metrics_q):
+
+        # Start the prometheus HTTP client
+        start_http_server(8000)
+        missing_counter = Counter('missing_packets', 'Number of missing packets')
+        messages = Counter('messages', 'Number of messages')
+        packets = Counter('packets', 'Number of packets')
+
+        # Number of messages
+        while True:
+            metrics_message = metrics_q.get()
+
+            # Number of missing messages
+            if metrics_message['type'] == "missing packets":
+                missing_counter.inc(metrics_message['count'])
+            elif metrics_message['type'] == "messages":
+                messages.inc(metrics_message['count'])
+            elif metrics_message['type'] == "packets":
+                packets.inc(metrics_message['count'])
 
 
     @abc.abstractmethod

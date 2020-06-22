@@ -179,6 +179,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
                                       "Missed %s packets! from %s", expected_seq,
                                       header.pseq, missed_packets, addr)
+                    self.metrics_q({'type': 'missing packets', 'count': missed_packets})
                 seq_data[sid] = header.pseq
 
             self.logger.debug("Size of seq_data: %i, Number of sub-records: %i",
