@@ -229,10 +229,10 @@ class UdpCollector(object):
 
         # Start the prometheus HTTP client
         start_http_server(8000)
-        missing_counter = Counter('missing_packets', 'Number of missing packets')
+        missing_counter = Counter('missing_packets', 'Number of missing packets', ['host'])
         messages = Counter('messages', 'Number of messages')
         packets = Counter('packets', 'Number of packets')
-        reorder_counter = Counter("reordered_packets", "Reordered Packets")
+        reorder_counter = Counter("reordered_packets", "Reordered Packets", ['host'])
 
         # Number of messages
         while True:
