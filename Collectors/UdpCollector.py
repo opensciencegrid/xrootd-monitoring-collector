@@ -232,6 +232,7 @@ class UdpCollector(object):
         missing_counter = Counter('missing_packets', 'Number of missing packets')
         messages = Counter('messages', 'Number of messages')
         packets = Counter('packets', 'Number of packets')
+        reorder_counter = Counter("reordered_packets", "Reordered Packets")
 
         # Number of messages
         while True:
@@ -244,6 +245,9 @@ class UdpCollector(object):
                 messages.inc(metrics_message['count'])
             elif metrics_message['type'] == "packets":
                 packets.inc(metrics_message['count'])
+            elif metrics_message['type'] == "reordered packets":
+                packets.inc(metrics_message['count'])
+
 
 
     @abc.abstractmethod

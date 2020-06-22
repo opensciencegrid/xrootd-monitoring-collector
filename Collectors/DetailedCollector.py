@@ -182,10 +182,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 missed_packets = (header.pseq + 255) - expected_seq
             else:
                 missed_packets = abs(header.pseq - expected_seq)
-            self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
-                                "Missed %s packets! from %s", expected_seq,
-                                header.pseq, missed_packets, addr)
-            self.metrics_q.put({'type': 'missing packets', 'count': missed_packets})
+
+            # Remove re-ordering errors
+            if missed_packets < 253:
+                self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                                    "Missed %s packets! from %s", expected_seq,
+                                    header.pseq, missed_packets, addr)
+                self.metrics_q.put({'type': 'missing packets', 'count': missed_packets})
+            else:
+                self.logger.error("Packet Reording packet(s)!  Expected seq=%s, got=%s.  "
+                                    "Missed %s packets! from %s", expected_seq,
+                                    header.pseq, missed_packets, addr)
+                self.metrics_q.put({'type': 'reordered packets', 'count': 1})
         self.seq_data[sid][str_header_code] = header.pseq
 
         if header.code == b'f':
