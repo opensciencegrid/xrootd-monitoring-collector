@@ -163,27 +163,30 @@ class DetailedCollector(UdpCollector.UdpCollector):
         # print "Servers: {0}, Users: {1}, Files: {2}".format(num_servers, num_users, num_files)
 
         sid = str(header.server_start) + "#" + str(addr) + "#" + str(port)
-
+        str_header_code = header.code.decode('utf-8')
         if sid not in self.seq_data:
-            self.seq_data[sid] = header.pseq
+            self.seq_data[sid] = {}
             self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
-        else:
-            # What is the last seq number we got
-            last_seq = self.seq_data[sid]
-            expected_seq = (last_seq + 1)
-            if expected_seq == 256:
-                expected_seq = 0
-            if expected_seq != header.pseq:
-                if header.pseq < expected_seq:
-                    # Handle the roll over
-                    missed_packets = (header.pseq + 255) - expected_seq
-                else:
-                    missed_packets = abs(header.pseq - expected_seq)
-                self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
-                                    "Missed %s packets! from %s", expected_seq,
-                                    header.pseq, missed_packets, addr)
-                self.metrics_q.put({'type': 'missing packets', 'count': missed_packets})
-            self.seq_data[sid] = header.pseq
+
+        if str_header_code not in self.seq_data[sid]:
+            self.seq_data[sid][str_header_code] = header.pseq
+
+        # What is the last seq number we got
+        last_seq = self.seq_data[sid][str_header_code]
+        expected_seq = (last_seq + 1)
+        if expected_seq == 256:
+            expected_seq = 0
+        if expected_seq != header.pseq:
+            if header.pseq < expected_seq:
+                # Handle the roll over
+                missed_packets = (header.pseq + 255) - expected_seq
+            else:
+                missed_packets = abs(header.pseq - expected_seq)
+            self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                                "Missed %s packets! from %s", expected_seq,
+                                header.pseq, missed_packets, addr)
+            self.metrics_q.put({'type': 'missing packets', 'count': missed_packets})
+        self.seq_data[sid][str_header_code] = header.pseq
 
         if header.code == b'f':
             # self.logger.debug("Got fstream object")
