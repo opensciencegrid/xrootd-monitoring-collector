@@ -170,10 +170,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         if str_header_code not in self.seq_data[sid]:
             self.seq_data[sid][str_header_code] = header.pseq
+            expected_seq = header.pseq
+        else:
+            # What is the last seq number we got
+            last_seq = self.seq_data[sid][str_header_code]
+            expected_seq = (last_seq + 1)
 
-        # What is the last seq number we got
-        last_seq = self.seq_data[sid][str_header_code]
-        expected_seq = (last_seq + 1)
         if expected_seq == 256:
             expected_seq = 0
         if expected_seq != header.pseq:
