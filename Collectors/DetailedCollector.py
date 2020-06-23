@@ -133,7 +133,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if 'user' not in rec:
             self.metrics_q.put({'type': 'failed user', 'count': 1})
 
-        if 'filename' not in rec:
+        if 'filename' not in rec or rec['filename'] == "missing directory":
             self.metrics_q.put({'type': 'failed filename', 'count': 1})
 
         if not lcg_record:
