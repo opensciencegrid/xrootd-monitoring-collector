@@ -288,7 +288,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self.logger.exception("Strange >>%s<< mapping message from %s mm: %s",
                                           header.code, addr, mm)
                 userRec = mm.info
-                rest = ''
+                rest = b''
 
             userInfo = decoding.userInfo(userRec)
             self.logger.debug('%i %s', mm.dictID, userInfo)
