@@ -189,7 +189,7 @@ class UdpCollector(object):
                 rlist = multiprocessing.connection.wait(sock_list, timeout=10)
                 if self.child_process.sentinel in rlist:
                     self.logger.error("Child event process died; restarting")
-                    self.metrics_q({'type': 'process died', 'count': 1})
+                    self.metrics_q.put({'type': 'process died', 'count': 1})
                     self._launch_child()
                 if self.metrics_process.sentinel in rlist:
                     self.logger.error("Metrics process died; restarting")
