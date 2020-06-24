@@ -189,6 +189,7 @@ class UdpCollector(object):
                 rlist = multiprocessing.connection.wait(sock_list, timeout=10)
                 if self.child_process.sentinel in rlist:
                     self.logger.error("Child event process died; restarting")
+                    self.metrics_q({'type': 'process died', 'count': 1})
                     self._launch_child()
                 if self.metrics_process.sentinel in rlist:
                     self.logger.error("Metrics process died; restarting")
@@ -236,6 +237,7 @@ class UdpCollector(object):
         failed_user = Counter("xrootd_mon_failed_user", "Failed User Collection")
         failed_filename = Counter("xrootd_mon_failed_filename", "Failed Filename Collection")
         messages_sent = Counter("xrootd_mon_messages_sent", "Number of messages sent to the message bus", ['message_type'])
+        process_died = Counter("xrootd_mon_process_died", "Number of times the process died")
 
         # Number of messages
         while True:
@@ -256,6 +258,8 @@ class UdpCollector(object):
                 failed_filename.inc(metrics_message['count'])
             elif metrics_message['type'] == "message sent":
                 messages_sent.labels(metrics_message['message_type']).inc(metrics_message['count'])
+            elif metrics_message['type'] == "process died":
+                process_died.inc(metrics_message['count'])
 
 
 
