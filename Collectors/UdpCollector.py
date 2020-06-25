@@ -224,6 +224,7 @@ class UdpCollector(object):
             pass
         except:
             coll.logger.exception("Child process has failed:")
+        coll.logger.error("Child process exited without exception, it should not do this")
 
     @staticmethod
     def _metrics_child(metrics_q):
