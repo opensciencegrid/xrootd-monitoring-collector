@@ -104,9 +104,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
             if fname.startswith('/user'):
                 rec['logical_dirname'] = rec['dirname2']
             elif fname.startswith('/osgconnect/public'):
-                rec['dirname2'] = "/".join(fname.split('/', 4)[:4])
+                rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
             elif fname.startswith('/hcc'):
-                rec['dirname2'] = "/".join(fname.split('/', 6)[:6])
+                rec['logical_dirname'] = "/".join(fname.split('/', 6)[:6])
             elif fname.startswith('/pnfs/fnal.gov/usr'):
                 rec['logical_dirname'] = "/".join(f.fileName.decode('utf-8').split('/')[:5])
             elif fname.startswith('/gwdata'):
