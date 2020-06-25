@@ -85,7 +85,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['appinfo'] = appinfo
                     
         except KeyError:
-            self.logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
+            self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
             #self._users.setdefault(sid, {})[userID] = None
         except TypeError as e:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
