@@ -28,7 +28,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._transfers = {}
         self._servers = {}
         self._users = {}
-        self._dictid_map = collections.defaultdict(dict)
+        self._dictid_map = {}
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self.last_flush = time.time()
@@ -310,6 +310,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
 
+                if sid not in self._dictid_map:
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 self._dictid_map[sid][mm.dictID] = userInfo
 
                 # Check if userInfo is available in _users
@@ -332,6 +334,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
 
                 # Add the dictid to the userinfo map
+                if sid not in self._dictid_map:
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 self._dictid_map[sid][mm.dictID] = userInfo
                 # New user signed in
                 if userInfo not in self._users[sid]:
