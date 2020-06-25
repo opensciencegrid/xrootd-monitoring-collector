@@ -288,6 +288,7 @@ class UdpCollector(object):
             if info is True:
                 last_heartbeat = time.time()
             elif info is None:
+                self.logger.debug('No heartbeats, shutting down process.')
                 break
             elif len(info) == 3:
                 self.process(*info)
