@@ -378,15 +378,21 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if (now_time - self.last_flush) > (60*5):
             self.logger.debug("Flushing data structures")
 
+            dictid_count = 0
             # Flush the dictid mapping
             for sid in self._dictid_map:
                 removed = self._dictid_map[sid].purge()
                 self.logger.debug("Removed {} items from DictID Mapping".format(removed))
+                dictid_count += len(self._dictid_map[sid])
+            self.logger.debug("Size of dictid map: %s", dictid_count)
 
             # Flush the users data structure
+            users_count = 0
             for sid in self._users:
                 removed = self._users[sid].purge()
                 self.logger.debug("Removed {} items from Users".format(removed))
+                users_count += len(self._users[sid])
+            self.logger.debug("Size of users map: %s", users_count)
 
             # Have to make a copy of .keys() because we 'del' as we go
             for key in list(self._transfers.keys()):
@@ -400,6 +406,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                         addr = cur_value[0][1]
                         rec = self.addRecord(sid, userId, cur_value[2], now_time, addr)
                     del self._transfers[key]
+            self.logger.debug("Size of transfers map: %s", len(self._transfers))
             self.last_flush = now_time
 
 

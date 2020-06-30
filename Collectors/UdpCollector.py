@@ -218,13 +218,15 @@ class UdpCollector(object):
         coll._create_rmq_channel()
         coll.message_q = message_q
         coll.metrics_q = metrics_q
-        try:
-            coll.run()
-        except KeyboardInterrupt:
-            pass
-        except:
-            coll.logger.exception("Child process has failed:")
-        coll.logger.error("Child process exited without exception, it should not do this")
+        while True:
+            try:
+                coll.run()
+                coll.logger.error("Child process exited without exception, it should not do this")
+            except KeyboardInterrupt:
+                break
+            except:
+                coll.logger.exception("Child process has failed:")
+
 
     @staticmethod
     def _metrics_child(metrics_q):
