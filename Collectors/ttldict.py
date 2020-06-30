@@ -62,7 +62,7 @@ class TTLOrderedDict(OrderedDict):
 
     def __len__(self):
         with self._lock:
-            self._purge()
+            self.purge()
             return super().__len__()
 
     def set_ttl(self, key, ttl, now=None):
@@ -137,18 +137,18 @@ class TTLOrderedDict(OrderedDict):
 
     def keys(self):
         with self._lock:
-            self._purge()
+            self.purge()
             return super().keys()
 
     def items(self):
         with self._lock:
-            self._purge()
+            self.purge()
             _items = list(super(OrderedDict, self).items())
             return [(k, v[1]) for (k, v) in _items]
 
     def values(self):
         with self._lock:
-            self._purge()
+            self.purge()
             _values = list(super(OrderedDict, self).values())
             return [v[1] for v in _values]
 
