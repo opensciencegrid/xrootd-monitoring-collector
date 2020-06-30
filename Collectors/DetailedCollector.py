@@ -379,19 +379,23 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug("Flushing data structures")
 
             dictid_count = 0
+            dictid_removed = 0
             # Flush the dictid mapping
             for sid in self._dictid_map:
                 removed = self._dictid_map[sid].purge()
-                self.logger.debug("Removed {} items from DictID Mapping".format(removed))
+                dictid_removed += removed
                 dictid_count += len(self._dictid_map[sid])
+            self.logger.debug("Removed {} items from DictID Mapping".format(dictid_removed))
             self.logger.debug("Size of dictid map: %i", dictid_count)
 
             # Flush the users data structure
             users_count = 0
+            users_removed = 0
             for sid in self._users:
                 removed = self._users[sid].purge()
-                self.logger.debug("Removed {} items from Users".format(removed))
+                users_removed += removed
                 users_count += len(self._users[sid])
+            self.logger.debug("Removed {} items from Users".format(users_removed))
             self.logger.debug("Size of users map: %i", users_count)
 
             # Have to make a copy of .keys() because we 'del' as we go
