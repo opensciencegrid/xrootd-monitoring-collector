@@ -204,14 +204,14 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             # Remove re-ordering errors
             if missed_packets < 253:
-                self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
-                                    "Missed %s packets! from %s", expected_seq,
-                                    header.pseq, missed_packets, addr)
+                #self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                #                    "Missed %s packets! from %s", expected_seq,
+                #                    header.pseq, missed_packets, addr)
                 self.metrics_q.put({'type': 'missing packets', 'count': missed_packets, 'addr': hostname})
             else:
-                self.logger.error("Packet Reording packet(s)!  Expected seq=%s, got=%s.  "
-                                    "Missed %s packets! from %s", expected_seq,
-                                    header.pseq, missed_packets, addr)
+                #self.logger.error("Packet Reording packet(s)!  Expected seq=%s, got=%s.  "
+                #                    "Missed %s packets! from %s", expected_seq,
+                #                    header.pseq, missed_packets, addr)
                 self.metrics_q.put({'type': 'reordered packets', 'count': 1, 'addr': hostname})
         self.seq_data[sid][str_header_code] = header.pseq
 
@@ -275,8 +275,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug("r - redirect stream message.")
 
         elif header.code == b't':
-            self.logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
-                                "'iov' directives from the monitoring configuration.", addr)
+            #self.logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
+            #                    "'iov' directives from the monitoring configuration.", addr)
+            pass
 
         else:
             infolen = len(data) - 4
@@ -302,8 +303,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             elif header.code == b'd':
                 path = rest
-                self.logger.warning('Path information sent (%s). Server at %s should remove "files" '
-                                    'directive from the monitoring configuration.', path, addr)
+                #self.logger.warning('Path information sent (%s). Server at %s should remove "files" '
+                #                    'directive from the monitoring configuration.', path, addr)
 
             elif header.code == b'i':
                 appinfo = rest
