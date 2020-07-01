@@ -20,7 +20,7 @@ import time
 
 from six.moves import configparser
 import prometheus_client
-from prometheus_client import start_http_server, Counter
+from prometheus_client import start_http_server, Counter, Gauge
 
 import pika
 
@@ -265,7 +265,7 @@ class UdpCollector(object):
             elif metrics_message['type'] == "process died":
                 process_died.inc(metrics_message['count'])
             elif metrics_message['type'] == "hash size":
-                messages_sent.labels(metrics_message['hash name']).set(metrics_message['count'])
+                hash_size.labels(metrics_message['hash name']).set(metrics_message['count'])
 
 
 
