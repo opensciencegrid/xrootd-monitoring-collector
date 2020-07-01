@@ -386,6 +386,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 dictid_removed += removed
                 dictid_count += len(self._dictid_map[sid])
             self.logger.debug("Removed {} items from DictID Mapping".format(dictid_removed))
+            self.metrics_q.put({'type': 'hash size', 'count': dictid_count, 'hash name': 'dictid'})
             self.logger.debug("Size of dictid map: %i", dictid_count)
 
             # Flush the users data structure
@@ -396,6 +397,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 users_removed += removed
                 users_count += len(self._users[sid])
             self.logger.debug("Removed {} items from Users".format(users_removed))
+            self.metrics_q.put({'type': 'hash size', 'count': users_count, 'hash name': 'users'})
             self.logger.debug("Size of users map: %i", users_count)
 
             # Have to make a copy of .keys() because we 'del' as we go
@@ -411,6 +413,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                         rec = self.addRecord(sid, userId, cur_value[2], now_time, addr)
                     del self._transfers[key]
             self.logger.debug("Size of transfers map: %i", len(self._transfers))
+            self.metrics_q.put({'type': 'hash size', 'count': len(self._transfers), 'hash name': 'transfers'})
             self.last_flush = now_time
 
 

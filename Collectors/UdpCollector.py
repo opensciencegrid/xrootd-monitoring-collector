@@ -241,6 +241,7 @@ class UdpCollector(object):
         failed_filename = Counter("xrootd_mon_failed_filename", "Failed Filename Collection")
         messages_sent = Counter("xrootd_mon_messages_sent", "Number of messages sent to the message bus", ['message_type'])
         process_died = Counter("xrootd_mon_process_died", "Number of times the process died")
+        hash_size = Gauge("xrootd_mon_hash_size", "Number of items in hash", ['hash_type'])
 
         # Number of messages
         while True:
@@ -263,6 +264,8 @@ class UdpCollector(object):
                 messages_sent.labels(metrics_message['message_type']).inc(metrics_message['count'])
             elif metrics_message['type'] == "process died":
                 process_died.inc(metrics_message['count'])
+            elif metrics_message['type'] == "hash size":
+                messages_sent.labels(metrics_message['hash name']).set(metrics_message['count'])
 
 
 
