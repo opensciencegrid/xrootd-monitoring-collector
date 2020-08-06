@@ -1,7 +1,7 @@
 XRootD Monitoring Collector
 ===========================
 
-![Docker Automated build](https://img.shields.io/docker/automated/opensciencegrid/xrootd-monitoring-collector)
+[![Docker Automated build](https://img.shields.io/docker/automated/opensciencegrid/xrootd-monitoring-collector)](https://hub.docker.com/repository/docker/opensciencegrid/xrootd-monitoring-collector)
 
 XRootD monitoring collector for ingesting monitoring data from the XRootD server,
 aggregating it into one monitoring record per file transfer, and sending a resulting JSON-formatted
