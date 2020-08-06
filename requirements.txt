@@ -2,3 +2,4 @@ pika
 requests
 six
 xmltodict
+prometheus_client

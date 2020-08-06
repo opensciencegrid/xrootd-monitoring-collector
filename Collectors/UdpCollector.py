@@ -19,6 +19,8 @@ import sys
 import time
 
 from six.moves import configparser
+import prometheus_client
+from prometheus_client import start_http_server, Counter, Gauge
 
 import pika
 
@@ -66,6 +68,7 @@ class UdpCollector(object):
         self.message_q = None
         self.child_process = None
         self.exchange = config.get('AMQP', 'exchange')
+        self.metrics_q = None
 
     def _create_rmq_channel(self):
         """
@@ -114,7 +117,7 @@ class UdpCollector(object):
     def _launch_child(self):
         if self.child_process:
             self._shutdown_child()
-        self.child_process = multiprocessing.Process(target=self._start_child, args=(self.config, self.message_q))
+        self.child_process = multiprocessing.Process(target=self._start_child, args=(self.config, self.message_q, self.metrics_q))
         self.child_process.name = "Collector processing thread"
         self.child_process.daemon = True
         orig_stdout = sys.stdout
@@ -127,6 +130,22 @@ class UdpCollector(object):
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
 
+    def _launch_metrics(self):
+        # Metrics process
+        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q,))
+        self.metrics_process.name = "Collector metrics thread"
+        self.metrics_process.daemon = True
+        orig_stdout = sys.stdout
+        orig_stderr = sys.stderr
+        sys.stdout = self.orig_stdout
+        sys.stderr = self.orig_stderr
+        try:
+            self.metrics_process.start()
+        finally:
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+
+
 
     def start(self):
         """
@@ -135,6 +154,7 @@ class UdpCollector(object):
         self._init_logging()
 
         self.message_q = multiprocessing.Queue()
+        self.metrics_q = multiprocessing.Queue()
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -157,6 +177,7 @@ class UdpCollector(object):
 
 
         self._launch_child()
+        self._launch_metrics()
 
         try:
             n_messages = 0
@@ -164,10 +185,15 @@ class UdpCollector(object):
             while True:
                 sock_list = list(self.socks)
                 sock_list.append(self.child_process.sentinel)
+                sock_list.append(self.metrics_process.sentinel)
                 rlist = multiprocessing.connection.wait(sock_list, timeout=10)
                 if self.child_process.sentinel in rlist:
                     self.logger.error("Child event process died; restarting")
+                    self.metrics_q.put({'type': 'process died', 'count': 1})
                     self._launch_child()
+                if self.metrics_process.sentinel in rlist:
+                    self.logger.error("Metrics process died; restarting")
+                    self._launch_metrics()
                 for sock in self.socks:
                     if sock in rlist:
                         message, addr = sock.recvfrom(65536)
@@ -186,17 +212,62 @@ class UdpCollector(object):
 
 
     @classmethod
-    def _start_child(Collector, config, message_q):
+    def _start_child(Collector, config, message_q, metrics_q):
         coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT))
         coll._init_logging()
         coll._create_rmq_channel()
         coll.message_q = message_q
-        try:
-            coll.run()
-        except KeyboardInterrupt:
-            pass
-        except:
-            coll.logger.exception("Child process has failed:")
+        coll.metrics_q = metrics_q
+        while True:
+            try:
+                coll.run()
+                coll.logger.error("Child process exited without exception, it should not do this")
+            except KeyboardInterrupt:
+                break
+            except:
+                coll.logger.exception("Child process has failed:")
+
+
+    @staticmethod
+    def _metrics_child(metrics_q):
+
+        # Start the prometheus HTTP client
+        start_http_server(8000)
+        missing_counter = Counter('missing_packets', 'Number of missing packets', ['host'])
+        messages = Counter('messages', 'Number of messages')
+        packets = Counter('packets', 'Number of packets')
+        reorder_counter = Counter("reordered_packets", "Reordered Packets", ['host'])
+        failed_user = Counter("xrootd_mon_failed_user", "Failed User Collection")
+        failed_filename = Counter("xrootd_mon_failed_filename", "Failed Filename Collection")
+        messages_sent = Counter("xrootd_mon_messages_sent", "Number of messages sent to the message bus", ['message_type'])
+        process_died = Counter("xrootd_mon_process_died", "Number of times the process died")
+        hash_size = Gauge("xrootd_mon_hash_size", "Number of items in hash", ['hash_type'])
+
+        # Number of messages
+        while True:
+            metrics_message = metrics_q.get()
+
+            # Number of missing messages
+            if metrics_message['type'] == "missing packets":
+                missing_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
+            elif metrics_message['type'] == "messages":
+                messages.inc(metrics_message['count'])
+            elif metrics_message['type'] == "packets":
+                packets.inc(metrics_message['count'])
+            elif metrics_message['type'] == "reordered packets":
+                reorder_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
+            elif metrics_message['type'] == "failed user":
+                failed_user.inc(metrics_message['count'])
+            elif metrics_message['type'] == "failed filename":
+                failed_filename.inc(metrics_message['count'])
+            elif metrics_message['type'] == "message sent":
+                messages_sent.labels(metrics_message['message_type']).inc(metrics_message['count'])
+            elif metrics_message['type'] == "process died":
+                process_died.inc(metrics_message['count'])
+            elif metrics_message['type'] == "hash size":
+                hash_size.labels(metrics_message['hash name']).set(metrics_message['count'])
+
+
 
 
     @abc.abstractmethod
@@ -223,6 +294,7 @@ class UdpCollector(object):
             if info is True:
                 last_heartbeat = time.time()
             elif info is None:
+                self.logger.debug('No heartbeats, shutting down process.')
                 break
             elif len(info) == 3:
                 self.process(*info)

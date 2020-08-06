@@ -8,4 +8,5 @@ COPY configs /configs
 WORKDIR /app
 
 EXPOSE 9930/udp
+EXPOSE 8000/tcp
 CMD [ "/app/DetailedCollector.py", "/configs/connection.conf" ]

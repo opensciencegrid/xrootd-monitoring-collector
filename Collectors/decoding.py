@@ -46,6 +46,8 @@ def revUserInfo(useridStruct):
 
 
 def authorizationInfo(message):
+    if isinstance(message, str):
+        message = message.encode('utf-8')
     r = message.split(b'&')
     ap = dn = hn = on = rn = gn = info = execname = moninfo = inetv = b''
     for i in r:

@@ -28,10 +28,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._transfers = {}
         self._servers = {}
         self._users = {}
-        self._dictid_map = collections.defaultdict(dict)
+        self._dictid_map = {}
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self.last_flush = time.time()
+        self.seq_data = {}
 
 
     def addRecord(self, sid, userID, fileClose, timestamp, addr):
@@ -84,7 +85,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['appinfo'] = appinfo
                     
         except KeyError:
-            self.logger.error("File close record from unknown UserID=%i, SID=%s", userID, sid)
+            self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
             #self._users.setdefault(sid, {})[userID] = None
         except TypeError as e:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
@@ -102,10 +103,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
             rec['dirname2'] = "/".join(fname.split('/', 3)[:3])
             if fname.startswith('/user'):
                 rec['logical_dirname'] = rec['dirname2']
-            if fname.startswith('/osgconnect/public'):
-                rec['dirname2'] = "/".join(fname.split('/', 4)[:4])
-            if fname.startswith('/hcc'):
-                rec['dirname2'] = "/".join(fname.split('/', 6)[:6])
+            elif fname.startswith('/osgconnect/public'):
+                rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
+            elif fname.startswith('/hcc'):
+                rec['logical_dirname'] = "/".join(fname.split('/', 6)[:6])
             elif fname.startswith('/pnfs/fnal.gov/usr'):
                 rec['logical_dirname'] = "/".join(f.fileName.decode('utf-8').split('/')[:5])
             elif fname.startswith('/gwdata'):
@@ -129,21 +130,28 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
 
+        if 'user' not in rec:
+            self.metrics_q.put({'type': 'failed user', 'count': 1})
+
+        if 'filename' not in rec or rec['filename'] == "missing directory":
+            self.metrics_q.put({'type': 'failed filename', 'count': 1})
 
         if not lcg_record:
             self.logger.debug("OSG record to send: %s", str(rec))
             self.publish("file-close", rec, exchange=self._exchange)
+            self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'stashcache'})
         else:
             wlcg_packet = wlcg_converter.Convert(rec)
             self.logger.debug("WLCG record to send: %s", str(wlcg_packet))
             self.publish("file-close", wlcg_packet, exchange=self._wlcg_exchange)
+            self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'wlcg'})
 
         return rec
 
 
     def process(self, data, addr, port):
 
-        seq_data = {}
+        self.metrics_q.put({'type': 'packets', 'count': 1})
 
         # print "Byte Length of Message: {0}".format(len(d))
         header = decoding.header._make(struct.unpack("!cBHI", data[:8]))  # XrdXrootdMonHeader
@@ -166,6 +174,46 @@ class DetailedCollector(UdpCollector.UdpCollector):
         # print "Servers: {0}, Users: {1}, Files: {2}".format(num_servers, num_users, num_files)
 
         sid = str(header.server_start) + "#" + str(addr) + "#" + str(port)
+        str_header_code = header.code.decode('utf-8')
+        if sid not in self.seq_data:
+            self.seq_data[sid] = {}
+            self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
+
+        if str_header_code not in self.seq_data[sid]:
+            self.seq_data[sid][str_header_code] = header.pseq
+            expected_seq = header.pseq
+        else:
+            # What is the last seq number we got
+            last_seq = self.seq_data[sid][str_header_code]
+            expected_seq = (last_seq + 1)
+
+        if expected_seq == 256:
+            expected_seq = 0
+        if expected_seq != header.pseq:
+            if header.pseq < expected_seq:
+                # Handle the roll over
+                missed_packets = (header.pseq + 255) - expected_seq
+            else:
+                missed_packets = abs(header.pseq - expected_seq)
+
+            hostname = addr
+            try:
+                hostname = socket.gethostbyaddr(addr)[0]
+            except:
+                pass
+
+            # Remove re-ordering errors
+            if missed_packets < 253:
+                #self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
+                #                    "Missed %s packets! from %s", expected_seq,
+                #                    header.pseq, missed_packets, addr)
+                self.metrics_q.put({'type': 'missing packets', 'count': missed_packets, 'addr': hostname})
+            else:
+                #self.logger.error("Packet Reording packet(s)!  Expected seq=%s, got=%s.  "
+                #                    "Missed %s packets! from %s", expected_seq,
+                #                    header.pseq, missed_packets, addr)
+                self.metrics_q.put({'type': 'reordered packets', 'count': 1, 'addr': hostname})
+        self.seq_data[sid][str_header_code] = header.pseq
 
         if header.code == b'f':
             # self.logger.debug("Got fstream object")
@@ -173,24 +221,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug(time_record)
             data = data[time_record.recSize:]
 
-            if sid not in seq_data:
-                seq_data[sid] = header.pseq
-                self.logger.debug("New SID found.  sid=%s, addr=%s", str(sid), addr)
-            else:
-                # What is the last seq number we got
-                last_seq = seq_data[sid]
-                expected_seq = (last_seq + 1)
-                if expected_seq == 256:
-                    expected_seq = 0
-                if expected_seq != header.pseq:
-                    missed_packets = abs(header.pseq - expected_seq)
-                    self.logger.error("Missed packet(s)!  Expected seq=%s, got=%s.  "
-                                      "Missed %s packets! from %s", expected_seq,
-                                      header.pseq, missed_packets, addr)
-                seq_data[sid] = header.pseq
-
             self.logger.debug("Size of seq_data: %i, Number of sub-records: %i",
-                              len(seq_data), time_record.total_recs)
+                              len(self.seq_data), time_record.total_recs)
             now = time.time()
 
             for idx in range(time_record.total_recs):
@@ -243,8 +275,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug("r - redirect stream message.")
 
         elif header.code == b't':
-            self.logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
-                                "'iov' directives from the monitoring configuration.", addr)
+            #self.logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
+            #                    "'iov' directives from the monitoring configuration.", addr)
+            pass
 
         else:
             infolen = len(data) - 4
@@ -256,7 +289,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self.logger.exception("Strange >>%s<< mapping message from %s mm: %s",
                                           header.code, addr, mm)
                 userRec = mm.info
-                rest = ''
+                rest = b''
 
             userInfo = decoding.userInfo(userRec)
             self.logger.debug('%i %s', mm.dictID, userInfo)
@@ -270,14 +303,16 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             elif header.code == b'd':
                 path = rest
-                self.logger.warning('Path information sent (%s). Server at %s should remove "files" '
-                                    'directive from the monitoring configuration.', path, addr)
+                #self.logger.warning('Path information sent (%s). Server at %s should remove "files" '
+                #                    'directive from the monitoring configuration.', path, addr)
 
             elif header.code == b'i':
                 appinfo = rest
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
 
+                if sid not in self._dictid_map:
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 self._dictid_map[sid][mm.dictID] = userInfo
 
                 # Check if userInfo is available in _users
@@ -300,6 +335,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
 
                 # Add the dictid to the userinfo map
+                if sid not in self._dictid_map:
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
                 self._dictid_map[sid][mm.dictID] = userInfo
                 # New user signed in
                 if userInfo not in self._users[sid]:
@@ -342,15 +379,27 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if (now_time - self.last_flush) > (60*5):
             self.logger.debug("Flushing data structures")
 
+            dictid_count = 0
+            dictid_removed = 0
             # Flush the dictid mapping
             for sid in self._dictid_map:
                 removed = self._dictid_map[sid].purge()
-                self.logger.debug("Removed {} items from DictID Mapping".format(removed))
+                dictid_removed += removed
+                dictid_count += len(self._dictid_map[sid])
+            self.logger.debug("Removed {} items from DictID Mapping".format(dictid_removed))
+            self.metrics_q.put({'type': 'hash size', 'count': dictid_count, 'hash name': 'dictid'})
+            self.logger.debug("Size of dictid map: %i", dictid_count)
 
             # Flush the users data structure
+            users_count = 0
+            users_removed = 0
             for sid in self._users:
                 removed = self._users[sid].purge()
-                self.logger.debug("Removed {} items from Users".format(removed))
+                users_removed += removed
+                users_count += len(self._users[sid])
+            self.logger.debug("Removed {} items from Users".format(users_removed))
+            self.metrics_q.put({'type': 'hash size', 'count': users_count, 'hash name': 'users'})
+            self.logger.debug("Size of users map: %i", users_count)
 
             # Have to make a copy of .keys() because we 'del' as we go
             for key in list(self._transfers.keys()):
@@ -364,6 +413,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                         addr = cur_value[0][1]
                         rec = self.addRecord(sid, userId, cur_value[2], now_time, addr)
                     del self._transfers[key]
+            self.logger.debug("Size of transfers map: %i", len(self._transfers))
+            self.metrics_q.put({'type': 'hash size', 'count': len(self._transfers), 'hash name': 'transfers'})
             self.last_flush = now_time
 
 
