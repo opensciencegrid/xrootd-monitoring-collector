@@ -17,6 +17,7 @@ import wlcg_converter
 import UdpCollector
 import ttldict
 
+DEFAULT_TTL = 3600*2
 
 class DetailedCollector(UdpCollector.UdpCollector):
 
@@ -309,10 +310,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
             elif header.code == b'i':
                 appinfo = rest
                 if sid not in self._users:
-                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
+                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
 
                 if sid not in self._dictid_map:
-                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
                 self._dictid_map[sid][mm.dictID] = userInfo
 
                 # Check if userInfo is available in _users
@@ -332,11 +333,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
                 # New server seen
                 if sid not in self._users:
-                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
+                    self._users[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
 
                 # Add the dictid to the userinfo map
                 if sid not in self._dictid_map:
-                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=3600*5)
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
                 self._dictid_map[sid][mm.dictID] = userInfo
                 # New user signed in
                 if userInfo not in self._users[sid]:
@@ -406,7 +407,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 cur_value = self._transfers[key]
                 # TODO: since we don't update based on the xfr info, we don't
                 # track progress or bump the timestamps... that needs to be done.
-                if (now_time - cur_value[0][0]) > (3600*5):
+                if (now_time - cur_value[0][0]) > DEFAULT_TTL:
                     if len(cur_value) == 3:
                         sid = key.rsplit(".", 1)[0]
                         userId = cur_value[1].userID
