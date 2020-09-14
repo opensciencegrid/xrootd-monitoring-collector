@@ -279,6 +279,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
             #                    "'iov' directives from the monitoring configuration.", addr)
             pass
 
+        elif header.code == b'g':
+            # The rest of the message is the gstream event
+            self.logger.debug("Received gstream message")
+            decoding.gStream(data)
+
+
         else:
             infolen = len(data) - 4
             mm = decoding.mapheader._make(struct.unpack("!I" + str(infolen) + "s", data))

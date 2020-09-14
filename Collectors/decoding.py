@@ -19,7 +19,7 @@ fileClose = namedtuple("fileClose", ["rectype", "recFlag", "recSize", "fileID", 
 fileTime  = namedtuple("fileTime",  ["rectype", "recFlag", "recSize", "isXfr_recs", "total_recs", "tBeg", "tEnd", "sid"])
 fileDisc  = namedtuple("fileDisc",  ["rectype", "recFlag", "recSize", "userID"])
 ops       = namedtuple("ops", ["read", "readv", "write", "rsMin", "rsMax", "rsegs", "rdMin", "rdMax", "rvMin", "rvMax", "wrMin", "wrMax"])
-
+gstream   = namedtuple("gstream", ["begin", "end", "ident", "events"])
 
 def userInfo(message):
     c = message
@@ -139,6 +139,14 @@ def xfrInfo(message):
     else:
         pd = b''
     return xfrinfo([lfn, tod, sz, tm, op, rc, pd])
+
+def gStream(message):
+    # int, int, int64, null terminated string
+
+    # Calculate the size of the string portion
+    string_size = len(message) - 16
+    up = gstream._make(struct.unpack("!IIQ" + str(string_size) + "s", message))
+    return up
 
 
 def MonFile(d):
