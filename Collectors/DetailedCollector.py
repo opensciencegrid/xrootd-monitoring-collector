@@ -17,7 +17,7 @@ import wlcg_converter
 import UdpCollector
 import ttldict
 
-DEFAULT_TTL = 3600*2
+DEFAULT_TTL = 3600*1
 
 class DetailedCollector(UdpCollector.UdpCollector):
 
