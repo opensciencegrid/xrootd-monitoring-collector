@@ -68,7 +68,7 @@ def setDiff(attr_name, json_data, currState, prevState):
 class SummaryCollector(UdpCollector.UdpCollector):
 
     DEFAULT_PORT = 9931
-
+    UDP_MON_PORT = 8001
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,6 +86,9 @@ class SummaryCollector(UdpCollector.UdpCollector):
         except:
             self.logger.exception("Unexpected error. Original data was: %s", data)
             return
+
+        #self.logger.debug("Summary Data:\n{}".format(data))
+        #self.logger.debug("Summary XML:\n{}".format(summary))
 
         currState = ProcessState()
 
@@ -171,6 +174,9 @@ class SummaryCollector(UdpCollector.UdpCollector):
                 rmq_data['sgen_as']  = int(st['as'])
                 # data['sgen_et']  = int(st['et']) # always 0
                 rmq_data['cend'] = datetime.utcfromtimestamp(float(st['toe'])).isoformat()
+            elif sw == 'cache':
+                self.logger.debug('Cache Data: {}'.format(str(st)))
+                self.logger.debug('Cache Opened: {}'.format(st['files']['opened']))
             elif sw == 'ofs':
                 pass
                 # TODO: fixup this information
@@ -203,3 +209,4 @@ class SummaryCollector(UdpCollector.UdpCollector):
 
 if __name__ == '__main__':
     SummaryCollector.main()
+
