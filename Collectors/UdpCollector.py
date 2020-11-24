@@ -58,9 +58,10 @@ class UdpCollector(object):
 
     DEFAULT_HOST = '0.0.0.0'
     DEFAULT_PORT = None
+    UDP_MON_PORT = 8000
 
 
-    def __init__(self, config, bind_addr):
+    def __init__(self, config, bind_addr, udp_mon_port):
         self.channel = None
         self.bind_addr = bind_addr
         self.socks = []
@@ -69,6 +70,7 @@ class UdpCollector(object):
         self.child_process = None
         self.exchange = config.get('AMQP', 'exchange')
         self.metrics_q = None
+        self.udp_mon_port = udp_mon_port
 
     def _create_rmq_channel(self):
         """
@@ -132,7 +134,7 @@ class UdpCollector(object):
 
     def _launch_metrics(self):
         # Metrics process
-        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q,))
+        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q, self.udp_mon_port))
         self.metrics_process.name = "Collector metrics thread"
         self.metrics_process.daemon = True
         orig_stdout = sys.stdout
@@ -198,6 +200,8 @@ class UdpCollector(object):
                     if sock in rlist:
                         message, addr = sock.recvfrom(65536)
 
+                        self.logger.debug('Message From: {}'.format(str(addr)))
+
                         self.message_q.put([message, addr[0], addr[1]])
                         n_messages += 1
                         if n_messages % 10000 == 0:
@@ -213,7 +217,7 @@ class UdpCollector(object):
 
     @classmethod
     def _start_child(Collector, config, message_q, metrics_q):
-        coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT))
+        coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT), Collector.UDP_MON_PORT)
         coll._init_logging()
         coll._create_rmq_channel()
         coll.message_q = message_q
@@ -229,10 +233,10 @@ class UdpCollector(object):
 
 
     @staticmethod
-    def _metrics_child(metrics_q):
+    def _metrics_child(metrics_q, monitor_port):
 
         # Start the prometheus HTTP client
-        start_http_server(8000)
+        start_http_server(monitor_port)
         missing_counter = Counter('missing_packets', 'Number of missing packets', ['host'])
         messages = Counter('messages', 'Number of messages')
         packets = Counter('packets', 'Number of packets')
@@ -318,6 +322,8 @@ class UdpCollector(object):
         if host is None:
             host = Collector.DEFAULT_HOST
 
+        udp_mon_port = Collector.UDP_MON_PORT
+
         parser = argparse.ArgumentParser()
         parser.add_argument("config", nargs=1, help="Location of configuration file.")
         args = parser.parse_args()
@@ -325,9 +331,10 @@ class UdpCollector(object):
         config = configparser.ConfigParser()
         config.read(args.config[0])
 
-        coll = Collector(config, bind_addr=(host, port))
+        coll = Collector(config, bind_addr=(host, port), udp_mon_port=udp_mon_port)
         try:
             coll.start()
         except KeyboardInterrupt:
             coll.orig_stderr.write("Exiting on keyboard interrupt...\n")
             sys.exit(1)
+
