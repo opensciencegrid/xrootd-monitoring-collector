@@ -1,5 +1,6 @@
 
 from collections import namedtuple
+import json
 import requests
 import struct
 import sys
@@ -10,6 +11,7 @@ mapheader = namedtuple("mapheader", ["dictID", "info"])
 
 userid   = namedtuple("userid", ["protocol", "username", "pid", "sid", "host"])
 authinfo = namedtuple("authinfo", ["ap", "dn", "hn", "on", "rn", "gn", "info", 'execname', 'moninfo', "inetv"])
+cacheinfo = namedtuple("cacheinfo", ["event", "lfn", "size", "blk_size", "n_blks", "n_blks_done", "access_cnt", "attach_t", "detach_t", "b_hit", "b_miss", "b_bypass"])
 srvinfo  = namedtuple("srvinfo", ["program", "version", "instance", "port", "site", "addr"])
 prginfo  = namedtuple("prginfo", ["xfn", "tod", "sz", "at", "ct", "mt", "fn"])
 xfrinfo  = namedtuple("xfrinfo", ["lfn", "tod", "sz", "tm", "op", "rc", "pd"])
@@ -22,7 +24,22 @@ fileDisc  = namedtuple("fileDisc",  ["rectype", "recFlag", "recSize", "userID"])
 ops       = namedtuple("ops", ["read", "readv", "write", "rsMin", "rsMax", "rsegs", "rdMin", "rdMax", "rvMin", "rvMax", "wrMin", "wrMax"])
 
 
+def cacheInfo(message):
+    #print('cacheInfo message: {}'.format(message))
+    this_msg = str(message)
+    datum=[]
+    #print('msg_len: {}'.format(len(this_msg.split("\\n"))))
+    for msg in this_msg.split("\\n"):
+        start_json=msg.rfind('{')
+        end_json=msg.rfind('}')
+        json_content=msg[start_json:end_json+1]
+        #print('Json_Content: {}'.format(json_content))
+        datum.append(cacheinfo(**(json.loads(json_content))))
+    return datum
+
+
 def userInfo(message):
+    #print('userInfo message: {}'.format(message))
     c = message
     if b'/' in message:
         prot, c = message.split(b'/', 1)
@@ -41,6 +58,7 @@ def userInfo(message):
     except ValueError:
         print("serious value error: ", pid, sid, "message was:", message)
     return userid(prot, user, pi, si, host)
+
 
 def revUserInfo(useridStruct):
     return str.encode("{}/{}.{}:{}@{}".format(useridStruct.protocol, useridStruct.username, useridStruct.pid, useridStruct.sid, useridStruct.host))
