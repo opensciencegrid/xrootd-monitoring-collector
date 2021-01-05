@@ -3,6 +3,7 @@ from collections import namedtuple
 import requests
 import struct
 import sys
+import urllib.parse
 
 header = namedtuple("header", ["code", "pseq", "plen", "server_start"])
 mapheader = namedtuple("mapheader", ["dictID", "info"])
@@ -93,12 +94,12 @@ def revAuthorizationInfo(authinfo):
     return str.encode(message)
 
 def serverInfo(message, addr):
-    r = message.split(b'&')
-    pgm = r[1].split(b'=')[1]
-    ver = r[2].split(b'=')[1]
-    inst = r[3].split(b'=')[1]
-    port = r[4].split(b'=')[1]
-    site = r[5].split(b'=')[1]
+    r = dict(urllib.parse.parse_qsl(message))
+    pgm  = r.get(b'pgm',  None)
+    ver  = r.get(b'ver',  None)
+    inst = r.get(b'inst', None)
+    port = r.get(b'port', None)
+    site = r.get(b'site', None)
     return srvinfo(pgm, ver, inst, port, site, addr)
 
 def revServerInfo(serverInfoStruct):
