@@ -283,7 +283,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
         elif header.code == b'g':
             # The rest of the message is the gstream event
             self.logger.debug("Received gstream message")
-            decoding.gStream(data)
+            decoded_gstream = decoding.gStream(data)
+            print(decoded_gstream)
 
 
         else:

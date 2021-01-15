@@ -3,6 +3,7 @@ from collections import namedtuple
 import requests
 import struct
 import sys
+import json
 
 header = namedtuple("header", ["code", "pseq", "plen", "server_start"])
 mapheader = namedtuple("mapheader", ["dictID", "info"])
@@ -146,6 +147,13 @@ def gStream(message):
     # Calculate the size of the string portion
     string_size = len(message) - 16
     up = gstream._make(struct.unpack("!IIQ" + str(string_size) + "s", message))
+
+    # Events element is null terminated, remove the extranous null
+    events = up.events.rstrip(b'\0').decode('utf-8').split("\n")
+    parsed_events = []
+    for event in events:
+        parsed_events.append(json.loads(event))
+    up.events = parsed_events
     return up
 
 
