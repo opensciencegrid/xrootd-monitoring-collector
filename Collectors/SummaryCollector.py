@@ -97,7 +97,7 @@ class SummaryCollector(UdpCollector.UdpCollector):
         self.logger.debug("Program: %s", pgm)
         if pgm != 'xrootd':
             self.logger.warning("Program: %s should not be sending summary information. Source: %s", pgm, statistics['@src'])
-            return
+            #return
 
         tos = int(statistics['@tos'])  # Unix time when the program was started.
         tod = int(statistics['@tod'])  # Unix time when statistics gathering started.
