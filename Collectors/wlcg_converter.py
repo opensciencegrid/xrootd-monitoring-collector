@@ -91,7 +91,7 @@ def Convert(source_record):
         to_return['operation'] = 'unknown'
 
     # server_site
-    to_return['server_site'] = source_record['site']
+    to_return['server_site'] = source_record.get('site', "")
 
     # user_protocol
     if "protocol" in source_record:

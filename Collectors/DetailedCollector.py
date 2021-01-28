@@ -43,7 +43,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec = {}
         lcg_record = False
         rec['timestamp'] = timestamp*1000  # expected to be in MS since Unix epoch
-        rec['start_time'] = openTime*1000
+        rec['start_time'] = int(openTime*1000)
         rec['end_time'] = timestamp*1000
         rec['operation_time'] = rec['end_time'] - rec['start_time']
 
@@ -320,14 +320,14 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 elif isinstance(hd, decoding.fileOpen):
                     transfer_key = str(sid) + "." + str(hd.fileID)
                     self.logger.debug('%i %s', idx, hd)
-                    self._transfers[transfer_key] = ((now, addr), hd)
+                    self._transfers[transfer_key] = ((time_record.tBeg, addr), hd)
 
                 elif isinstance(hd, decoding.fileClose):
                     # self.logger.debug('%i %s', i, hd)
                     transfer_key = str(sid) + "." + str(hd.fileID)
                     if transfer_key in self._transfers:
                         userId = self._transfers[transfer_key][1].userID
-                        openTime = self._transfers[transfer_key][0][1]
+                        openTime = self._transfers[transfer_key][0][0]
                         rec = self.addRecord(sid, userId, hd, time_record.tEnd, addr, openTime)
                         self.logger.debug("Record to send: %s", str(rec))
                         del self._transfers[transfer_key]
