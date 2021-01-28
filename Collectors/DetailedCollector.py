@@ -42,9 +42,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
         """
         rec = {}
         lcg_record = False
-        rec['timestamp'] = timestamp*1000  # expected to be in MS since Unix epoch
+        rec['timestamp'] = int(timestamp*1000)  # expected to be in MS since Unix epoch
         rec['start_time'] = int(openTime*1000)
-        rec['end_time'] = timestamp*1000
+        rec['end_time'] = int(timestamp*1000)
         rec['operation_time'] = rec['end_time'] - rec['start_time']
 
         try:
