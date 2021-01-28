@@ -36,13 +36,16 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self.seq_data = {}
 
 
-    def addRecord(self, sid, userID, fileClose, timestamp, addr):
+    def addRecord(self, sid, userID, fileClose, timestamp, addr, openTime):
         """
         Given information to create a record, send it up to the message queue.
         """
         rec = {}
         lcg_record = False
         rec['timestamp'] = timestamp*1000  # expected to be in MS since Unix epoch
+        rec['start_time'] = openTime*1000
+        rec['end_time'] = timestamp*1000
+        rec['operation_time'] = rec['end_time'] - rec['start_time']
 
         try:
             rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
@@ -82,6 +85,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 if auth.on != b'':
                     if auth.on == b"cms" or auth.on == b"dteam":
                         lcg_record = True
+                    rec['vo'] = auth.on.decode('utf-8')
             if appinfo is not None:
                 rec['appinfo'] = appinfo
                     
@@ -130,6 +134,80 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['read'] = fileClose.read
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
+
+        if fileClose.ops:
+            # read_average (optional)
+            try:
+                rec['read_average'] = (fileClose.read + fileClose.readv) / (fileClose.ops.read + fileClose.ops.readv)
+            except ZeroDivisionError as zde:
+                rec['read_average'] = 0
+            # read_bytes_at_close (optional)
+            rec['read_bytes_at_close'] = fileClose.read + fileClose.readv
+            # read_max (optional)
+            rec['read_max'] = max(fileClose.ops.rdMax, fileClose.ops.rvMax)
+            # read_min (optional)
+            rec['read_min'] = min(fileClose.ops.rdMin, fileClose.ops.rvMin)
+            # read_operations (optional)
+            rec['read_operations'] = fileClose.ops.read + fileClose.ops.readv
+            # read_sigma (optional)
+            # read_single_average (optional)
+            try:
+                rec['read_single_average'] = fileClose.read / fileClose.ops.read
+            except ZeroDivisionError as zde:
+                rec['read_single_average'] = 0
+            # read_single_bytes (optional)
+            rec['read_single_bytes'] = fileClose.read
+            # read_single_max (optional)
+            rec['read_single_max'] = fileClose.ops.rdMax
+            # read_single_min (optional)
+            rec['read_single_min'] = fileClose.ops.rdMin
+            # read_single_operations (optional)
+            rec['read_single_operations'] = fileClose.ops.read
+            # read_single_sigma (optional)
+            # read_vector_average (optional)
+            try:
+                rec['read_vector_average'] = fileClose.readv / fileClose.ops.readv
+            except ZeroDivisionError as zde:
+                rec['read_vector_average'] = 0
+            # read_vector_count_average (optional)
+            try:
+                rec['read_vector_count_average'] = fileClose.ops.rsegs / fileClose.readv
+            except ZeroDivisionError as zde:
+                rec['read_vector_count_average'] = 0
+            # read_vector_count_max (optional)
+            rec['read_vector_count_max'] = fileClose.ops.rsMax
+            # read_vector_count_min (optional)
+            rec['read_vector_count_min'] = fileClose.ops.rsMin
+            # read_vector_count_sigma (optional)
+            # read_vector_max (optional)
+            rec['read_vector_max'] = fileClose.ops.rvMax
+            # read_vector_min (optional)
+            rec['read_vector_min'] = fileClose.ops.rvMin
+            # read_vector_operations (optional)
+            rec['read_vector_operations'] = fileClose.ops.readv
+            # read_vector_sigma (optional)
+            # server_username (optional)
+            # throughput (optional)
+            try:
+                rec['throughput'] = (fileClose.read + fileClose.readv + fileClose.write) / rec['operation_time']
+            except ZeroDivisionError as zde:
+                rec['throughput'] = 0
+            # user_fqan (optional)
+            # user_role (optional)
+            # write_average (optional)
+            try:
+                rec['write_average'] = fileClose.write / fileClose.ops.write
+            except ZeroDivisionError as zde:
+                rec['write_average'] = 0
+            # write_bytes_at_close (optional)
+            rec['write_bytes_at_close'] = fileClose.write
+            # write_max (optional)
+            rec['write_max'] = fileClose.ops.wrMax
+            # write_min (optional)
+            rec['write_min'] = fileClose.ops.wrMin
+            # write_operations (optional)
+            rec['write_operations'] = fileClose.ops.write
+            # write_sigma (optional)
 
         if 'user' not in rec:
             self.metrics_q.put({'type': 'failed user', 'count': 1})
@@ -249,12 +327,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     transfer_key = str(sid) + "." + str(hd.fileID)
                     if transfer_key in self._transfers:
                         userId = self._transfers[transfer_key][1].userID
-                        rec = self.addRecord(sid, userId, hd, time_record.tEnd, addr)
+                        openTime = self._transfers[transfer_key][0][1]
+                        rec = self.addRecord(sid, userId, hd, time_record.tEnd, addr, openTime)
                         self.logger.debug("Record to send: %s", str(rec))
                         del self._transfers[transfer_key]
                         self.logger.debug('%i %s', idx, hd)
                     else:
-                        rec = self.addRecord(sid, 0, hd, time_record.tEnd, addr)
+                        rec = self.addRecord(sid, 0, hd, time_record.tEnd, addr, time_record.tEnd)
                         self.logger.error("file to close not found. fileID: %i, serverID: %s. close=%s",
                                           hd.fileID, sid, str(hd))
 

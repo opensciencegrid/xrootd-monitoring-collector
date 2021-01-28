@@ -149,6 +149,7 @@ def MonFile(d):
         recOps = ()
         if up[1] & 0b010:  # hasOPS
             recOps = ops._make(struct.unpack("!IIIHHQIIIIII", d[32:80]))
+        #if up[1] & 0b100:  # hasSSQ
         # forced Disconnect prior to close  forced =0x01, hasOPS =0x02, hasSSQ =0x04
         unpacked = struct.unpack("!BBHIQQQ", d[:32])
         unpacked = unpacked + (recOps,)

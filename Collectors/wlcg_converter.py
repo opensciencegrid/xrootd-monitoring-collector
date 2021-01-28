@@ -61,6 +61,86 @@ def Convert(source_record):
     to_return["read_single_bytes"] = source_record.get("read", 0)
     to_return["read_vector_bytes"] = source_record.get("readv", 0)
     to_return["ipv6"] = source_record.get("ipv6", False)
+    if "user_dn" in source_record:
+        to_return["user_dn"] = source_record["user_dn"]
+        # user
+        # appears to be just everything after the CN in the user_dn
+        try:
+            split_dn = source_record["user_dn"].split("CN=")
+            to_return["user"] = split_dn[1]
+        except Exception as e:
+            print("Failed to split the DN to create the WLCG user attribute: ", str(e))
+
+
+    # start_time
+    # When we received the file open event
+    to_return['start_time'] = source_record['start_time']
+
+    # Use timestamp from original record, or now if there is no timestamp
+    to_return['end_time'] = source_record['end_time']
+
+    # operation_time
+    to_return['operation_time'] = source_record['operation_time']
+
+    # operation is either "read", "write", or "unknown"
+    if source_record['read'] > 0 or source_record['readv'] > 0:
+        to_return['operation'] = 'read'
+    elif source_record['write'] > 0:
+        to_return['operation'] = 'write'
+    else:
+        to_return['operation'] = 'unknown'
+
+    # server_site
+    to_return['server_site'] = source_record['site']
+
+    # user_protocol
+    if "protocol" in source_record:
+        to_return["user_protocol"] = source_record["protocol"]
+
+    # vo
+    if "vo" in source_record:
+        to_return["vo"] = source_record["vo"]
+
+    # write_bytes
+    to_return["write_bytes"] = source_record['write']
+    # remote_access - boolean
+    # is_transfer (optional)
+    # user_fqan (optional)
+    # user_role (optional)
+    # server_username (optional)
+
+    # Whole bunch of values to copy from the source_record
+    values_to_copy = ["read_average",
+                      "read_bytes_at_close",
+                      "read_max",
+                      "read_min",
+                      "read_operations",
+                      "read_sigma",
+                      "read_single_average",
+                      "read_single_bytes",
+                      "read_single_max",
+                      "read_single_min",
+                      "read_single_operations",
+                      "read_single_sigma",
+                      "read_vector_average",
+                      "read_vector_count_average",
+                      "read_vector_count_max",
+                      "read_vector_count_min",
+                      "read_vector_count_sigma",
+                      "read_vector_max",
+                      "read_vector_min",
+                      "read_vector_operations",
+                      "read_vector_sigma",
+                      "throughput",
+                      "write_average",
+                      "write_bytes_at_close",
+                      "write_max",
+                      "write_min",
+                      "write_operations",
+                      "write_sigma"]
+
+    for key in values_to_copy:
+        to_return[key] = source_record.get(key, 0)
 
     if 'appinfo' in source_record:
         # Convert from 
