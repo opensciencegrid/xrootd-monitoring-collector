@@ -45,7 +45,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['timestamp'] = int(timestamp*1000)  # expected to be in MS since Unix epoch
         rec['start_time'] = int(openTime*1000)
         rec['end_time'] = int(timestamp*1000)
-        rec['operation_time'] = rec['end_time'] - rec['start_time']
+        rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
 
         try:
             rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
@@ -328,12 +328,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     if transfer_key in self._transfers:
                         userId = self._transfers[transfer_key][1].userID
                         openTime = self._transfers[transfer_key][0][0]
-                        rec = self.addRecord(sid, userId, hd, time_record.tEnd, addr, openTime)
+                        rec = self.addRecord(sid, userId, hd, time_record.tBeg, addr, openTime)
                         self.logger.debug("Record to send: %s", str(rec))
                         del self._transfers[transfer_key]
                         self.logger.debug('%i %s', idx, hd)
                     else:
-                        rec = self.addRecord(sid, 0, hd, time_record.tEnd, addr, time_record.tEnd)
+                        rec = self.addRecord(sid, 0, hd, time_record.tBeg, addr, time_record.tBeg)
                         self.logger.error("file to close not found. fileID: %i, serverID: %s. close=%s",
                                           hd.fileID, sid, str(hd))
 
@@ -491,7 +491,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
                         sid = key.rsplit(".", 1)[0]
                         userId = cur_value[1].userID
                         addr = cur_value[0][1]
-                        rec = self.addRecord(sid, userId, cur_value[2], now_time, addr)
+                        openTime = cur_value[0][0]
+                        rec = self.addRecord(sid, userId, cur_value[2], now_time, addr, openTime)
                     del self._transfers[key]
             self.logger.debug("Size of transfers map: %i", len(self._transfers))
             self.metrics_q.put({'type': 'hash size', 'count': len(self._transfers), 'hash name': 'transfers'})
