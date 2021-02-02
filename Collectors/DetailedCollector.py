@@ -135,7 +135,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
 
-        if fileClose.ops:
+        if isinstance(fileClose, decoding.fileClose) and fileClose.ops:
             # read_average (optional)
             try:
                 rec['read_average'] = (fileClose.read + fileClose.readv) / (fileClose.ops.read + fileClose.ops.readv)
