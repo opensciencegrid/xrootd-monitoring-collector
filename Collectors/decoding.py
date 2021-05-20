@@ -11,7 +11,7 @@ mapheader = namedtuple("mapheader", ["dictID", "info"])
 
 userid   = namedtuple("userid", ["protocol", "username", "pid", "sid", "host"])
 authinfo = namedtuple("authinfo", ["ap", "dn", "hn", "on", "rn", "gn", "info", 'execname', 'moninfo', "inetv"])
-cacheinfo = namedtuple("cacheinfo", ["event", "lfn", "size", "blk_size", "n_blks", "n_blks_done", "access_cnt", "attach_t", "detach_t", "b_hit", "b_miss", "b_bypass"])
+cacheinfo = namedtuple("cacheinfo", ["event", "lfn", "size", "blk_size", "n_blks", "n_blks_done", "access_cnt", "attach_t", "detach_t", "b_hit", "b_miss", "b_bypass", "remotes"])
 srvinfo  = namedtuple("srvinfo", ["program", "version", "instance", "port", "site", "addr"])
 prginfo  = namedtuple("prginfo", ["xfn", "tod", "sz", "at", "ct", "mt", "fn"])
 xfrinfo  = namedtuple("xfrinfo", ["lfn", "tod", "sz", "tm", "op", "rc", "pd"])
