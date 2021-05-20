@@ -77,7 +77,11 @@ class UdpCollector(object):
         Create a fresh connection to RabbitMQ
         """
         parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
-        connection = pika.BlockingConnection(parameters)
+        try:
+            connection = pika.BlockingConnection(parameters)
+        except pika.exceptions.AMQPConnectionError:
+            self.logger.exception('Failed to connect to AMQP URL: "{}"'.format(self.config.get('AMQP', 'url')))
+            raise
         self.channel = connection.channel()
 
 
@@ -94,6 +98,7 @@ class UdpCollector(object):
         except Exception:
             if retry:
                 self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
+                # TODO decide if want to handle buffering of messages until queue comes back?
                 self._create_rmq_channel()
                 self.publish(routing_key, record, retry=False, exchange=exchange)
 
@@ -219,7 +224,17 @@ class UdpCollector(object):
     def _start_child(Collector, config, message_q, metrics_q):
         coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT), Collector.UDP_MON_PORT)
         coll._init_logging()
-        coll._create_rmq_channel()
+        try:
+            coll._create_rmq_channel()
+        except pika.exceptions.AMQPConnectionError:
+            connectionEstablished=False
+            while not conectionEstablished:
+                try:
+                    coll._create_rmq_channel()
+                    connectionEstablished=True
+                except pika.exceptions.AMQPConnectionError:
+                    time.sleep(2)
+                    pass
         coll.message_q = message_q
         coll.metrics_q = metrics_q
         while True:
