@@ -56,6 +56,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['hostname'] =    hostname
         rec['addr'] =        addr
         rec['port'] =        port
+        rec['remotes'] =     event.remotes
 
         self.publish("cache-event", rec, exchange=self._exchange)
 
@@ -83,7 +84,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
             s = self._servers[sid]
             rec['serverID'] = sid
             rec['server'] = s.addr
-            rec['site'] = s.site.decode('utf-8')
+            if s.site:
+                rec['site'] = s.site.decode('utf-8')
+            else:
+                rec['site'] = "unknown"
         else:
             rec['server'] = addr
             # logger.warning('server still not identified: %s',sid)
