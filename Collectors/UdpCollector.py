@@ -68,7 +68,7 @@ class UdpCollector(object):
         self.config = config
         self.message_q = None
         self.child_process = None
-        self.exchange = config.get('AMQP', 'exchange')
+        self.exchange = config.get('AMQP', 'wlcg_exchange')
         self.metrics_q = None
         self.udp_mon_port = udp_mon_port
 

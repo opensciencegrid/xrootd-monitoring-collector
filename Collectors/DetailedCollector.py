@@ -31,8 +31,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._servers = {}
         self._users = {}
         self._dictid_map = {}
-        self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
+        self.report_raw_data = not bool(self.config.get('AMQP', 'process_metrics'))
         self.last_flush = time.time()
         self.seq_data = {}
 
@@ -58,7 +58,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['port'] =        port
         rec['remotes'] =     event.remotes
 
-        self.publish("cache-event", rec, exchange=self._exchange)
+        self.publish("cache-event", rec, exchange=self._wlcg_exchange)
 
         self.logger.debug('Publishing Cache Event: {}'.format(str(rec)))
 
@@ -132,12 +132,38 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if transfer_key in self._transfers:
             f = self._transfers[transfer_key][1]
             fname = f.fileName.decode('utf-8')
-            self.logger.debug('{}'.format(self._transfers[transfer_key]))
+            #self.logger.debug('{}'.format(self._transfers[transfer_key]))
             rec['filename'] = fname
             rec['filesize'] = f.fileSize
+            if not self.report_raw_data:
+                rec['dirname1'] = "/".join(fname.split('/', 2)[:2])
+                rec['dirname2'] = "/".join(fname.split('/', 3)[:3])
+                if fname.startswith('/user'):
+                    rec['logical_dirname'] = rec['dirname2']
+                elif fname.startswith('/osgconnect/public'):
+                    rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
+                elif fname.startswith('/hcc'):
+                    rec['logical_dirname'] = "/".join(fname.split('/', 6)[:6])
+                elif fname.startswith('/pnfs/fnal.gov/usr'):
+                    rec['logical_dirname'] = "/".join(f.fileName.decode('utf-8').split('/')[:5])
+                elif fname.startswith('/gwdata'):
+                    rec['logical_dirname'] = rec['dirname2']
+                elif fname.startswith('/chtc/'):
+                    rec['logical_dirname'] = '/chtc'
+                elif fname.startswith('/icecube/'):
+                    rec['logical_dirname'] = '/icecube'
+
+                # Check for CMS files
+                elif fname.startswith('/store') or fname.startswith('/user/dteam'):
+                    rec['logical_dirname'] = rec['dirname2']
+                    lcg_record = True
+                else:
+                    rec['logical_dirname'] = 'unknown directory'
         else:
             rec['filename'] = "missing directory"
             rec['filesize'] = "-1"
+            if not self.report_raw_data:
+                rec['logical_dirname'] = "missing directory"
         rec['read'] = fileClose.read
         rec['readv'] = fileClose.readv
         rec['write'] = fileClose.write
@@ -224,7 +250,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         if not lcg_record:
             self.logger.debug("OSG record to send: %s", str(rec))
-            self.publish("file-close", rec, exchange=self._exchange)
+            self.publish("file-close", rec, exchange=self._wlcg_exchange)
             self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'stashcache'})
         else:
             wlcg_packet = wlcg_converter.Convert(rec)
