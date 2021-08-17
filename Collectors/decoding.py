@@ -154,8 +154,8 @@ def gStream(message):
     parsed_events = []
     for event in events:
         parsed_events.append(json.loads(event))
-    up.events = parsed_events
-    return up
+    #up.events = parsed_events
+    return gstream(up.begin, up.end, up.ident, parsed_events)
 
 
 def MonFile(d):
