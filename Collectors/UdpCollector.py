@@ -17,6 +17,7 @@ import queue
 import socket
 import sys
 import time
+import base64
 
 from six.moves import configparser
 import prometheus_client
@@ -145,7 +146,21 @@ class UdpCollector(object):
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
 
-
+    def _launch_message_bus_reader(self):
+        # Message Bus reader
+        # Metrics process
+        self.bus_process = multiprocessing.Process(target=self._bus_child, args=(self.config, self.message_q, self.metrics_q))
+        self.bus_process.name = "Collector Message Bus thread"
+        self.bus_process.daemon = True
+        orig_stdout = sys.stdout
+        orig_stderr = sys.stderr
+        sys.stdout = self.orig_stdout
+        sys.stderr = self.orig_stderr
+        try:
+            self.bus_process.start()
+        finally:
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
 
     def start(self):
         """
@@ -178,6 +193,8 @@ class UdpCollector(object):
 
         self._launch_child()
         self._launch_metrics()
+        if self.config.get("Pushed", "enable").lower() == "true":
+            self._launch_message_bus_reader()
 
         try:
             n_messages = 0
@@ -186,6 +203,8 @@ class UdpCollector(object):
                 sock_list = list(self.socks)
                 sock_list.append(self.child_process.sentinel)
                 sock_list.append(self.metrics_process.sentinel)
+                if self.config.get("Pushed", "enable").lower() == "true":
+                    sock_list.append(self.bus_process.sentinel)
                 rlist = multiprocessing.connection.wait(sock_list, timeout=10)
                 if self.child_process.sentinel in rlist:
                     self.logger.error("Child event process died; restarting")
@@ -194,6 +213,9 @@ class UdpCollector(object):
                 if self.metrics_process.sentinel in rlist:
                     self.logger.error("Metrics process died; restarting")
                     self._launch_metrics()
+                if self.config.get("Pushed", "enabled").lower() == "true" and self.bus_process.sentinel in rlist:
+                    self.logger.error("Message bus process died; restarting")
+                    self._launch_message_bus_reader()
                 for sock in self.socks:
                     if sock in rlist:
                         message, addr = sock.recvfrom(65536)
@@ -228,6 +250,43 @@ class UdpCollector(object):
                 coll.logger.exception("Child process has failed:")
 
 
+    @classmethod
+    def _bus_child(self, config, message_q: multiprocessing.Queue, metrics_q: multiprocessing.Queue):
+        # Setup the connection to the message bus
+        parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+
+        def on_message(channel, method, properties, body):
+            # Parse the JSON message
+            loaded_json = json.loads(body)
+
+            # Base64 decode the data
+            message = base64.standard_b64decode(loaded_json['data'])
+
+            # Send to message queue
+            addr = loaded_json['remote'].split(":")
+            message_q.put([message, addr[0], addr[1]])
+            channel.basic_ack(method.delivery_tag)
+
+            # Update the number of messages received on the bus to the metrics_q
+            metrics_q.put({'type': 'pushed messages', 'count': 1})
+
+        channel.basic_qos(prefetch_count=1000)
+        channel.basic_consume(config.get("Pushed", "push_queue"), on_message)
+
+        try:
+            channel.start_consuming()
+        except Exception as ex:
+            channel.stop_consuming()
+            connection.close()
+            raise ex
+        connection.close()
+
+
+
+        
+
     @staticmethod
     def _metrics_child(metrics_q):
 
@@ -235,6 +294,7 @@ class UdpCollector(object):
         start_http_server(8000)
         missing_counter = Counter('missing_packets', 'Number of missing packets', ['host'])
         messages = Counter('messages', 'Number of messages')
+        pushed_messages = Counter('pushed_messages', 'Number of pushed messages')
         packets = Counter('packets', 'Number of packets')
         reorder_counter = Counter("reordered_packets", "Reordered Packets", ['host'])
         failed_user = Counter("xrootd_mon_failed_user", "Failed User Collection")
@@ -266,6 +326,8 @@ class UdpCollector(object):
                 process_died.inc(metrics_message['count'])
             elif metrics_message['type'] == "hash size":
                 hash_size.labels(metrics_message['hash name']).set(metrics_message['count'])
+            elif metrics_message['type'] == "pushed messages":
+                pushed_messages.inc(metrics_message['count'])
 
 
 
