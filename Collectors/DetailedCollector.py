@@ -11,6 +11,7 @@ import socket
 import struct
 import time
 import collections
+import json
 
 import decoding
 import wlcg_converter
@@ -32,6 +33,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._dictid_map = {}
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
+        self._tcp_exchange = self.config.get('AMQP', 'tcp_exchange')
         self.last_flush = time.time()
         self.seq_data = {}
 
@@ -228,6 +230,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
         return rec
 
 
+    def process_tcp(self, decoded_packet: decoding.gstream, addr: str):
+        """
+        Process a TCP stream
+        """
+        # For each event in the decoded_packet, add the addr, send to the exchange.  
+        # The event is already a dict from the parsed JSON
+        for event in decoded_packet.events:
+            # parse the event from json
+            event['from'] = addr
+            self.publish('tcp-event', event, exchange=self._tcp_exchange)
+
+
     def process(self, data, addr, port):
 
         self.metrics_q.put({'type': 'packets', 'count': 1})
@@ -363,7 +377,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # The rest of the message is the gstream event
             self.logger.debug("Received gstream message")
             decoded_gstream = decoding.gStream(data)
+
+            # We only care about the top 8 bits of the ident, which are a character.
+            stream_type = chr(decoded_gstream.ident >> 56)
+            if stream_type == "T":
+                self.process_tcp(decoded_gstream, addr)
             print(decoded_gstream)
+
 
 
         else:
