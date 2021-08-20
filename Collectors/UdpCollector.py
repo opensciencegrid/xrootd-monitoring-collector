@@ -213,7 +213,7 @@ class UdpCollector(object):
                 if self.metrics_process.sentinel in rlist:
                     self.logger.error("Metrics process died; restarting")
                     self._launch_metrics()
-                if self.config.get("Pushed", "enabled").lower() == "true" and self.bus_process.sentinel in rlist:
+                if self.config.get("Pushed", "enable").lower() == "true" and self.bus_process.sentinel in rlist:
                     self.logger.error("Message bus process died; restarting")
                     self._launch_message_bus_reader()
                 for sock in self.socks:
@@ -253,7 +253,7 @@ class UdpCollector(object):
     @classmethod
     def _bus_child(self, config, message_q: multiprocessing.Queue, metrics_q: multiprocessing.Queue):
         # Setup the connection to the message bus
-        parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
+        parameters = pika.URLParameters(config.get('AMQP', 'url'))
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
 
