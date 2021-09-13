@@ -374,15 +374,23 @@ class DetailedCollector(UdpCollector.UdpCollector):
             pass
 
         elif header.code == b'g':
-            # The rest of the message is the gstream event
             self.logger.debug("Received gstream message")
-            decoded_gstream = decoding.gStream(data)
+
+            userfromserver = self._users[sid].items()[0];
+            host = userfromserver[0].host
+            site = ""
+            if sid in self._servers:
+                s = self._servers[sid]
+                site = s.site.decode('utf-8')
+
+            decoded_gstream = decoding.gStream(data,host,site)
 
             # We only care about the top 8 bits of the ident, which are a character.
             stream_type = chr(decoded_gstream.ident >> 56)
             if stream_type == "T":
                 self.process_tcp(decoded_gstream, addr)
-            print(decoded_gstream)
+
+            self.publish("file-close-gstream", decoded_gstream, exchange=self._exchange)
 
 
 
