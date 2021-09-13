@@ -238,7 +238,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             return ""
 
 
-    def process_tcp(self, decoded_packet: decoding.gstream, addr: str):
+    def process_tcp(self, decoded_packet, decoding.gstream, addr: str):
         """
         Process a TCP stream
         """
