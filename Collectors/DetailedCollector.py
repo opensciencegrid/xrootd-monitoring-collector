@@ -228,6 +228,14 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'wlcg'})
 
         return rec
+        
+    # return the VO based on the on the path    
+    def returnVO(fname):
+
+       if fname.startswith('/icecube'):
+            return "icecube"
+       else:
+            return ""
 
 
     def process_tcp(self, decoded_packet: decoding.gstream, addr: str):
@@ -383,13 +391,41 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 s = self._servers[sid]
                 site = s.site.decode('utf-8')
 
-            decoded_gstream = decoding.gStream(data,host,site)
+            decoded_gstream = decoding.gStream(data)
 
             # We only care about the top 8 bits of the ident, which are a character.
             stream_type = chr(decoded_gstream.ident >> 56)
             if stream_type == "T":
                 self.process_tcp(decoded_gstream, addr)
-
+            
+            ip = ""                                             
+            try:                                                
+               hosttoip = str(host)                            
+               hosttoip = hosttoip[1:]                         
+               hosttoip = hosttoip[:2]                         
+               print(hosttoip)                                 
+               ip = socket.gethostbyname(hosttoip)             
+            except Exception as e:                              
+               print("No IP")            
+                
+            for event in events:                                                  
+                evt = json.loads(event)
+                evt["ip"] = ip
+                evt["host"] = str(host)
+                evt["file_path"] = evt.pop("lfn")
+                evt["block_size"] = evt.pop("blk_size")
+                evt["numbers_blocks"] = evt.pop("n_blks")
+                evt["numbers_blocks_done"] = evt.pop("n_blks_done")
+                evt["access_count"] = evt.pop("access_cnt")
+                evt["attach_time"] = evt.pop("attach_t")
+                evt["detach_time"] = evt.pop("detach_t")
+                evt["remotes_origin"] = evt.pop("remotes")
+                evt["block_hit_cache"] = evt.pop("b_hit")
+                evt["block_miss_cache"] = evt.pop("b_miss")
+                evt["block_bypass_cache"] = evt.pop("b_bypass")
+                evt["site"] = site
+                evt["vo"] = returnVO(evt["file_path"])
+        
             self.publish("file-close-gstream", decoded_gstream, exchange=self._exchange)
 
 
