@@ -152,9 +152,10 @@ def gStream(message):
     # Events element is null terminated, remove the extranous null
     events = up.events.rstrip(b'\0').decode('utf-8').split("\n")
     parsed_events = []
-    
+    for event in events:
+        parsed_events.append(json.loads(event))
+    #up.events = parsed_events
     return gstream(up.begin, up.end, up.ident, parsed_events)
-
 
 
 def MonFile(d):
