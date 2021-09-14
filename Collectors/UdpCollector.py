@@ -75,15 +75,8 @@ class UdpCollector(object):
         Create a fresh connection to RabbitMQ
         """
         try:
-            #parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
-            #connection = pika.BlockingConnection(parameters)
-            #self.channel = connection.channel()
-
-            credentials = pika.PlainCredentials("xrootduser","123")
-            parameters = pika.ConnectionParameters("127.0.0.1",5672,'/',credentials)
+            parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
             connection = pika.BlockingConnection(parameters)
-
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
             self.channel = connection.channel()
 
         except Exception  as e:
