@@ -260,7 +260,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     ip = socket.gethostbyname(hosttoip)             
                 except Exception as e:                              
                     self.logger.error("No able to gethostnyname")
-            
+                # just renaming the fields
                 for event in gstream.events:
                      evt = {}
                      event["ip"] = ip
