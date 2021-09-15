@@ -234,6 +234,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
        if fname.startswith('/icecube'):
             return "icecube"
+       if fname.startswith('/osgconnect'):
+            return "osfg"
        else:
             return ""
 
@@ -260,9 +262,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     ip = socket.gethostbyname(hosttoip)             
                 except Exception as e:                              
                     self.logger.error("No able to gethostnyname")
-                # just renaming the fields
+                    
+                # renaming the fields and adding the VO
                 for event in gstream.events:
-                     evt = {}
                      event["ip"] = ip
                      event["host"] = str(host)
                      event["file_path"] = event.pop("lfn")
