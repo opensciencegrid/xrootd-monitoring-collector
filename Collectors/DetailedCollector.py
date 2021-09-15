@@ -232,12 +232,24 @@ class DetailedCollector(UdpCollector.UdpCollector):
     # return the VO based on the path    
     def returnVO(self,fname):
 
-       if fname.startswith('/icecube'):
-            return "icecube"
-       if fname.startswith('/osgconnect'):
-            return "osg"
+       if fname.startswith('/user'):
+            return 'user'
+       if fname.startswith('/osgconnect/public'):
+            return 'osg/public'
+       elif fname.startswith('/hcc'):
+            return 'hcc'
+       elif fname.startswith('/pnfs/fnal.gov/usr'):
+            return 'pnfs/fnal'
+       elif fname.startswith('/hcc'):
+            return 'hcc'
+       elif fname.startswith('/gwdata'):   
+            return 'gwdata'
+       elif fname.startswith('/chtc/'):
+            return 'chtc'
+       elif fname.startswith('/icecube/'):
+            return 'icecube'
        else:
-            return ""
+            return "noVO"
 
 
     def process_gstream(self, gstream, addr, sid):
