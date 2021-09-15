@@ -22,7 +22,7 @@ DEFAULT_TTL = 3600*1
 
 class DetailedCollector(UdpCollector.UdpCollector):
 
-    DEFAULT_PORT = 9931
+    DEFAULT_PORT = 9930
 
 
     def __init__(self, *args, **kw):
