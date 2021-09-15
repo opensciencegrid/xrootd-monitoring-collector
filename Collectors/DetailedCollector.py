@@ -229,13 +229,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         return rec
         
-    # return the VO based on the on the path    
+    # return the VO based on the path    
     def returnVO(self,fname):
 
        if fname.startswith('/icecube'):
             return "icecube"
        if fname.startswith('/osgconnect'):
-            return "osfg"
+            return "osg"
        else:
             return ""
 
