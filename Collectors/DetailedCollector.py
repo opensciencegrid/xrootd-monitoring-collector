@@ -267,30 +267,34 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 site = s.site.decode('utf-8')                                                           
                                                                                                         
                                                                       
-            for event in gstream.events: 
-                self.logger.info("Seding GStream") 
-                event["sid"] = sid                                                                      
-                event["server_ip"] = hostip                                                                
-                event["server_hostname"] = hostname                                                            
-                event["file_path"] = event.pop("lfn")                                                   
-                event["block_size"] = event.pop("blk_size")                                             
-                event["numbers_blocks"] = event.pop("n_blks")                                           
-                event["numbers_blocks_done"] = event.pop("n_blks_done")                                 
-                event["access_count"] = event.pop("access_cnt")                                         
-                event["attach_time"] = event.pop("attach_t")                                            
-                event["detach_time"] = event.pop("detach_t")                                            
-                event["remotes_origin"] = event.pop("remotes")                                          
-                event["block_hit_cache"] = event.pop("b_hit")                                           
-                event["block_miss_cache"] = event.pop("b_miss")                                         
-                event["block_bypass_cache"] = event.pop("b_bypass")                                     
-                event["site"] = site                                                                    
-                event["vo"] = self.returnVO(event["file_path"])                                         
-                fname = event["file_path"]  
-                if fname.startswith('/store') or fname.startswith('/user/dteam'):
-                    self.publish("xrd-cache-stats", event, exchange=self._exchange)
-                    lcg_record = True
-                else:
-                    self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange)
+           for event in gstream.events:
+                try: 
+                     event["sid"] = sid
+                     event["server_ip"] = hostip
+                     event["server_hostname"] = hostname
+                     event["file_path"] = event.pop("lfn")
+                     event["block_size"] = event.pop("blk_size")
+                     event["numbers_blocks"] = event.pop("n_blks")
+                     event["numbers_blocks_done"] = event.pop("n_blks_done")
+                     event["access_count"] = event.pop("access_cnt")
+                     event["attach_time"] = event.pop("attach_t")
+                     event["detach_time"] = event.pop("detach_t")
+                     event["remotes_origin"] = event.pop("remotes")
+                     event["block_hit_cache"] = event.pop("b_hit")
+                     event["block_miss_cache"] = event.pop("b_miss")
+                     event["block_bypass_cache"] = event.pop("b_bypass")
+                     event["site"] = site
+                     event["vo"] = self.returnVO(event["file_path"])
+                     fname = event["file_path"]
+                     self.logger.info("Sending GStream")
+                     if fname.startswith('/store') or fname.startswith('/user/dteam'):
+                         lcg_record = True
+                         self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange)                     
+                     else:
+                         self.publish("xrd-cache-stats", event, exchange=self._exchange)
+                         
+                except Exception as e:
+                    self.logger.error("Error on creating Json - event - GStream" + e)
 
         except Exception as e:
             self.logger.error("Error on creating Json - GStream" + e)
