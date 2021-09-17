@@ -266,10 +266,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 s = self._servers[sid]                                                                  
                 site = s.site.decode('utf-8')                                                           
                                                                                                         
-            self.logger.info("Seding GStream")                                                          
-            for event in gstream.events:                                                                
-                event["hostip"] = hostip                                                                
-                event["hostname"] = hostname                                                            
+                                                                      
+            for event in gstream.events: 
+                self.logger.info("Seding GStream") 
+                event["sid"] = sid                                                                      
+                event["server_ip"] = hostip                                                                
+                event["server_hostname"] = hostname                                                            
                 event["file_path"] = event.pop("lfn")                                                   
                 event["block_size"] = event.pop("blk_size")                                             
                 event["numbers_blocks"] = event.pop("n_blks")                                           
@@ -291,8 +293,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange)
 
         except Exception as e:
-            self.logger.error("Error on creating Json - GStream")
-            print(e)
+            self.logger.error("Error on creating Json - GStream" + e)
                                                             
 
     def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
