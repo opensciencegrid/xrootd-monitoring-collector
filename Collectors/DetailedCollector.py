@@ -235,9 +235,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
        if fname.startswith('/user'):
             return 'user'
        if fname.startswith('/osgconnect/public'):
-            return 'osg/public'
-       elif fname.startswith('/hcc'):
-            return 'hcc'
+            return 'osg'
        elif fname.startswith('/pnfs/fnal.gov/usr'):
             return 'pnfs/fnal'
        elif fname.startswith('/hcc'):
@@ -252,50 +250,50 @@ class DetailedCollector(UdpCollector.UdpCollector):
             return "noVO"
 
 
-    def process_gstream(self, gstream, addr, sid):
-        userfromserver = ""
-        host = ""
-        site = ""
-        ip = ""                                             
-        try:
-            if sid in self._users:
-                userfromserver = self._users[sid].items()[0];
-                host = userfromserver[0].host
-           
-            if sid in self._servers:
-                s = self._servers[sid]
-                site = s.site.decode('utf-8')
-        
-            if(host != ""):    
-                try:                                                
-                    hosttoip = str(host)                            
-                    hosttoip = hosttoip[1:]                         
-                    hosttoip = hosttoip[:2]                         
-                    ip = socket.gethostbyname(hosttoip)             
-                except Exception as e:                              
-                    self.logger.error("No able to gethostnyname")
-                    
-                # renaming the fields and adding the VO
-                for event in gstream.events:
-                     event["ip"] = ip
-                     event["host"] = str(host)
-                     event["file_path"] = event.pop("lfn")
-                     event["block_size"] = event.pop("blk_size")
-                     event["numbers_blocks"] = event.pop("n_blks")
-                     event["numbers_blocks_done"] = event.pop("n_blks_done")
-                     event["access_count"] = event.pop("access_cnt")
-                     event["attach_time"] = event.pop("attach_t")
-                     event["detach_time"] = event.pop("detach_t")
-                     event["remotes_origin"] = event.pop("remotes")
-                     event["block_hit_cache"] = event.pop("b_hit")
-                     event["block_miss_cache"] = event.pop("b_miss")
-                     event["block_bypass_cache"] = event.pop("b_bypass")
-                     event["site"] = site
-                     event["vo"] = self.returnVO(event["file_path"])
-             
-                self.publish("file-close", gstream, exchange=self._exchange)
+    def process_gstream(self, gstream, addr, sid):                                                      
+        hostname = ""                                                                                   
+        hostip = ""                                                                                     
+        site = ""                                                                                       
+        lcg_record = False                                                                              
+        try:                                                                                            
+            hostip = addr                                                                               
+            try:                                                                                        
+                hostname = socket.gethostbyaddr(addr)[0]                                                
+            except Exception as e:                                                                      
+                self.logger.error("No able to gethostnyname")                                           
+                                                                                                        
+            if sid in self._servers:                                                                    
+                s = self._servers[sid]                                                                  
+                site = s.site.decode('utf-8')                                                           
+                                                                                                        
+            self.logger.info("Seding GStream")                                                          
+            for event in gstream.events:                                                                
+                event["hostip"] = hostip                                                                
+                event["hostname"] = hostname                                                            
+                event["file_path"] = event.pop("lfn")                                                   
+                event["block_size"] = event.pop("blk_size")                                             
+                event["numbers_blocks"] = event.pop("n_blks")                                           
+                event["numbers_blocks_done"] = event.pop("n_blks_done")                                 
+                event["access_count"] = event.pop("access_cnt")                                         
+                event["attach_time"] = event.pop("attach_t")                                            
+                event["detach_time"] = event.pop("detach_t")                                            
+                event["remotes_origin"] = event.pop("remotes")                                          
+                event["block_hit_cache"] = event.pop("b_hit")                                           
+                event["block_miss_cache"] = event.pop("b_miss")                                         
+                event["block_bypass_cache"] = event.pop("b_bypass")                                     
+                event["site"] = site                                                                    
+                event["vo"] = self.returnVO(event["file_path"])                                         
+                fname = event["file_path"]  
+                if fname.startswith('/store') or fname.startswith('/user/dteam'):
+                    self.publish("file-close", event, exchange=self._exchange)
+                    lcg_record = True
+                else:
+                    self.publish("file-close", event, exchange=self._wlcg_exchange)
+
         except Exception as e:
             self.logger.error("Error on creating Json - GStream")
+            print(e)
+                                                            
 
     def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
         """
