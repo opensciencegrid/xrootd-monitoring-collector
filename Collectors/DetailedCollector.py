@@ -285,10 +285,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 event["vo"] = self.returnVO(event["file_path"])                                         
                 fname = event["file_path"]  
                 if fname.startswith('/store') or fname.startswith('/user/dteam'):
-                    self.publish("file-close", event, exchange=self._exchange)
+                    self.publish("xrd-cache-stats", event, exchange=self._exchange)
                     lcg_record = True
                 else:
-                    self.publish("file-close", event, exchange=self._wlcg_exchange)
+                    self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange)
 
         except Exception as e:
             self.logger.error("Error on creating Json - GStream")
