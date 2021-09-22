@@ -267,7 +267,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 site = s.site.decode('utf-8')                                                           
                                                                                                         
                                                                       
-           for event in gstream.events:
+            for event in gstream.events:
                 try: 
                      event["sid"] = sid
                      event["server_ip"] = hostip
