@@ -64,7 +64,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
             s = self._servers[sid]
             rec['serverID'] = sid
             rec['server'] = s.addr
-            rec['site'] = s.site.decode('utf-8')
+            if s.site is not None:
+                rec['site'] = s.site.decode('utf-8')
+            else:
+                rec['site'] = ''
+
         else:
             rec['server'] = addr
             # logger.warning('server still not identified: %s',sid)
@@ -269,7 +273,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                                                                                         
             if sid in self._servers:                                                                    
                 s = self._servers[sid]
-                if s .site is not None:
+                if s.site is not None:
                     site = s.site.decode('utf-8')
                                          
             for event in gstream.events:
