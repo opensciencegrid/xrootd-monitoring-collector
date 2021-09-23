@@ -27,13 +27,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        
         self._transfers = {}
         self._servers = {}
         self._users = {}
         self._dictid_map = {}
+        
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
         self._tcp_exchange = self.config.get('AMQP', 'tcp_exchange')
+        self._exchange_cache = self.config.get('AMQP', 'exchange_cache')
+        self._wlcg_exchange_cache = self.config.get('AMQP', 'wlcg_exchange_cache')
+        
         self.last_flush = time.time()
         self.seq_data = {}
 
@@ -289,9 +294,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      self.logger.info("Sending GStream")
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
-                         self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange)                     
+                         self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange_cache)                     
                      else:
-                         self.publish("xrd-cache-stats", event, exchange=self._exchange)
+                         self.publish("xrd-cache-stats", event, exchange=self._exchange_cache)
                          
                 except Exception as e:
                     self.logger.error("Error on creating Json - event - GStream" + e)
