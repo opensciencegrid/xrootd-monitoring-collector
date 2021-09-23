@@ -268,10 +268,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 self.logger.error("No able to gethostnyname")                                           
                                                                                                         
             if sid in self._servers:                                                                    
-                s = self._servers[sid]                                                                  
-                site = s.site.decode('utf-8')                                                           
-                                                                                                        
-                                                                      
+                s = self._servers[sid]
+                if s .site is not None:
+                    site = s.site.decode('utf-8')
+                                         
             for event in gstream.events:
                 try: 
                      event["sid"] = sid
