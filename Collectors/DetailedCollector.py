@@ -260,6 +260,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
 
     def process_gstream(self, gstream, addr, sid):                                                      
+
+        self.logger.info("GStream")
         hostname = ""                                                                                   
         hostip = ""                                                                                     
         site = ""                                                                                       
@@ -273,9 +275,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                                                                                         
             if sid in self._servers:                                                                    
                 s = self._servers[sid]
-                if s.site is not None:
+                if s .site is not None:
                     site = s.site.decode('utf-8')
-                                         
+                                                                                                        
+                                                                      
             for event in gstream.events:
                 try: 
                      event["sid"] = sid
@@ -288,27 +291,37 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["access_count"] = event.pop("access_cnt")
                      event["attach_time"] = event.pop("attach_t")
                      event["detach_time"] = event.pop("detach_t")
-                     event["remotes_origin"] = event.pop("remotes")
+                     remote = event.pop("remotes")
+                     if(len(remote) > 0):
+                          event["remotes_origin"] = remote
+                     else:
+                          event["remotes_origin"] = "null"
                      event["block_hit_cache"] = event.pop("b_hit")
                      event["block_miss_cache"] = event.pop("b_miss")
                      event["block_bypass_cache"] = event.pop("b_bypass")
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
+
+                     if(event["block_hit_cache"] == event["size"]):
+                         event["cache_request"] = "total"
+                     else:
+                         event["cache_request"] = "partial"
+
                      fname = event["file_path"]
-                     self.logger.info("Sending GStream")
+                     print(event)
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
-                         self.publish("xrd-cache-stats", event, exchange=self._wlcg_exchange_cache)                     
+                         self.logger.info("Sending GStream for "+self._exchange_cache)
+                         self.publish("file-close", event, exchange=self._exchange_cache)
                      else:
-                         self.publish("xrd-cache-stats", event, exchange=self._exchange_cache)
-                         
+                         self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
+                         self.publish("file-close", event, exchange=self._exchange_cache)
                 except Exception as e:
                     self.logger.error("Error on creating Json - event - GStream" + e)
 
         except Exception as e:
             self.logger.error("Error on creating Json - GStream" + e)
-                                                            
-
+                                                                                                 
     def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
         """
         Process a TCP stream
@@ -319,6 +332,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # parse the event from json
             event['from'] = addr
             self.publish('tcp-event', event, exchange=self._tcp_exchange)
+
+
 
 
     def process(self, data, addr, port):
