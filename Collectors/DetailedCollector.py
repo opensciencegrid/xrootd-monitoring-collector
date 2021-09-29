@@ -302,20 +302,20 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
 
-                     if(event["block_hit_cache"] == event["size"]):
+                     if(event["block_hit_cache"] >= event["size"]):
                          event["cache_request"] = "total"
                      else:
                          event["cache_request"] = "partial"
 
                      fname = event["file_path"]
-                     print(event)
+                     
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
                          self.logger.info("Sending GStream for "+self._exchange_cache)
                          self.publish("file-close", event, exchange=self._exchange_cache)
                      else:
                          self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
-                         self.publish("file-close", event, exchange=self._exchange_cache)
+                         self.publish("file-close", event, exchange=self._wlcg_exchange_cache)
                 except Exception as e:
                     self.logger.error("Error on creating Json - event - GStream" + e)
 
