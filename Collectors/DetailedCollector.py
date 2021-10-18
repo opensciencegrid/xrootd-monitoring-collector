@@ -271,7 +271,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             try:                                                                                        
                 hostname = socket.gethostbyaddr(addr)[0]                                                
             except Exception as e:                                                                      
-                self.logger.error("No able to gethostnyname")                                           
+                self.logger.exception("Not able to get gethostnyname")                                           
                                                                                                         
             if sid in self._servers:                                                                    
                 s = self._servers[sid]
