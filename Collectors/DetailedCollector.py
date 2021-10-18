@@ -275,7 +275,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                                                                                         
             if sid in self._servers:                                                                    
                 s = self._servers[sid]
-                if s .site is not None:
+                if s.site is not None:
                     site = s.site.decode('utf-8')
                                                                                                         
                                                                       
