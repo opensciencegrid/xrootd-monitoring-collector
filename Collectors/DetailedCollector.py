@@ -320,7 +320,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     self.logger.exception("Error on creating Json - event - GStream" + e)
 
         except Exception as e:
-            self.logger.error("Error on creating Json - GStream" + e)
+            self.logger.exception("Error on creating Json - GStream" + e)
                                                                                                  
     def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
         """
