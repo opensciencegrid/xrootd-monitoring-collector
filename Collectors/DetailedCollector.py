@@ -317,7 +317,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                          self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
                          self.publish("file-close", event, exchange=self._wlcg_exchange_cache)
                 except Exception as e:
-                    self.logger.error("Error on creating Json - event - GStream" + e)
+                    self.logger.exception("Error on creating Json - event - GStream" + e)
 
         except Exception as e:
             self.logger.error("Error on creating Json - GStream" + e)
