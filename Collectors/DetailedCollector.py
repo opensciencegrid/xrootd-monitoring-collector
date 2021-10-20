@@ -11,6 +11,7 @@ import socket
 import struct
 import time
 import collections
+import json
 
 import decoding
 import wlcg_converter
@@ -26,12 +27,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        
         self._transfers = {}
         self._servers = {}
         self._users = {}
         self._dictid_map = {}
+        
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
+        self._tcp_exchange = self.config.get('AMQP', 'tcp_exchange')
+        self._exchange_cache = self.config.get('AMQP', 'exchange_cache')
+        self._wlcg_exchange_cache = self.config.get('AMQP', 'wlcg_exchange_cache')
+        
         self.last_flush = time.time()
         self.seq_data = {}
 
@@ -57,7 +64,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
             s = self._servers[sid]
             rec['serverID'] = sid
             rec['server'] = s.addr
-            rec['site'] = s.site.decode('utf-8')
+            if s.site is not None:
+                rec['site'] = s.site.decode('utf-8')
+            else:
+                rec['site'] = ''
+
         else:
             rec['server'] = addr
             # logger.warning('server still not identified: %s',sid)
@@ -226,6 +237,102 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'wlcg'})
 
         return rec
+        
+    # return the VO based on the path    
+    def returnVO(self,fname):
+
+       if fname.startswith('/user'):
+            return 'osg'
+       if fname.startswith('/osgconnect/public'):
+            return 'osg'
+       elif fname.startswith('/pnfs/fnal.gov/usr'):
+            return 'fermilab'
+       elif fname.startswith('/hcc'):
+            return 'hcc'
+       elif fname.startswith('/gwdata'):   
+            return 'gwdata'
+       elif fname.startswith('/chtc/'):
+            return 'chtc'
+       elif fname.startswith('/icecube/'):
+            return 'icecube'
+       else:
+            return "noVO"
+
+
+    def process_gstream(self, gstream, addr, sid):                                                      
+
+        hostname = ""                                                                                   
+        hostip = ""                                                                                     
+        site = ""                                                                                       
+        lcg_record = False                                                                              
+        try:                                                                                            
+            hostip = addr                                                                               
+            try:                                                                                        
+                hostname = socket.gethostbyaddr(addr)[0]                                                
+            except Exception as e:                                                                      
+                self.logger.exception("Not able to get gethostnyname")                                           
+                                                                                                        
+            if sid in self._servers:                                                                    
+                s = self._servers[sid]
+                if s.site is not None:
+                    site = s.site.decode('utf-8')
+                                                                                                        
+                                                                      
+            for event in gstream.events:
+                try: 
+                     event["sid"] = sid
+                     event["server_ip"] = hostip
+                     event["server_hostname"] = hostname
+                     event["file_path"] = event.pop("lfn")
+                     event["block_size"] = event.pop("blk_size")
+                     event["numbers_blocks"] = event.pop("n_blks")
+                     event["numbers_blocks_done"] = event.pop("n_blks_done")
+                     event["access_count"] = event.pop("access_cnt")
+                     event["attach_time"] = event.pop("attach_t")
+                     event["detach_time"] = event.pop("detach_t")
+                     remote = event.pop("remotes")
+                     if(len(remote) > 0):
+                          event["remotes_origin"] = remote
+                     else:
+                          event["remotes_origin"] = ""
+                     event["block_hit_cache"] = event.pop("b_hit")
+                     event["block_miss_cache"] = event.pop("b_miss")
+                     event["block_bypass_cache"] = event.pop("b_bypass")
+                     event["site"] = site
+                     event["vo"] = self.returnVO(event["file_path"])
+
+                     if(event["block_hit_cache"] >= event["size"]):
+                         event["cache_request"] = "total"
+                     else:
+                         event["cache_request"] = "partial"
+
+                     fname = event["file_path"]
+                     
+                     if fname.startswith('/store') or fname.startswith('/user/dteam'):
+                         lcg_record = True
+                         self.logger.info("Sending GStream for "+self._exchange_cache)
+                         self.publish("file-close", event, exchange=self._exchange_cache)
+                     else:
+                         self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
+                         self.publish("file-close", event, exchange=self._wlcg_exchange_cache)
+                except Exception as e:
+                    self.logger.exception("Error on creating Json - event - GStream" + e)
+
+        except Exception as e:
+            self.logger.exception("Error on creating Json - GStream" + e)
+                                                                                                 
+    def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
+        """
+        Process a TCP stream
+        """
+        # For each event in the decoded_packet, add the addr, send to the exchange.  
+        # The event is already a dict from the parsed JSON
+        for event in decoded_packet.events:
+            # parse the event from json
+            event['from'] = addr
+            self.publish('tcp-event', event, exchange=self._tcp_exchange)
+
+
 
 
     def process(self, data, addr, port):
@@ -358,6 +465,20 @@ class DetailedCollector(UdpCollector.UdpCollector):
             #self.logger.warning("t - stream message. Server at %s should remove 'files', 'io', and "
             #                    "'iov' directives from the monitoring configuration.", addr)
             pass
+
+        elif header.code == b'g':
+        
+            # The rest of the message is the gstream event
+            self.logger.debug("Received gstream message")
+            decoded_gstream = decoding.gStream(data)
+
+            # We only care about the top 8 bits of the ident, which are a character.
+            stream_type = chr(decoded_gstream.ident >> 56)
+            if stream_type == "T":
+                self.process_tcp(decoded_gstream, addr)
+            elif stream_type == "C":
+                # process the gstream
+                self.process_gstream(decoded_gstream, addr,sid)
 
         else:
             infolen = len(data) - 4

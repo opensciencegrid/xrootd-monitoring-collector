@@ -3,6 +3,7 @@ from collections import namedtuple
 import requests
 import struct
 import sys
+import json
 import urllib.parse
 
 header = namedtuple("header", ["code", "pseq", "plen", "server_start"])
@@ -20,7 +21,7 @@ fileClose = namedtuple("fileClose", ["rectype", "recFlag", "recSize", "fileID", 
 fileTime  = namedtuple("fileTime",  ["rectype", "recFlag", "recSize", "isXfr_recs", "total_recs", "tBeg", "tEnd", "sid"])
 fileDisc  = namedtuple("fileDisc",  ["rectype", "recFlag", "recSize", "userID"])
 ops       = namedtuple("ops", ["read", "readv", "write", "rsMin", "rsMax", "rsegs", "rdMin", "rdMax", "rvMin", "rvMax", "wrMin", "wrMax"])
-
+gstream   = namedtuple("gstream", ["begin", "end", "ident", "events"])
 
 def userInfo(message):
     c = message
@@ -140,6 +141,21 @@ def xfrInfo(message):
     else:
         pd = b''
     return xfrinfo([lfn, tod, sz, tm, op, rc, pd])
+
+def gStream(message):
+    # int, int, int64, null terminated string
+
+    # Calculate the size of the string portion
+    string_size = len(message) - 16
+    up = gstream._make(struct.unpack("!IIQ" + str(string_size) + "s", message))
+
+    # Events element is null terminated, remove the extranous null
+    events = up.events.rstrip(b'\0').decode('utf-8').split("\n")
+    parsed_events = []
+    for event in events:
+        parsed_events.append(json.loads(event))
+    #up.events = parsed_events
+    return gstream(up.begin, up.end, up.ident, parsed_events)
 
 
 def MonFile(d):
