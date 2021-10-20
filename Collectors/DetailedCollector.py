@@ -242,7 +242,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
     def returnVO(self,fname):
 
        if fname.startswith('/user'):
-            return 'user'
+            return 'osg'
        if fname.startswith('/osgconnect/public'):
             return 'osg'
        elif fname.startswith('/pnfs/fnal.gov/usr'):
