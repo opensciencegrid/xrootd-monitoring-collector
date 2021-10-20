@@ -261,7 +261,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
     def process_gstream(self, gstream, addr, sid):                                                      
 
-        self.logger.info("GStream")
         hostname = ""                                                                                   
         hostip = ""                                                                                     
         site = ""                                                                                       
