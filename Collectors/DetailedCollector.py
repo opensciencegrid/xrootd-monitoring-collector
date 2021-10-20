@@ -246,7 +246,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
        if fname.startswith('/osgconnect/public'):
             return 'osg'
        elif fname.startswith('/pnfs/fnal.gov/usr'):
-            return 'pnfs/fnal'
+            return 'fermilab'
        elif fname.startswith('/hcc'):
             return 'hcc'
        elif fname.startswith('/gwdata'):   
