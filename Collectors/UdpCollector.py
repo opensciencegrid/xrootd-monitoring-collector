@@ -59,24 +59,30 @@ class UdpCollector(object):
 
     DEFAULT_HOST = '0.0.0.0'
     DEFAULT_PORT = None
+    UDP_MON_PORT = 8000
 
 
-    def __init__(self, config, bind_addr):
+    def __init__(self, config, bind_addr, udp_mon_port):
         self.channel = None
         self.bind_addr = bind_addr
         self.socks = []
         self.config = config
         self.message_q = None
         self.child_process = None
-        self.exchange = config.get('AMQP', 'exchange')
+        self.exchange = config.get('AMQP', 'wlcg_exchange')
         self.metrics_q = None
+        self.udp_mon_port = udp_mon_port
 
     def _create_rmq_channel(self):
         """
         Create a fresh connection to RabbitMQ
         """
         parameters = pika.URLParameters(self.config.get('AMQP', 'url'))
-        connection = pika.BlockingConnection(parameters)
+        try:
+            connection = pika.BlockingConnection(parameters)
+        except pika.exceptions.AMQPConnectionError:
+            self.logger.exception('Failed to connect to AMQP URL: "{}"'.format(self.config.get('AMQP', 'url')))
+            raise
         self.channel = connection.channel()
 
 
@@ -93,6 +99,7 @@ class UdpCollector(object):
         except Exception:
             if retry:
                 self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
+                # TODO decide if want to handle buffering of messages until queue comes back?
                 self._create_rmq_channel()
                 self.publish(routing_key, record, retry=False, exchange=exchange)
 
@@ -133,7 +140,7 @@ class UdpCollector(object):
 
     def _launch_metrics(self):
         # Metrics process
-        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q,))
+        self.metrics_process = multiprocessing.Process(target=self._metrics_child, args=(self.metrics_q, self.udp_mon_port))
         self.metrics_process.name = "Collector metrics thread"
         self.metrics_process.daemon = True
         orig_stdout = sys.stdout
@@ -220,6 +227,8 @@ class UdpCollector(object):
                     if sock in rlist:
                         message, addr = sock.recvfrom(65536)
 
+                        self.logger.debug('Message From: {}'.format(str(addr)))
+
                         self.message_q.put([message, addr[0], addr[1]])
                         n_messages += 1
                         if n_messages % 10000 == 0:
@@ -235,9 +244,19 @@ class UdpCollector(object):
 
     @classmethod
     def _start_child(Collector, config, message_q, metrics_q):
-        coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT))
+        coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT), Collector.UDP_MON_PORT)
         coll._init_logging()
-        coll._create_rmq_channel()
+        try:
+            coll._create_rmq_channel()
+        except pika.exceptions.AMQPConnectionError:
+            connectionEstablished=False
+            while not conectionEstablished:
+                try:
+                    coll._create_rmq_channel()
+                    connectionEstablished=True
+                except pika.exceptions.AMQPConnectionError:
+                    time.sleep(2)
+                    pass
         coll.message_q = message_q
         coll.metrics_q = metrics_q
         while True:
@@ -288,10 +307,10 @@ class UdpCollector(object):
         
 
     @staticmethod
-    def _metrics_child(metrics_q):
+    def _metrics_child(metrics_q, monitor_port):
 
         # Start the prometheus HTTP client
-        start_http_server(8000)
+        start_http_server(monitor_port)
         missing_counter = Counter('missing_packets', 'Number of missing packets', ['host'])
         messages = Counter('messages', 'Number of messages')
         pushed_messages = Counter('pushed_messages', 'Number of pushed messages')
@@ -380,6 +399,8 @@ class UdpCollector(object):
         if host is None:
             host = Collector.DEFAULT_HOST
 
+        udp_mon_port = Collector.UDP_MON_PORT
+
         parser = argparse.ArgumentParser()
         parser.add_argument("config", nargs=1, help="Location of configuration file.")
         args = parser.parse_args()
@@ -387,9 +408,10 @@ class UdpCollector(object):
         config = configparser.ConfigParser()
         config.read(args.config[0])
 
-        coll = Collector(config, bind_addr=(host, port))
+        coll = Collector(config, bind_addr=(host, port), udp_mon_port=udp_mon_port)
         try:
             coll.start()
         except KeyboardInterrupt:
             coll.orig_stderr.write("Exiting on keyboard interrupt...\n")
             sys.exit(1)
+
