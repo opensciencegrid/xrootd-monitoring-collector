@@ -476,10 +476,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
             stream_type = chr(decoded_gstream.ident >> 56)
             if stream_type == "T":
                 self.process_tcp(decoded_gstream, addr)
-         
-         
-            # process the gstream
-            self.process_gstream(decoded_gstream, addr,sid)
+            elif stream_type == "C":
+                # process the gstream
+                self.process_gstream(decoded_gstream, addr,sid)
 
         else:
             infolen = len(data) - 4
