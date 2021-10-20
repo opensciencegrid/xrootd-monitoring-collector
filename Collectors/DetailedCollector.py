@@ -294,7 +294,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      if(len(remote) > 0):
                           event["remotes_origin"] = remote
                      else:
-                          event["remotes_origin"] = "null"
+                          event["remotes_origin"] = ""
                      event["block_hit_cache"] = event.pop("b_hit")
                      event["block_miss_cache"] = event.pop("b_miss")
                      event["block_bypass_cache"] = event.pop("b_bypass")
