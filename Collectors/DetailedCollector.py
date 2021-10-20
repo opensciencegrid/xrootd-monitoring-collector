@@ -468,17 +468,17 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         elif header.code == b'g':
         
-         # The rest of the message is the gstream event
-         self.logger.debug("Received gstream message")
-         decoded_gstream = decoding.gStream(data)
+            # The rest of the message is the gstream event
+            self.logger.debug("Received gstream message")
+            decoded_gstream = decoding.gStream(data)
 
-         # We only care about the top 8 bits of the ident, which are a character.
-         stream_type = chr(decoded_gstream.ident >> 56)
-         if stream_type == "T":
-              self.process_tcp(decoded_gstream, addr)
+            # We only care about the top 8 bits of the ident, which are a character.
+            stream_type = chr(decoded_gstream.ident >> 56)
+            if stream_type == "T":
+                self.process_tcp(decoded_gstream, addr)
          
-         # process the gstream
-         self.process_gstream(decoded_gstream, addr,sid)
+            # process the gstream
+            self.process_gstream(decoded_gstream, addr,sid)
 
         else:
             infolen = len(data) - 4
