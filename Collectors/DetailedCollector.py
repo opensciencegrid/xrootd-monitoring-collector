@@ -477,6 +477,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             if stream_type == "T":
                 self.process_tcp(decoded_gstream, addr)
          
+         
             # process the gstream
             self.process_gstream(decoded_gstream, addr,sid)
 
