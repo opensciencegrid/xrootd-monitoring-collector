@@ -270,7 +270,8 @@ class UdpCollector(object):
             message = base64.standard_b64decode(loaded_json['data'])
 
             # Send to message queue
-            addr = loaded_json['remote'].split(":")
+            # Get the address and port
+            addr = loaded_json['remote'].rsplit(":", 1)
             message_q.put([message, addr[0], addr[1]])
             channel.basic_ack(method.delivery_tag)
 
