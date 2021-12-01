@@ -53,6 +53,7 @@ def Convert(source_record):
         to_return["server_domain"] = ".".join(source_record["server_hostname"].split(".")[-2:])
     else:
         to_return["server_hostname"] = ""
+    to_return["server_ip"] = source_record.get("server_ip", "")
     # Generate a random uuid
     to_return["unique_id"] = str(uuid.uuid4())
     to_return["file_lfn"] = source_record.get("filename", "")
