@@ -280,6 +280,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                                                       
             for event in gstream.events:
                 try: 
+                     self.metrics_q.put({'type': 'gstreamevt', 'count': 1})
                      event["sid"] = sid
                      event["server_ip"] = hostip
                      event["server_hostname"] = hostname
