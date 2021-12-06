@@ -302,8 +302,8 @@ class UdpCollector(object):
         messages = Counter('messages', 'Number of messages')
         pushed_messages = Counter('pushed_messages', 'Number of pushed messages')
         packets = Counter('packets', 'Number of packets')
-        gstreamevt = Counter('gstreamevt', 'Number of gstream events')
-        gstreammsg = Counter('gstreammsg', 'Number of gstream messages')
+        gstreamevt = Counter('gstream_event_cache', 'Number cache events from gstream')
+        gstreammsg = Counter('gstreammsg', 'Number cache messages from gstream')
         reorder_counter = Counter("reordered_packets", "Reordered Packets", ['host'])
         failed_user = Counter("xrootd_mon_failed_user", "Failed User Collection")
         failed_filename = Counter("xrootd_mon_failed_filename", "Failed Filename Collection")
@@ -324,9 +324,9 @@ class UdpCollector(object):
                 packets.inc(metrics_message['count'])
             elif metrics_message['type'] == "reordered packets":
                 reorder_counter.labels(metrics_message['addr']).inc(metrics_message['count'])
-            elif metrics_message['type'] == "gstreamevt":
+            elif metrics_message['type'] == "gstream_event_cache":
                 gstreamevt.inc(metrics_message['count'])
-            elif metrics_message['type'] == "gstreammsg":
+            elif metrics_message['type'] == "gstream_event_message":
                 gstreammsg.inc(metrics_message['count'])
             elif metrics_message['type'] == "failed user":
                 failed_user.inc(metrics_message['count'])
