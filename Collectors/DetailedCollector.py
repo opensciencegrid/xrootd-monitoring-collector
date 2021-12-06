@@ -472,7 +472,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # The rest of the message is the gstream event
             self.logger.debug("Received gstream message")
             decoded_gstream = decoding.gStream(data)
-            self.metrics_q.put({'type': 'gstream_event_message', 'count': 1})
+            self.metrics_q.put({'type': 'gstream_message', 'count': 1})
 
 
             # We only care about the top 8 bits of the ident, which are a character.
