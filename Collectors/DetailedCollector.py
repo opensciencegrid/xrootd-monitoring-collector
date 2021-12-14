@@ -53,6 +53,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['start_time'] = int(openTime*1000)
         rec['end_time'] = int(timestamp*1000)
         rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
+        path = ""
 
         try:
             rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
@@ -75,7 +76,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         try:
             # Get userinfo from the map
-            userInfo = self._dictid_map[sid][userID]
+            userInfo = None
+            if userID != 0:
+                userInfo = self._dictid_map[sid][userID]
+            elif fileClose.fileID in self._dictid_map[sid]:
+                pathInfo = self._dictid_map[sid][fileClose.fileID]
+                userInfo = pathInfo.userinfo
+                path = pathInfo.path.decode('utf-8')
             u = self._users[sid][userInfo].get('userinfo', None)
             auth = self._users[sid][userInfo].get('authinfo', None)
             appinfo = self._users[sid][userInfo].get('appinfo', None)
@@ -113,6 +120,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if transfer_key in self._transfers:
             f = self._transfers[transfer_key][1]
             fname = f.fileName.decode('utf-8')
+            if fname == "":
+                fname = path
             rec['filename'] = fname
             rec['filesize'] = f.fileSize
             rec['dirname1'] = "/".join(fname.split('/', 2)[:2])
@@ -414,6 +423,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             for idx in range(time_record.total_recs):
                 hd = decoding.MonFile(data)
                 data = data[hd.recSize:]
+                self.logger.debug(str(hd))
 
                 if isinstance(hd, decoding.fileDisc):
                     try:
@@ -504,8 +514,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
             elif header.code == b'd':
                 path = rest
-                #self.logger.warning('Path information sent (%s). Server at %s should remove "files" '
-                #                    'directive from the monitoring configuration.', path, addr)
+                if sid not in self._dictid_map:
+                    self._dictid_map[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
+                pathInfo = decoding.pathinfo(userInfo, path)
+                self.logger.debug("Adding new pathinfo: %s", pathInfo)
+                self._dictid_map[sid][mm.dictID] = pathInfo
 
             elif header.code == b'i':
                 appinfo = rest

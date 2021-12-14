@@ -14,6 +14,7 @@ authinfo = namedtuple("authinfo", ["ap", "dn", "hn", "on", "rn", "gn", "info", '
 srvinfo  = namedtuple("srvinfo", ["program", "version", "instance", "port", "site", "addr"])
 prginfo  = namedtuple("prginfo", ["xfn", "tod", "sz", "at", "ct", "mt", "fn"])
 xfrinfo  = namedtuple("xfrinfo", ["lfn", "tod", "sz", "tm", "op", "rc", "pd"])
+pathinfo = namedtuple("pathinfo", ["userinfo", "path"])
 
 fileOpen  = namedtuple("fileOpen",  ["rectype", "recFlag", "recSize", "fileID", "fileSize", "userID", "fileName"])
 fileXfr   = namedtuple("fileXfr",   ["rectype", "recFlag", "recSize", "fileID", "read", "readv", "write"])
