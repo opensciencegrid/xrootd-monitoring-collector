@@ -289,6 +289,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                                                                       
             for event in gstream.events:
                 try: 
+                     self.metrics_q.put({'type': 'gstream_event_cache', 'count': 1})
                      event["sid"] = sid
                      event["server_ip"] = hostip
                      event["server_hostname"] = hostname
@@ -481,6 +482,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # The rest of the message is the gstream event
             self.logger.debug("Received gstream message")
             decoded_gstream = decoding.gStream(data)
+            self.metrics_q.put({'type': 'gstream_message', 'count': 1})
+
 
             # We only care about the top 8 bits of the ident, which are a character.
             stream_type = chr(decoded_gstream.ident >> 56)
