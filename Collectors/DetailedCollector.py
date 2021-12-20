@@ -311,11 +311,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
-                         self.logger.info("Sending GStream for "+self._exchange_cache)
-                         self.publish("file-close", event, exchange=self._exchange_cache)
-                     else:
                          self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
                          self.publish("file-close", event, exchange=self._wlcg_exchange_cache)
+                     else:
+                         self.logger.info("Sending GStream for "+self._exchange_cache)
+                         self.publish("file-close", event, exchange=self._exchange_cache)
+                        
                 except Exception as e:
                     self.logger.exception("Error on creating Json - event - GStream" + e)
 
