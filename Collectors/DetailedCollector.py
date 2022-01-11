@@ -318,6 +318,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
                      fname = event["file_path"]
                      
+                     if('n_cks_errs' in event):
+                         event["numbers_checksum_errors"] = event.pop("n_cks_errs")
+                     
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
                          self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
