@@ -1,0 +1,19 @@
+version: '3.2'
+services:
+  detailed_collector:
+    #image: "opensciencegrid/xrootd-monitoring-collector"
+    build:
+      context: .
+    volumes:
+      - ./connection.conf:/configs/connection.conf
+    ports:
+      - "9930:9930/udp"
+      - "8000:8000/tcp"
+    restart: always
+#  summary_collector:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.summary_collector
+#    ports:
+#     - "9301:9301/udp"
+#    restart: always
