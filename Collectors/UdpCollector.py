@@ -14,6 +14,7 @@ import logging.config
 import multiprocessing
 import os
 import queue
+import random
 import socket
 import sys
 import time
@@ -24,6 +25,7 @@ import prometheus_client
 from prometheus_client import start_http_server, Counter, Gauge
 
 import pika
+import stomp
 
 
 class _LoggerWriter(object):
@@ -54,6 +56,32 @@ class _LoggerWriter(object):
         """
         # self.level()
 
+class StompyListener(stomp.ConnectionListener):
+    def __init__(self, message_q, metrics_q):
+        self.message_q = message_q
+        self.metrics_q = metrics_q
+
+    def on_error(self, frame):
+        self.logger.error('Received an error "%s"' % frame.body)
+
+    def on_message(self, headers, body):
+        # Parse the JSON message
+        loaded_json = json.loads(body)
+
+        # Base64 decode the data
+        message = base64.standard_b64decode(loaded_json['data'])
+
+        # Send to message queue
+        # Get the address and port
+        addr = loaded_json['remote'].rsplit(":", 1)
+        self.message_q.put([message, addr[0], addr[1]])
+
+        # Update the number of messages received on the bus to the metrics_q
+        self.metrics_q.put({'type': 'pushed messages', 'count': 1})
+
+    def on_disconnected(self):
+        self.logger.debug('disconnected')
+
 
 class UdpCollector(object):
 
@@ -68,8 +96,25 @@ class UdpCollector(object):
         self.config = config
         self.message_q = None
         self.child_process = None
-        self.exchange = config.get('AMQP', 'exchange')
         self.metrics_q = None
+
+        self.protocol = config.get("protocol")
+        if self.protocol == 'AMQP':
+            self.exchange = config.get('AMQP', 'exchange')
+        elif self.protocol == 'STOMP':
+            self.UDP_queue = config.get('STOMP', 'UDPQueue')
+            self.topic = config.get('STOMP', 'topic')
+            self.connections = []
+        else:
+            self.logger.exception('Error while loading configuration, selected protocol is not valid')
+
+
+    def _create_mq_channel(self):
+        if self.protocol == 'AMQP':
+            self._create_rmq_channel()
+        elif self.protocol == 'STOMP':
+            self._create_amq_channel()
+
 
     def _create_rmq_channel(self):
         """
@@ -84,22 +129,89 @@ class UdpCollector(object):
             self.logger.exception('Error while connecting rabbitmq message;')
             print(e)
 
+    def _get_stomp_connection_objects(self):
+        connections = []
+        try:
+            # Following advice from messaging team URL should be translated into all possible
+            # hosts behind the alias
+            mb_alias = self.config.get('STOMP', 'url')
+            port = self.config.get('STOMP', 'port')
+
+            # Get the list of IPs behind the alias
+            hosts  = socket.gethostbyname_ex(mb_alias)[2]
+
+            host_and_ports   = map(lambda x: (x, port), hosts)
+            username = self.config.get('STOMP', 'username')
+            password = self.config.get('STOMP', 'password')
+
+            # Create a connection to each broker available
+            for host_and_port in host_and_ports:
+                connection = stomp.Connection(host_and_ports=[host_and_port])
+                connection.set_listener('StompyListener', StompyListener([], []))
+                self.connections.append(connection)
+                
+        except Exception as e:
+            self.logger.exception('Error while connecting to AMQ message;')
+            print(e)
+
+        return connections
+
+
+    def _create_amq_channel(self):
+        """
+        Create a fresh connection to AMQ
+        """
+        for connection in self.connections:
+            if connection.is_connected():
+                connection.disconnect()
+        # Clean up the connection arrays
+        self.connections = []
+        self.connections = self._get_stomp_connection_objects()
+
 
     def publish(self, routing_key, record: dict, retry=True, exchange=None):
         if exchange is None:
             exchange = self.exchange
 
-        try:
-            self.channel.basic_publish(exchange,
-                                       routing_key,
-                                       json.dumps(record),
-                                       pika.BasicProperties(content_type='application/json',
-                                                            delivery_mode=pika.spec.TRANSIENT_DELIVERY_MODE))
-        except Exception:
-            if retry:
-                self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
-                self._create_rmq_channel()
-                self.publish(routing_key, record, retry=False, exchange=exchange)
+        if self.protocol == 'AMQP':
+            try:
+                self.channel.basic_publish(exchange,
+                                           routing_key,
+                                           json.dumps(record),
+                                           pika.BasicProperties(content_type='application/json',
+                                                                delivery_mode=pika.spec.TRANSIENT_DELIVERY_MODE))
+            except Exception:
+                if retry:
+                    self.logger.exception('Error while sending rabbitmq message; will recreate connection and retry')
+                    self._create_rmq_channel()
+                    self.publish(routing_key, record, retry=False, exchange=exchange)
+        elif self.protocol == 'STOMP':
+            try:
+                random.choice(self.connection).send(self.topic,
+                                                    json.dumps(record),
+                                                    headers={'content_type': 'application/json'})
+            except Exception:
+                if retry:
+                    sent = False
+                    for connection in self.connections:
+                        if sent:
+                            # Message sent we are done
+                            break
+                        else:
+                            try:
+                                connection.send(self.topic,
+                                                json.dumps(record),
+                                                headers={'content_type': 'application/json'})
+                                sent = True
+                            except Exception:
+                                # Just keep trying other connections
+                                pass
+                    # Recreate the connections anyhow to keep them healthy
+                    self._create_amq_channel()
+                    # If it was not sent at all We better retry
+                    if not sent:
+                        self.logger.exception('Error while sending amq message; will recreate connection and retry')
+                        self.publish(routing_key, record, retry=False, exchange=exchange)
 
 
     def _init_logging(self):
@@ -242,7 +354,7 @@ class UdpCollector(object):
     def _start_child(Collector, config, message_q, metrics_q):
         coll = Collector(config, (Collector.DEFAULT_HOST, Collector.DEFAULT_PORT))
         coll._init_logging()
-        coll._create_rmq_channel()
+        coll._create_mq_channel()
         coll.message_q = message_q
         coll.metrics_q = metrics_q
         while True:
@@ -257,41 +369,52 @@ class UdpCollector(object):
 
     @classmethod
     def _bus_child(self, config, message_q: multiprocessing.Queue, metrics_q: multiprocessing.Queue):
-        # Setup the connection to the message bus
-        parameters = pika.URLParameters(config.get('AMQP', 'url'))
-        connection = pika.BlockingConnection(parameters)
-        channel = connection.channel()
+        if self.protocol == 'AMQP':
+            # Setup the connection to the message bus
+            parameters = pika.URLParameters(config.get('AMQP', 'url'))
+            connection = pika.BlockingConnection(parameters)
+            channel = connection.channel()
 
-        def on_message(channel, method, properties, body):
-            # Parse the JSON message
-            loaded_json = json.loads(body)
+            def on_message(channel, method, properties, body):
+                # Parse the JSON message
+                loaded_json = json.loads(body)
 
-            # Base64 decode the data
-            message = base64.standard_b64decode(loaded_json['data'])
+                # Base64 decode the data
+                message = base64.standard_b64decode(loaded_json['data'])
 
-            # Send to message queue
-            # Get the address and port
-            addr = loaded_json['remote'].rsplit(":", 1)
-            message_q.put([message, addr[0], addr[1]])
-            channel.basic_ack(method.delivery_tag)
+                # Send to message queue
+                # Get the address and port
+                addr = loaded_json['remote'].rsplit(":", 1)
+                message_q.put([message, addr[0], addr[1]])
+                channel.basic_ack(method.delivery_tag)
 
-            # Update the number of messages received on the bus to the metrics_q
-            metrics_q.put({'type': 'pushed messages', 'count': 1})
+                # Update the number of messages received on the bus to the metrics_q
+                metrics_q.put({'type': 'pushed messages', 'count': 1})
 
-        channel.basic_qos(prefetch_count=1000)
-        channel.basic_consume(config.get("Pushed", "push_queue"), on_message)
+            channel.basic_qos(prefetch_count=1000)
+            channel.basic_consume(config.get("Pushed", "push_queue"), on_message)
 
-        try:
-            channel.start_consuming()
-        except Exception as ex:
-            channel.stop_consuming()
+            try:
+                channel.start_consuming()
+            except Exception as ex:
+                channel.stop_consuming()
+                connection.close()
+                raise ex
             connection.close()
-            raise ex
-        connection.close()
+        elif self.protocol == 'STOMP':
+            connections = self._get_stomp_connection_objects()
+            for connection in connections:
+                try:
+                    connection.subscribe(self.UDP_queue,
+                                         id='XrootDCollector')
+                except Exception as ex:
+                    if connection.is_connected():
+                        connection.close()
+                    raise ex
 
+                if connection.is_connected():
+                    connection.close()
 
-
-        
 
     @staticmethod
     def _metrics_child(metrics_q):
