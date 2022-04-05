@@ -273,7 +273,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         if 'filename' not in rec or rec['filename'] == "missing directory":
             self.metrics_q.put({'type': 'failed filename', 'count': 1})
 
-        if not lcg_record:
+        if not self.wlcg and not lcg_record:
             self.logger.debug("OSG record to send: %s", str(rec))
             self.publish("file-close", rec, exchange=self._exchange)
             self.metrics_q.put({'type': 'message sent', 'count': 1, 'message_type': 'stashcache'})
