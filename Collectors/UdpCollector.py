@@ -97,6 +97,7 @@ class UdpCollector(object):
         self.message_q = None
         self.child_process = None
         self.metrics_q = None
+        self.wlcg = config.get("wlcg")
 
         self.protocol = config.get("protocol")
         if self.protocol == 'AMQP':
@@ -129,7 +130,12 @@ class UdpCollector(object):
             self.logger.exception('Error while connecting rabbitmq message;')
             print(e)
 
-    def _get_stomp_connection_objects(self):
+    def _get_stomp_connection_objects(self, connections=[]):
+        # If we had connection already, make sure to close them
+        for connection in connections:
+            if connection.is_connected():
+                connection.close()
+
         connections = []
         try:
             # Following advice from messaging team URL should be translated into all possible
@@ -402,18 +408,19 @@ class UdpCollector(object):
                 raise ex
             connection.close()
         elif self.protocol == 'STOMP':
-            connections = self._get_stomp_connection_objects()
-            for connection in connections:
-                try:
-                    connection.subscribe(self.UDP_queue,
-                                         id='XrootDCollector')
-                except Exception as ex:
-                    if connection.is_connected():
-                        connection.close()
-                    raise ex
+            subscribed = False
 
-                if connection.is_connected():
-                    connection.close()
+            while(True):
+                if not subscribed:
+                    connections = self._get_stomp_connection_objects(connections)
+                    for connection in connections:
+                        connection.subscribe(self.UDP_queue,
+                                             id='XrootDCollector')
+                    subscribed = True
+                # Check every 5 minutes if all the connection are alive, otherwise reconnect
+                time.sleep(300)
+                if not all(connection.is_connected() for connection in connections):
+                    subscribed = False
 
 
     @staticmethod
