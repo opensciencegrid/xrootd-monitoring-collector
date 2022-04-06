@@ -26,6 +26,7 @@ from prometheus_client import start_http_server, Counter, Gauge
 
 import pika
 import stomp
+from stomp_helper import get_stomp_connection_objects
 
 
 class _LoggerWriter(object):
@@ -56,32 +57,6 @@ class _LoggerWriter(object):
         """
         # self.level()
 
-class StompyListener(stomp.ConnectionListener):
-    def __init__(self, message_q, metrics_q):
-        self.message_q = message_q
-        self.metrics_q = metrics_q
-
-    def on_error(self, frame):
-        self.logger.error('Received an error "%s"' % frame.body)
-
-    def on_message(self, headers, body):
-        # Parse the JSON message
-        loaded_json = json.loads(body)
-
-        # Base64 decode the data
-        message = base64.standard_b64decode(loaded_json['data'])
-
-        # Send to message queue
-        # Get the address and port
-        addr = loaded_json['remote'].rsplit(":", 1)
-        self.message_q.put([message, addr[0], addr[1]])
-
-        # Update the number of messages received on the bus to the metrics_q
-        self.metrics_q.put({'type': 'pushed messages', 'count': 1})
-
-    def on_disconnected(self):
-        self.logger.debug('disconnected')
-
 
 class UdpCollector(object):
 
@@ -97,13 +72,12 @@ class UdpCollector(object):
         self.message_q = None
         self.child_process = None
         self.metrics_q = None
-        self.wlcg = config.get("wlcg")
+        self.wlcg = config.get('DEFAULT', 'wlcg')
 
-        self.protocol = config.get("protocol")
+        self.protocol = config.get('DEFAULT', 'protocol')
         if self.protocol == 'AMQP':
             self.exchange = config.get('AMQP', 'exchange')
         elif self.protocol == 'STOMP':
-            self.UDP_queue = config.get('STOMP', 'UDPQueue')
             self.topic = config.get('STOMP', 'topic')
             self.connections = []
         else:
@@ -130,49 +104,21 @@ class UdpCollector(object):
             self.logger.exception('Error while connecting rabbitmq message;')
             print(e)
 
-    def _get_stomp_connection_objects(self, connections=[]):
-        # If we had connection already, make sure to close them
-        for connection in connections:
-            if connection.is_connected():
-                connection.close()
-
-        connections = []
-        try:
-            # Following advice from messaging team URL should be translated into all possible
-            # hosts behind the alias
-            mb_alias = self.config.get('STOMP', 'url')
-            port = self.config.get('STOMP', 'port')
-
-            # Get the list of IPs behind the alias
-            hosts  = socket.gethostbyname_ex(mb_alias)[2]
-
-            host_and_ports   = map(lambda x: (x, port), hosts)
-            username = self.config.get('STOMP', 'username')
-            password = self.config.get('STOMP', 'password')
-
-            # Create a connection to each broker available
-            for host_and_port in host_and_ports:
-                connection = stomp.Connection(host_and_ports=[host_and_port])
-                connection.set_listener('StompyListener', StompyListener([], []))
-                self.connections.append(connection)
-                
-        except Exception as e:
-            self.logger.exception('Error while connecting to AMQ message;')
-            print(e)
-
-        return connections
-
 
     def _create_amq_channel(self):
         """
         Create a fresh connection to AMQ
         """
-        for connection in self.connections:
-            if connection.is_connected():
-                connection.disconnect()
-        # Clean up the connection arrays
-        self.connections = []
-        self.connections = self._get_stomp_connection_objects()
+        try:
+            mb_alias = self.config.get('STOMP', 'url')
+            port = self.config.get('STOMP', 'port') 
+            username = self.config.get('STOMP', 'username')
+            password = self.config.get('STOMP', 'password')
+            self.connections = get_stomp_connection_objects(mb_alias, port,
+                                                            username, password,
+                                                            self.connections)
+        except Exception:
+            self.logger("Something bad happened")
 
 
     def publish(self, routing_key, record: dict, retry=True, exchange=None):
@@ -375,7 +321,8 @@ class UdpCollector(object):
 
     @classmethod
     def _bus_child(self, config, message_q: multiprocessing.Queue, metrics_q: multiprocessing.Queue):
-        if self.protocol == 'AMQP':
+        protocol = config.get('DEFAULT', 'protocol')
+        if protocol == 'AMQP':
             # Setup the connection to the message bus
             parameters = pika.URLParameters(config.get('AMQP', 'url'))
             connection = pika.BlockingConnection(parameters)
@@ -407,14 +354,22 @@ class UdpCollector(object):
                 connection.close()
                 raise ex
             connection.close()
-        elif self.protocol == 'STOMP':
+        elif protocol == 'STOMP':
+            mb_alias = config.get('STOMP', 'url')
+            port = config.get('STOMP', 'port')
+            username = config.get('STOMP', 'username')
+            password = config.get('STOMP', 'password')
             subscribed = False
+            connections = []
 
             while(True):
                 if not subscribed:
-                    connections = self._get_stomp_connection_objects(connections)
+                    connections = get_stomp_connection_objects(mb_alias, port,
+                                                               username, password,
+                                                               connections,
+                                                               message_q, metrics_q)
                     for connection in connections:
-                        connection.subscribe(self.UDP_queue,
+                        connection.subscribe(config.get('STOMP', 'UDPQueue'),
                                              id='XrootDCollector')
                     subscribed = True
                 # Check every 5 minutes if all the connection are alive, otherwise reconnect
