@@ -14,9 +14,9 @@ class StompyListener(stomp.ConnectionListener):
     def on_error(self, frame):
         logging.error('Received an error "%s"' % frame.body)
 
-    def on_message(self, headers, body):
+    def on_message(self, frame):
         # Parse the JSON message
-        loaded_json = json.loads(body)
+        loaded_json = json.loads(frame.body)
 
         # Base64 decode the data
         message = base64.standard_b64decode(loaded_json['data'])
