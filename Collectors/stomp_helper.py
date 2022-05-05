@@ -38,7 +38,7 @@ def get_stomp_connection_objects(mb_alias, port, username, password,
     # If we had connection already, make sure to close them
     for connection in connections:
         if connection.is_connected():
-            connection.close()
+            connection.disconnect()
 
     connections = []
     # Following advice from messaging team URL should be translated into all possible

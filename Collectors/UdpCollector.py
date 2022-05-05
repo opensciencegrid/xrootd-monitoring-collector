@@ -114,11 +114,15 @@ class UdpCollector(object):
             port = self.config.get('STOMP', 'port') 
             username = self.config.get('STOMP', 'username')
             password = self.config.get('STOMP', 'password')
+            self.logger.debug("Instantiating connection to {}, with user {}".format(
+                mb_alias, username
+            ))
             self.connections = get_stomp_connection_objects(mb_alias, port,
                                                             username, password,
                                                             self.connections)
+            self.logger.debug("Amount of opened connections: {}".format(len(self.connections)))
         except Exception:
-            self.logger("Something bad happened")
+            self.logger.exception("Something bad happened")
 
 
     def publish(self, routing_key, record: dict, retry=True, exchange=None):
