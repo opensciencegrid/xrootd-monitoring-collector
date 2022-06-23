@@ -37,7 +37,7 @@ import time
 import socket
 import urllib.parse
 
-def Convert(source_record):
+def Convert(source_record, metadata_producer, metadata_type):
     """
     Convert to the WLCG format documented here:
     https://twiki.cern.ch/twiki/bin/view/Main/GenericFileMonitoring
@@ -172,9 +172,9 @@ def Convert(source_record):
     
     # Add the metadata
     to_return["metadata"] = {
-        "producer": "cms",
-        "type": "aaa-ng",
-        "timestamp": int(round(time.time()*1000)),
+        "producer": metadata_producer,
+        "type": metadata_type,
+        "timestamp": to_return['end_time'],
         "type_prefix": "raw",
         "host": socket.gethostname(),
         "_id": to_return['unique_id']

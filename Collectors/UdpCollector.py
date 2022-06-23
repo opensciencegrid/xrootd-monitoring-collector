@@ -74,6 +74,9 @@ class UdpCollector(object):
         self.metrics_q = None
         self.wlcg = config.get('DEFAULT', 'wlcg')
 
+        self.metadata_producer = config.get('WLCG', 'producer')
+        self.metadata_type = config.get('WLCG', 'type')
+
         self.protocol = config.get('DEFAULT', 'protocol')
         if self.protocol == 'AMQP':
             self.exchange = config.get('AMQP', 'exchange')
