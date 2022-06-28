@@ -266,6 +266,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
             return 'icecube'
        else:
             return "noVO"
+    def process_gstream_tpc(self, gstream, addr, sid):
+        self.metrics_q.put({'type': 'gstream_event_tpc', 'count': 1})
+        for event in gstream.events:
+            print(event)
 
 
     def process_gstream(self, gstream, addr, sid):                                                      
@@ -496,6 +500,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
             elif stream_type == "C":
                 # process the gstream
                 self.process_gstream(decoded_gstream, addr,sid)
+            elif stream_type == "P":
+                self.process_gstream_tpc(decoded_gstream, addr,sid)
 
         else:
             infolen = len(data) - 4
