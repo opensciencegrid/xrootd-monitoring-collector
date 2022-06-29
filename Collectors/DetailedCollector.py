@@ -38,6 +38,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._tcp_exchange = self.config.get('AMQP', 'tcp_exchange')
         self._exchange_cache = self.config.get('AMQP', 'exchange_cache')
         self._wlcg_exchange_cache = self.config.get('AMQP', 'wlcg_exchange_cache')
+        self._exchange_tpc = self.config.get('AMQP', 'exchange_tpc')
+        self._wlcg_exchange_tpc = self.config.get('AMQP', 'wlcg_exchange_tpc')
+
         
         self.last_flush = time.time()
         self.seq_data = {}
@@ -266,10 +269,33 @@ class DetailedCollector(UdpCollector.UdpCollector):
             return 'icecube'
        else:
             return "noVO"
+
     def process_gstream_tpc(self, gstream, addr, sid):
-        self.metrics_q.put({'type': 'gstream_event_tpc', 'count': 1})
-        for event in gstream.events:
-            print(event)
+         for event in gstream.events:
+
+             self.metrics_q.put({'type': 'gstream_message_tpc', 'count': 1})
+             event["tpc_protocol"] = event.pop("TPC")
+             event["client"] = event.pop("Client")
+             event["xeq"] = event.pop("Xeq")
+
+             self.logger.info(event["xeq"])
+             self.logger.info(type(event["xeq"]))
+             event["xeq"]["begin_transfer"] = event["xeq"].pop("Beg")
+             event["xeq"]["end_trasnfer"] = event["xeq"].pop("End")
+             event["xeq"]["ip_version"] = event["xeq"].pop("IPv")
+             event["xeq"]["return_code"] = event["xeq"].pop("RC")
+             event["xeq"]["used_streams"] = event["xeq"].pop("Strm")
+             event["xeq"]["flow_direction"] = event["xeq"].pop("Type")
+             event["source"] = event.pop("Src")
+             event["destination"] = event.pop("Dst")
+             event["size"] = event.pop("Size")
+
+             if event["source"].startswith('/store') or event["source"].startswith('/user/dteam'):
+                  self.logger.info("Sending GStream TPC for "+self._wlcg_exchange_tpc)
+                  self.publish("tpc", event, exchange=self._wlcg_exchange_tpc)
+             else:
+                  self.logger.info("Sending GStream TPC for "+self._exchange_tpc)
+                  self.publish("tpc", event, exchange=self._exchange_tpc)
 
 
     def process_gstream(self, gstream, addr, sid):                                                      
@@ -314,12 +340,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["block_bypass_cache"] = event.pop("b_bypass")
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
-
-                     if(event["block_hit_cache"] >= event["size"]):
-                         event["cache_request"] = "total"
-                     else:
-                         event["cache_request"] = "partial"
-
                      fname = event["file_path"]
                      
                      if('n_cks_errs' in event):
@@ -491,7 +511,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
             self.logger.debug("Received gstream message")
             decoded_gstream = decoding.gStream(data)
             self.metrics_q.put({'type': 'gstream_message', 'count': 1})
-
 
             # We only care about the top 8 bits of the ident, which are a character.
             stream_type = chr(decoded_gstream.ident >> 56)
