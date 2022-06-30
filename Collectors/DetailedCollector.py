@@ -463,7 +463,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     transfer_key = str(sid) + "." + str(hd.fileID)
                     if transfer_key in self._transfers:
                         cur_value = self._transfers[transfer_key]
-                        self._transfers[transfer_key] = ((now, cur_value[0][1]), cur_value[1], hd)
+                        self._transfers[transfer_key] = ((cur_value[0][0], cur_value[0][1]), cur_value[1], hd)
                         self.logger.debug("f-stream index=%i Known xfrInfo: %s. sid=%s", idx, str(hd), sid)
                     else:
                         self.logger.debug("f-stream index=%i Unknown xfrInfo: %s. sid=%s", idx, str(hd),
