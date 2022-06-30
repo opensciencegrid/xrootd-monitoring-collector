@@ -281,7 +281,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
              self.logger.info(event["xeq"])
              self.logger.info(type(event["xeq"]))
              event["xeq"]["begin_transfer"] = event["xeq"].pop("Beg")
-             event["xeq"]["end_trasnfer"] = event["xeq"].pop("End")
+             event["xeq"]["end_transfer"] = event["xeq"].pop("End")
              event["xeq"]["ip_version"] = event["xeq"].pop("IPv")
              event["xeq"]["return_code"] = event["xeq"].pop("RC")
              event["xeq"]["used_streams"] = event["xeq"].pop("Strm")
