@@ -294,7 +294,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                   self.logger.debug("Sending WLCG GStream TPC: %s", str(event))
                   self.publish("tpc", event, exchange=self._wlcg_exchange_tpc)
              else:
-                  self.logger.info("Sending GStream TPC for "+self._exchange_tpc)
+                  self.logger.debug("Sending GStream TPC: %s", str(event))
                   self.publish("tpc", event, exchange=self._exchange_tpc)
 
 
