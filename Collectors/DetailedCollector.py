@@ -291,7 +291,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
              event["size"] = event.pop("Size")
 
              if event["source"].startswith('/store') or event["source"].startswith('/user/dteam'):
-                  self.logger.info("Sending GStream TPC for "+self._wlcg_exchange_tpc)
+                  self.logger.debug("Sending WLCG GStream TPC: %s", str(event))
                   self.publish("tpc", event, exchange=self._wlcg_exchange_tpc)
              else:
                   self.logger.info("Sending GStream TPC for "+self._exchange_tpc)
