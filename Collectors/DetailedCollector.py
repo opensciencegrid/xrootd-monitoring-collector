@@ -325,8 +325,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["server_hostname"] = hostname
                      event["file_path"] = event.pop("lfn")
                      event["block_size"] = event.pop("blk_size")
+                     # Total number of blocks in the file
                      event["numbers_blocks"] = event.pop("n_blks")
+                     # number of blocks that have been downloaded by the cache
                      event["numbers_blocks_done"] = event.pop("n_blks_done")
+                     # number of concurrent reads
                      event["access_count"] = event.pop("access_cnt")
                      event["attach_time"] = event.pop("attach_t")
                      event["detach_time"] = event.pop("detach_t")
@@ -335,9 +338,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
                           event["remotes_origin"] = remote
                      else:
                           event["remotes_origin"] = ""
-                     event["block_hit_cache"] = event.pop("b_hit")
-                     event["block_miss_cache"] = event.pop("b_miss")
-                     event["block_bypass_cache"] = event.pop("b_bypass")
+                     event["bytes_hit_cache"] = event.pop("b_hit")
+                     event["bytes_miss_cache"] = event.pop("b_miss")
+                     # number of bytes bypass by the cache due an overload
+                     event["bytes_bypass_cache"] = event.pop("b_bypass")
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
                      fname = event["file_path"]
