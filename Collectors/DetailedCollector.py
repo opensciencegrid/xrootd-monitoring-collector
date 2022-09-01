@@ -295,7 +295,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["server_hostname"] = hostname
                      event["file_path"] = event.pop("lfn")
                      event["block_size"] = event.pop("blk_size")
-                     # number of blocks used by the file
+                     # Total number of blocks in the file
                      event["numbers_blocks"] = event.pop("n_blks")
                      # number of blocks that have been downloaded by the cache
                      event["numbers_blocks_done"] = event.pop("n_blks_done")
