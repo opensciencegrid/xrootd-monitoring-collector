@@ -297,7 +297,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["block_size"] = event.pop("blk_size")
                      # number of blocks used by the file
                      event["numbers_blocks"] = event.pop("n_blks")
-                     # number of blocks read by the cache
+                     # number of blocks that have been downloaded by the cache
                      event["numbers_blocks_done"] = event.pop("n_blks_done")
                      # number of concurrent reads
                      event["access_count"] = event.pop("access_cnt")
