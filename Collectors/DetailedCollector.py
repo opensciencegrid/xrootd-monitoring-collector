@@ -291,8 +291,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
              event["size"] = event.pop("Size")
 
              if event["source"].startswith('/store') or event["source"].startswith('/user/dteam'):
-                  self.logger.debug("Sending WLCG GStream TPC: %s", str(event))
-                  self.publish("tpc", event, exchange=self._wlcg_exchange_tpc)
+                  wlcg_packet = wlcg_converter.ConvertGstream(event)
+                  self.logger.debug("Sending WLCG GStream TPC: %s", str(wlcg_packet))
+                  self.publish("tpc", wlcg_packet, exchange=self._wlcg_exchange_tpc)
              else:
                   self.logger.debug("Sending GStream TPC: %s", str(event))
                   self.publish("tpc", event, exchange=self._exchange_tpc)
@@ -351,8 +352,11 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      
                      if fname.startswith('/store') or fname.startswith('/user/dteam'):
                          lcg_record = True
+                         wlcg_packet = wlcg_converter.ConvertGstream(event)
+                         self.logger.info(wlcg_packet)
                          self.logger.info("Sending GStream for "+self._wlcg_exchange_cache)
-                         self.publish("file-close", event, exchange=self._wlcg_exchange_cache)
+                         self.publish("file-close", wlcg_packet, exchange=self._wlcg_exchange_cache)
+
                      else:
                          self.logger.info("Sending GStream for "+self._exchange_cache)
                          self.publish("file-close", event, exchange=self._exchange_cache)
