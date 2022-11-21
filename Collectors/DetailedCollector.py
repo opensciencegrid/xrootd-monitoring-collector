@@ -375,7 +375,15 @@ class DetailedCollector(UdpCollector.UdpCollector):
         # The event is already a dict from the parsed JSON
         for event in decoded_packet.events:
             # parse the event from json
+            
             event['from'] = addr
+            try:                                                                                        
+                hostname = socket.gethostbyaddr(event['from'])[0]
+                event['hostname'] = hostname 
+            except Exception as e:                                                                      
+                self.logger.exception("Not able to get gethostnyname")  
+
+            
             self.publish('tcp-event', event, exchange=self._tcp_exchange)
 
 
