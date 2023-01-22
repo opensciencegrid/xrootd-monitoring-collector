@@ -46,6 +46,39 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self.seq_data = {}
 
 
+    def _determineHostname(self, addr):
+        """
+        Given an address string which is potentially an IP address or a hostname, return
+        a hostname.  This is to help us transition from all IP addresses to having the shoveler
+        reporting a hostname instead as the address.
+
+        If `gethostbyaddr` throws an exception, `addr` is returned
+        """
+        try:
+            # If `addr` was actually a hostname, then we prefer to keep that as our hostname
+            # instead of using the canonical hostname (often a reverse DNS lookup).
+            # If `addr` is an IPv4 or IPv6 string, then gethostbyaddr will return it in the
+            # address list.
+
+            # Example:
+            # >>> socket.gethostbyaddr("google.com")
+            # ('ord38s33-in-f14.1e100.net', ['14.32.251.142.in-addr.arpa'], ['142.251.32.14'])
+            # In this case, we want to use "google.com" as the hostname.
+            # >>> socket.gethostbyaddr("2607:f8b0:4009:81c::200e")
+            # ('ord38s33-in-x0e.1e100.net', ['e.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.c.1.8.0.9.0.0.4.0.b.8.f.7.0.6.2.ip6.arpa'], ['2607:f8b0:4009:81c::200e'])
+            # In this case, we use "ord38s33-in-x0e.1e100.net".
+            canonical_hostname, _, addrlist = socket.gethostbyaddr(addr)
+
+            # addr appears to be an IP address; use the canonical hostname
+            if addr in addrlist:
+                return canonical_hostname
+            # In this case, we think the input address is actually a hostname; use that.
+            return addr
+        except:
+            self.logger.exception("Not able to get gethostbyaddr")
+            return addr
+
+
     def addRecord(self, sid, userID, fileClose, timestamp, addr, openTime):
         """
         Given information to create a record, send it up to the message queue.
@@ -58,11 +91,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
         path = ""
 
-        try:
-            rec['server_hostname'] = socket.gethostbyaddr(addr)[0]
-        except:
-            pass
-
+        rec['server_hostname'] = self._determineHostname(addr)
         rec['server_ip'] = addr
         if sid in self._servers:
             s = self._servers[sid]
@@ -299,25 +328,22 @@ class DetailedCollector(UdpCollector.UdpCollector):
                   self.publish("tpc", event, exchange=self._exchange_tpc)
 
 
-    def process_gstream(self, gstream, addr, sid):                                                      
+    def process_gstream(self, gstream, addr, sid):
 
-        hostname = ""                                                                                   
-        hostip = ""                                                                                     
-        site = ""                                                                                       
-        lcg_record = False                                                                              
-        try:                                                                                            
-            hostip = addr                                                                               
-            try:                                                                                        
-                hostname = socket.gethostbyaddr(addr)[0]                                                
-            except Exception as e:                                                                      
-                self.logger.exception("Not able to get gethostnyname")                                           
-                                                                                                        
-            if sid in self._servers:                                                                    
+        hostname = ""
+        hostip = ""
+        site = ""
+        lcg_record = False
+        try:
+            hostip = addr
+            hostname = self._determineHostname(addr)
+
+            if sid in self._servers:
                 s = self._servers[sid]
                 if s.site is not None:
                     site = s.site.decode('utf-8')
-                                                                                                        
-                                                                      
+
+
             for event in gstream.events:
                 try: 
                      self.metrics_q.put({'type': 'gstream_event_cache', 'count': 1})
@@ -366,7 +392,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
 
         except Exception as e:
             self.logger.exception("Error on creating Json - GStream" + e)
-                                                                                                 
+
     def process_tcp(self, decoded_packet:decoding.gstream, addr: str):
         """
         Process a TCP stream
@@ -377,13 +403,8 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # parse the event from json
             
             event['from'] = addr
-            try:                                                                                        
-                hostname = socket.gethostbyaddr(event['from'])[0]
-                event['hostname'] = hostname 
-            except Exception as e:                                                                      
-                self.logger.exception("Not able to get gethostnyname")  
+            event['hostname'] = self._determineHostname(addr)
 
-            
             self.publish('tcp-event', event, exchange=self._tcp_exchange)
 
 
@@ -436,11 +457,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             else:
                 missed_packets = abs(header.pseq - expected_seq)
 
-            hostname = addr
-            try:
-                hostname = socket.gethostbyaddr(addr)[0]
-            except:
-                pass
+            hostname = self._determineHostname(addr)
 
             # Remove re-ordering errors
             if missed_packets < 253:
