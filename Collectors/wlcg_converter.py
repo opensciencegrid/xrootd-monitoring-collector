@@ -184,7 +184,7 @@ def Convert(source_record):
     return to_return
 
 
-def ConvertGstream(source_record, tpc):
+def ConvertGstream(source_record,tpc):
 
     if tpc is True:
         producerT = "cms-xrootd-cache-tpc"
