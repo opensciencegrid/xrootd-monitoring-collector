@@ -199,6 +199,20 @@ def ConvertGstream(source_record):
 
     return source_record
     
+def ConvertGstreamTPC(source_record):
+
+    idd = str(uuid.uuid4())
+    # Add the metadata
+    source_record["metadata"] = {
+        "producer": "cms-xrootd-cache-tpc",
+        "type": "metric",
+        "timestamp": int(round(time.time()*1000)),
+        "type_prefix": "raw",
+        "host": socket.gethostname(),
+        "_id": idd
+    }
+
+    return source_record
 
 
 
