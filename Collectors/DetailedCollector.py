@@ -291,7 +291,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
              event["size"] = event.pop("Size")
 
              if event["source"].startswith('/store') or event["source"].startswith('/user/dteam'):
-                  wlcg_packet = wlcg_converter.ConvertGstream(event)
+                  wlcg_packet = wlcg_converter.ConvertGstreamTPC(event)
                   self.logger.debug("Sending WLCG GStream TPC: %s", str(wlcg_packet))
                   self.publish("tpc", wlcg_packet, exchange=self._wlcg_exchange_tpc)
              else:
