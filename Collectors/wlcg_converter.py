@@ -186,7 +186,7 @@ def Convert(source_record):
 
 def ConvertGstream(source_record,tpc=False):
 
-    if tpc is True:
+    if tpc:
         typeT = "tpc"
     else:
         typeT = "metric"
