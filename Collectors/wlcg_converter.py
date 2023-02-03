@@ -184,18 +184,18 @@ def Convert(source_record):
     return to_return
 
 
-def ConvertGstream(source_record,tpc):
+def ConvertGstream(source_record,tpc=False):
 
     if tpc is True:
-        producerT = "cms-xrootd-cache-tpc"
+        typeT = "tpc"
     else:
-        producerT = "cms-xrootd-cache"
+        typeT = "metric"
       
     idd = str(uuid.uuid4())
     # Add the metadata
     source_record["metadata"] = {
-        "producer": producerT
-        "type": "metric",
+        "producer": "cms-xrootd-cache",
+        "type": typeT,
         "timestamp": int(round(time.time()*1000)),
         "type_prefix": "raw",
         "host": socket.gethostname(),
