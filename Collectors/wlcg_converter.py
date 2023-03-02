@@ -35,6 +35,8 @@ Convert to a format WLCG would like.
 import uuid
 import time
 import socket
+import re
+import urllib.parse
 
 def Convert(source_record):
     """
@@ -183,6 +185,19 @@ def Convert(source_record):
     
     return to_return
 
+# check the path on TPC     
+def tpcPathCheckWLCG(url):
+    try:
+        parts = urllib.parse.urlparse(url)
+        path = parts.path.lstrip('/')
+        
+        if path.startswith('store') or path.startswith('user/dteam'):
+            return True
+        else:
+            return False
+    except:
+        return False
+   
 
 def ConvertGstream(source_record,tpc=False):
 
@@ -203,9 +218,4 @@ def ConvertGstream(source_record,tpc=False):
     }
 
     return source_record
-
-
-
-
-
-
+   
