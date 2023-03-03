@@ -35,7 +35,6 @@ Convert to a format WLCG would like.
 import uuid
 import time
 import socket
-import re
 import urllib.parse
 
 def Convert(source_record):
