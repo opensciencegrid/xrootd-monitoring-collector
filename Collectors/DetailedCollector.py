@@ -38,8 +38,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._tcp_exchange = self.config.get('AMQP', 'tcp_exchange')
         self._exchange_cache = self.config.get('AMQP', 'exchange_cache')
         self._wlcg_exchange_cache = self.config.get('AMQP', 'wlcg_exchange_cache')
-        self._exchange_
-        = self.config.get('AMQP', 'exchange_tpc')
+        self._exchange_tpc = self.config.get('AMQP', 'exchange_tpc')
         self._wlcg_exchange_tpc = self.config.get('AMQP', 'wlcg_exchange_tpc')
 
         
