@@ -169,8 +169,6 @@ def Convert(source_record):
                 to_return['CRAB_Workflow'] = split_appinfo[1].split("/")[-1]
             except:
                 pass
-
-    
     
     # Add the metadata
     to_return["metadata"] = {
@@ -184,22 +182,20 @@ def Convert(source_record):
     
     return to_return
 
-# check the path on TPC     
+# check the path on TPC
 def tpcPathCheckWLCG(url):
     try:
         parts = urllib.parse.urlparse(url)
         path = parts.path.lstrip('/')
-        
+
         if path.startswith('store') or path.startswith('user/dteam'):
             return True
         else:
             return False
     except:
         return False
-   
 
 def ConvertGstream(source_record,tpc=False):
-
     if tpc:
         typeT = "tpc"
     else:
@@ -217,4 +213,3 @@ def ConvertGstream(source_record,tpc=False):
     }
 
     return source_record
-   
