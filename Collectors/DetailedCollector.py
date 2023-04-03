@@ -85,10 +85,10 @@ class DetailedCollector(UdpCollector.UdpCollector):
         """
         rec = {}
         lcg_record = False
-        rec['timestamp'] = int(timestamp*1000)  # expected to be in MS since Unix epoch
-        rec['start_time'] = int(openTime*1000)
-        rec['end_time'] = int(timestamp*1000)
-        rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
+        rec['timestamp'] = int(timestamp)
+        rec['start_time'] = int(openTime)
+        rec['end_time'] = int(timestamp)
+        rec['operation_time'] = int(rec['end_time'] - rec['start_time'])
         path = ""
 
         rec['server_hostname'] = self._determineHostname(addr)
