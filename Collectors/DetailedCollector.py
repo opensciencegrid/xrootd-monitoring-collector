@@ -79,7 +79,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             return addr
 
 
-    def addRecord(self, sid, userID, fileClose, timestamp, addr, openTime):
+    def addRecord(self, sid, userID, fileClose, timestamp, addr, openTime, fileToClose = True):
         """
         Given information to create a record, send it up to the message queue.
         """
@@ -88,6 +88,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['timestamp'] = int(timestamp*1000)  # expected to be in MS since Unix epoch
         rec['start_time'] = int(openTime*1000)
         rec['end_time'] = int(timestamp*1000)
+        
+        if(fileToClose == True):
+            rec['fileToClose'] = 1
+        else:
+            rec['fileToClose'] = 0
+            
         rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
         path = ""
 
@@ -512,7 +518,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                         del self._transfers[transfer_key]
                         self.logger.debug('%i %s', idx, hd)
                     else:
-                        rec = self.addRecord(sid, 0, hd, time_record.tBeg, addr, time_record.tBeg)
+                        rec = self.addRecord(sid, 0, hd, time_record.tBeg, addr, time_record.tBeg,False)
                         self.logger.error("file to close not found. fileID: %i, serverID: %s. close=%s",
                                           hd.fileID, sid, str(hd))
 
