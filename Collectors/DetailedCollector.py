@@ -90,9 +90,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
         rec['end_time'] = int(timestamp*1000)
         
         if(fileToClose == True):
-            rec['fileToClose'] = 1
+            rec['HasFileCloseMsg'] = 1
         else:
-            rec['fileToClose'] = 0
+            rec['HasFileCloseMsg'] = 0
             
         rec['operation_time'] = int((rec['end_time'] - rec['start_time']) / 1000)
         path = ""
