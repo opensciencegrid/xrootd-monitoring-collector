@@ -169,7 +169,10 @@ def Convert(source_record, metadata_producer, metadata_type):
                 to_return['CRAB_Workflow'] = split_appinfo[1].split("/")[-1]
             except:
                 pass
-    
+
+    if 'HasFileCloseMsg' in source_record:
+        to_return['HasFileCloseMsg'] = source_record['HasFileCloseMsg']
+ 
     # Add the metadata
     to_return["metadata"] = {
         "producer": metadata_producer,
