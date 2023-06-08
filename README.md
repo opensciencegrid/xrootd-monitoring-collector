@@ -10,15 +10,7 @@ record into a AMQP-based message bus.
 Configuration
 -------------
 
-The DetailedCollector needs the a configuration in order to connect to the AMQP message bus.
-
-    [AMQP]
-
-    # Host information
-    url = amqps://username:password@example.com
-
-    # Exchange to write to
-    exchange = xrd.detailed 
+The DetailedCollector needs the a configuration in order to connect to the MQ message bus, please check connection.sample.conf file in this repository.
 
 This file is named `connection.conf` and should be in the Collectors directory or deployed with docker volumes, as shown below.
 

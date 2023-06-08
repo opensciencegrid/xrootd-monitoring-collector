@@ -3,3 +3,4 @@ requests
 six
 xmltodict
 prometheus_client
+stomp.py
