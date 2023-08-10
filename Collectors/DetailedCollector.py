@@ -166,8 +166,18 @@ class DetailedCollector(UdpCollector.UdpCollector):
             rec['dirname2'] = "/".join(fname.split('/', 3)[:3])
             if fname.startswith('/user'):
                 rec['logical_dirname'] = rec['dirname2']
-            elif fname.startswith('/osgconnect/public'):
+            # /osgconnect are for legacy login04/login05
+            # /ospool/PROTECTED is for ap40.uw.osg-htc.org
+            elif fname.startswith('/osgconnect/public') or fname.startswith('/osgconnect/protected') or fname.startswith('/ospool/PROTECTED'):
                 rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
+            # remaining /ospool is for the ap20.uc.osg-htc.org and ap21.uc.osg-htc.org
+            # Paths like:
+            # - /ospool/ap21/data/[USERNAME]
+            # - /ospool/ap20/data/[USERNAME]
+            # - /ospool/uc-shared/projects/[PROJECT]
+            # - /ospool/uc-shared/public/[PROJECT]
+            elif fname.startswith('/ospool'):
+                rec['logical_dirname'] = "/".join(fname.split('/', 5)[:5])
             elif fname.startswith('/hcc'):
                 rec['logical_dirname'] = "/".join(fname.split('/', 6)[:6])
             elif fname.startswith('/pnfs/fnal.gov/usr'):
@@ -178,6 +188,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 rec['logical_dirname'] = '/chtc'
             elif fname.startswith('/icecube/'):
                 rec['logical_dirname'] = '/icecube'
+            # Ligo and virgo paths
+            # - /igwn/ligo
+            # - /igwn/virgo
+            # - /igwn/shared
+            elif fname.startswith('/igwn'):
+                rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
 
             # Check for CMS files
             elif fname.startswith('/store') or fname.startswith('/user/dteam'):
