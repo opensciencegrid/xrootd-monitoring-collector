@@ -276,7 +276,7 @@ class UdpCollector(object):
             # High water mark for the queue
             if len(message_q.qsize() > config.get('Worker', 'high_water_mark', fallback=100)):
                 while message_q.qsize() > config.get('Worker', 'low_water_mark', fallback=10):
-                    logging.error("Sleeping for 1 second to allow the queue to drain")
+                    logging.error("Sleeping for 1 second to allow the queue to drain: {} pending".format(message_q.qsize()))
                     time.sleep(1)
             message_q.put([message, addr[0], addr[1]])
             channel.basic_ack(method.delivery_tag)
