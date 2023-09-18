@@ -274,7 +274,7 @@ class UdpCollector(object):
             addr = loaded_json['remote'].rsplit(":", 1)
 
             # High water mark for the queue
-            if len(message_q.qsize() > config.getint('Worker', 'high_water_mark', fallback=100)):
+            if message_q.qsize() > config.getint('Worker', 'high_water_mark', fallback=100):
                 while message_q.qsize() > config.getint('Worker', 'low_water_mark', fallback=10):
                     logging.error("Sleeping for 1 second to allow the queue to drain: {} pending".format(message_q.qsize()))
                     time.sleep(1)
