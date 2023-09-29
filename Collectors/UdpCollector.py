@@ -284,7 +284,7 @@ class UdpCollector(object):
             # Update the number of messages received on the bus to the metrics_q
             metrics_q.put({'type': 'pushed messages', 'count': 1})
 
-        channel.basic_qos(prefetch_count=1000)
+        channel.basic_qos(prefetch_count=config.getint("Pushed", "prefetch_count", fallback=1000))
         channel.basic_consume(config.get("Pushed", "push_queue"), on_message)
 
         try:
