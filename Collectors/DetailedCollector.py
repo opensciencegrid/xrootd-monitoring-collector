@@ -261,11 +261,6 @@ class DetailedCollector(UdpCollector.UdpCollector):
             rec['read_vector_operations'] = fileClose.ops.readv
             # read_vector_sigma (optional)
             # server_username (optional)
-            # throughput (optional)
-            try:
-                rec['throughput'] = (fileClose.read + fileClose.readv + fileClose.write) / rec['operation_time']
-            except ZeroDivisionError as zde:
-                rec['throughput'] = 0
             # user_fqan (optional)
             # user_role (optional)
             # write_average (optional)
