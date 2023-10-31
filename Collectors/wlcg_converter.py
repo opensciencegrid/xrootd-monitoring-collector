@@ -133,7 +133,6 @@ def Convert(source_record):
                       "read_vector_min",
                       "read_vector_operations",
                       "read_vector_sigma",
-                      "throughput",
                       "write_average",
                       "write_bytes_at_close",
                       "write_max",
