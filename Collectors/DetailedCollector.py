@@ -178,6 +178,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # - /ospool/uc-shared/public/[PROJECT]
             elif fname.startswith('/ospool'):
                 rec['logical_dirname'] = "/".join(fname.split('/', 5)[:5])
+            # /path-facility/data/[USERNAME]
+            elif fname.startswith('/path-facility'):
+                rec['logical_dirname'] = "/".join(fname.split('/', 4)[:4])
             elif fname.startswith('/hcc'):
                 rec['logical_dirname'] = "/".join(fname.split('/', 6)[:6])
             elif fname.startswith('/pnfs/fnal.gov/usr'):
