@@ -32,6 +32,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._servers = {}
         self._users = {}
         self._dictid_map = {}
+        self._dns_cache = ttldict.TTLOrderedDict(default_ttl=3600*24)
         
         self._exchange = self.config.get('AMQP', 'exchange')
         self._wlcg_exchange = self.config.get('AMQP', 'wlcg_exchange')
@@ -67,7 +68,13 @@ class DetailedCollector(UdpCollector.UdpCollector):
             # >>> socket.gethostbyaddr("2607:f8b0:4009:81c::200e")
             # ('ord38s33-in-x0e.1e100.net', ['e.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.c.1.8.0.9.0.0.4.0.b.8.f.7.0.6.2.ip6.arpa'], ['2607:f8b0:4009:81c::200e'])
             # In this case, we use "ord38s33-in-x0e.1e100.net".
-            canonical_hostname, _, addrlist = socket.gethostbyaddr(addr)
+            canonical_hostname = ""
+            addrlist = []
+            if addr in self._dns_cache:
+                canonical_hostname, addrlist = self._dns_cache[addr]
+            else:
+                canonical_hostname, _, addrlist = socket.gethostbyaddr(addr)
+                self._dns_cache[addr] = [canonical_hostname, addrlist]
 
             # addr appears to be an IP address; use the canonical hostname
             if addr in addrlist:
