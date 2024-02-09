@@ -613,7 +613,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 self._dictid_map[sid][mm.dictID] = pathInfo
 
             elif header.code == b'i':
-                appinfo = rest
+                appinfo = rest.decode('utf-8')
                 if sid not in self._users:
                     self._users[sid] = ttldict.TTLOrderedDict(default_ttl=DEFAULT_TTL)
 
