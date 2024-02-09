@@ -624,7 +624,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 # Check if userInfo is available in _users
                 if userInfo not in self._users[sid]:
                     self._users[sid][userInfo] = {}
-                self._users[sid][userInfo]['appinfo'] = rest
+                self._users[sid][userInfo]['appinfo'] = appinfo
                 self.logger.info('appinfo:%s', appinfo)
 
             elif header.code == b'p':
