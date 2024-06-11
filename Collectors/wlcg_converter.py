@@ -158,7 +158,10 @@ def Convert(source_record):
         # CRAB_Rerty=2
 
         # Try to split the appinfo by "_"
-        split_appinfo = source_record['appinfo'].decode().split("_")
+        if isinstance(source_record['appinfo'], bytes):
+            split_appinfo = source_record['appinfo'].decode().split("_")
+        else:
+            split_appinfo = source_record['appinfo'].split("_")
         if len(split_appinfo) == 3:
             to_return['CRAB_Id'] = split_appinfo[0]
             to_return['CRAB_Retry'] = split_appinfo[2]
