@@ -594,8 +594,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 userRec = mm.info
                 rest = b''
 
-            userInfo = decoding.userInfo(userRec)
-            self.logger.debug('%i %s', mm.dictID, userInfo)
+            try:
+                userInfo = decoding.userInfo(userRec)
+                self.logger.debug('%i %s', mm.dictID, userInfo)
+            except ValueError as ve:
+                self.logger.exception("Failed to decode userInfo >>%s<< mapping message from %s mm: %s",
+                                      header.code, addr, mm)
 
             if header.code == b'=':
                 serverInfo = decoding.serverInfo(rest, addr)
