@@ -100,11 +100,17 @@ def Convert(source_record):
         to_return["user_protocol"] = source_record["protocol"]
 
     # vo
-    if "vo" in source_record:
+    if "experiment" in source_record:
+        to_return["vo"] = source_record["experiment"]
+    elif "vo" in source_record:
         to_return["vo"] = source_record["vo"]
 
     # write_bytes
     to_return["write_bytes"] = source_record['write']
+
+    # activity
+    to_return["activity"] = source_record.get('activity', 'unknown')
+
     # remote_access - boolean
     # is_transfer (optional)
     # user_fqan (optional)

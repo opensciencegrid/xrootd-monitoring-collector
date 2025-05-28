@@ -42,6 +42,12 @@ class DetailedCollector(UdpCollector.UdpCollector):
         self._exchange_tpc = self.config.get('AMQP', 'exchange_tpc')
         self._wlcg_exchange_tpc = self.config.get('AMQP', 'wlcg_exchange_tpc')
 
+        if 'SCITAGS' in self.config:
+            self._scitags_mapping_file = self.config.get('SCITAGS', 'mapping_file_path')
+            with open(self._scitags_mapping_file) as scitag_file:
+                self._scitags_mapping = json.load(scitag_file)
+        else:
+            self._scitags_mapping = None
         
         self.last_flush = time.time()
         self.seq_data = {}
@@ -131,6 +137,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
             u = self._users[sid][userInfo].get('userinfo', None)
             auth = self._users[sid][userInfo].get('authinfo', None)
             appinfo = self._users[sid][userInfo].get('appinfo', None)
+            eainfo = self._users[sid][userInfo].get('eainfo', None)
 
             if u is not None:
                 hostname = u.host.decode('idna')
@@ -151,6 +158,9 @@ class DetailedCollector(UdpCollector.UdpCollector):
                     rec['vo'] = auth.on.decode('utf-8')
             if appinfo is not None:
                 rec['appinfo'] = appinfo
+            if eainfo is not None:
+                rec['activity'] = eainfo.activity
+                rec['experiment'] = eainfo.experiment
                     
         except KeyError:
             self.logger.exception("File close record from unknown UserID=%i, SID=%s", userID, sid)
@@ -581,6 +591,16 @@ class DetailedCollector(UdpCollector.UdpCollector):
                 self.process_gstream(decoded_gstream, addr,sid)
             elif stream_type == "P":
                 self.process_gstream_tpc(decoded_gstream, addr,sid)
+
+        elif header.code == b'U': #eainfo
+            if self._scitags_mapping:
+                eainfo = decoding.eaInfo(rest, self._scitags_mapping)
+
+                try:
+                    self.logger.debug("Adding new eainfo: %s.", eainfo)
+                    self._users[sid][userInfo]['eainfo'] = eainfo
+                except KeyError:
+                    self.logger.warning("Received eainfo for a server or user not seen yet")
 
         else:
             infolen = len(data) - 4
