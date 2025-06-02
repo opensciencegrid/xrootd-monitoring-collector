@@ -17,3 +17,8 @@ services:
 #    ports:
 #     - "9301:9301/udp"
 #    restart: always
+  mock-mq:
+    # https://github.com/tsv1/amqp-mock
+    image: tsv1/amqp-mock
+    profiles:
+      - mock
