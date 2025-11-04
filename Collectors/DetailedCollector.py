@@ -394,8 +394,22 @@ class DetailedCollector(UdpCollector.UdpCollector):
                           event["remotes_origin"] = ""
                      event["bytes_hit_cache"] = event.pop("b_hit")
                      event["bytes_miss_cache"] = event.pop("b_miss")
+
                      # number of bytes bypass by the cache due an overload
                      event["bytes_bypass_cache"] = event.pop("b_bypass")
+
+                     # b_todisk: number of bytes written to disk
+                     event["bytes_to_disk"] = event.pop("b_todisk")
+
+                     # b_prefetch: number of bytes requested via prefetching
+                     event["bytes_by_prefetch"] = event.pop("b_prefetch")
+
+                     # One can now determine the amount of data cache read from the remote (b_todisk + b_bypass) and also how much of this transfer was driven by prefetching (b_prefetch). Note that b_todisk includes b_prefetch.
+                     event["bytes_read_by_remote"] = event["bytes_to_disk"] + event["bytes_bypass_cache"] 
+                     
+                     # number of bytes for which explicit remote read calls had to be issued is b_todisk + b_bypass - b_prefetch.
+                     event["bytes_explicit_remote_read"] = event["bytes_to_disk"] + event["bytes_bypass_cache"] - event["bytes_by_prefetch"]
+
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
                      fname = event["file_path"]
