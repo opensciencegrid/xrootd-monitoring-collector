@@ -15,6 +15,7 @@ srvinfo  = namedtuple("srvinfo", ["program", "version", "instance", "port", "sit
 prginfo  = namedtuple("prginfo", ["xfn", "tod", "sz", "at", "ct", "mt", "fn"])
 xfrinfo  = namedtuple("xfrinfo", ["lfn", "tod", "sz", "tm", "op", "rc", "pd"])
 pathinfo = namedtuple("pathinfo", ["userinfo", "path"])
+eainfo   = namedtuple("eainfo", ["udid", "experiment", "activity"])
 
 fileOpen  = namedtuple("fileOpen",  ["rectype", "recFlag", "recSize", "fileID", "fileSize", "userID", "fileName"])
 fileXfr   = namedtuple("fileXfr",   ["rectype", "recFlag", "recSize", "fileID", "read", "readv", "write"])
@@ -142,6 +143,21 @@ def xfrInfo(message):
     else:
         pd = b''
     return xfrinfo([lfn, tod, sz, tm, op, rc, pd])
+
+
+def eaInfo(message, scitags_mapping):
+    if isinstance(message, str):
+        message = message.encode('utf-8')
+    r = message.split(b'&')
+    
+    udid = r[1].split(b'=')[1]
+    expc = int(r[2].split(b'=')[1]) - 1 
+    actc = int(r[3].split(b'=')[1]) - 1
+
+    experiment = scitags_maping['experiments'][expc]['expName']
+    activity = scitags_maping['experiments'][expc]['activities'][actc]['activityName']
+    return eainfo(udid, experiment, activity)   
+
 
 def gStream(message):
     # int, int, int64, null terminated string
