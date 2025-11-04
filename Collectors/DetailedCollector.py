@@ -408,7 +408,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      event["bytes_read_by_remote"] = event["bytes_to_disk"] + event["bytes_bypass_cache"] 
                      
                      # number of bytes for which explicit remote read calls had to be issued is b_todisk + b_bypass - b_prefetch.
-                     event["bytes_explicit_remote_read"] =  event["bytes_to_disk"] + event["bytes_bypass_cache"] - event["bytes_by_prefetch"]
+                     event["bytes_explicit_remote_read"] = event["bytes_to_disk"] + event["bytes_bypass_cache"] - event["bytes_by_prefetch"]
 
                      event["site"] = site
                      event["vo"] = self.returnVO(event["file_path"])
