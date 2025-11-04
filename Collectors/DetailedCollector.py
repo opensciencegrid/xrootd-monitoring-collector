@@ -404,7 +404,7 @@ class DetailedCollector(UdpCollector.UdpCollector):
                      # b_prefetch: number of bytes requested via prefetching
                      event["bytes_by_prefetch"] = event.pop("b_prefetch")
 
-                     # One can now determine the amount of data cache read from the remote (b_todisk + b_bypass) and also how much of this transfer was driven by prefetching (b_prefetch). Note that b_todisk includes b_prefetch -- 
+                     # One can now determine the amount of data cache read from the remote (b_todisk + b_bypass) and also how much of this transfer was driven by prefetching (b_prefetch). Note that b_todisk includes b_prefetch.
                      event["bytes_read_by_remote"] = event["bytes_to_disk"] + event["bytes_bypass_cache"] 
                      
                      # number of bytes for which explicit remote read calls had to be issued is b_todisk + b_bypass - b_prefetch.
